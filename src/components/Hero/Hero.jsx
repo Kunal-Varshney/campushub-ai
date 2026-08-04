@@ -1,8 +1,8 @@
+import { useState, useEffect, useRef } from "react";
 import {
   ArrowRight,
   Sparkles,
   Brain,
-  PlayCircle,
   CheckCircle2,
   BookOpen,
   FileText,
@@ -32,8 +32,81 @@ const assistantMessages = [
   { icon: Briefcase, text: "Find Internships & Jobs" },
 ];
 
+function getAIReply(userMessage) {
+  const message = userMessage.toLowerCase();
+
+  if (message.includes("resume")) {
+    return "I can help you create an ATS friendly resume with strong projects and skills.";
+  }
+
+  if (message.includes("dsa")) {
+    return "Let's start DSA. I can explain arrays, linked lists, trees and algorithms step-by-step.";
+  }
+
+  if (message.includes("internship")) {
+    return "I can help you find internships and prepare for technical interviews.";
+  }
+
+  if (message.includes("notes")) {
+    return "I can generate smart study notes from your subjects and topics.";
+  }
+
+  if (message.includes("hello") || message.includes("hi")) {
+    return "Hello! I'm CampusHub AI Assistant. How can I help you today?";
+  }
+
+  return "I can help you with learning, career and campus related queries.";
+}
+
 function Hero() {
   const navigate = useNavigate();
+
+  const [message, setMessage] = useState("");
+  const [chat, setChat] = useState([
+    {
+      type: "ai",
+      text: "👋 Hello Student! How can I help you today?",
+    },
+  ]);
+  const [isTyping, setIsTyping] = useState(false);
+
+  const chatEndRef = useRef(null);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
+  }, [chat, isTyping]);
+
+  const sendMessage = () => {
+    const trimmedMessage = message.trim();
+
+    if (!trimmedMessage) return;
+
+    setChat((prev) => [
+      ...prev,
+      {
+        type: "user",
+        text: trimmedMessage,
+      },
+    ]);
+
+    setMessage("");
+    setIsTyping(true);
+
+    setTimeout(() => {
+      setChat((prev) => [
+        ...prev,
+        {
+          type: "ai",
+          text: getAIReply(trimmedMessage),
+        },
+      ]);
+      setIsTyping(false);
+    }, 1000);
+  };
+
   return (
     <section
       id="home"
@@ -44,9 +117,7 @@ function Hero() {
       <div className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-purple-600/20 blur-[110px]" />
 
       {/* Grid texture */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.05] [background-image:linear-gradient(rgba(255,255,255,.3)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.3)_1px,transparent_1px)] [background-size:56px_56px]"
-      />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.05] [background-image:linear-gradient(rgba(255,255,255,.3)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.3)_1px,transparent_1px)] [background-size:56px_56px]" />
 
       <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-12 px-6 pt-28 pb-16 lg:grid lg:min-h-screen lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-10 lg:py-24">
         {/* LEFT */}
@@ -86,8 +157,9 @@ function Hero() {
           {/* Buttons */}
           <div className="mt-8 flex flex-wrap gap-4">
             <button
-            onClick={() => navigate('/signup')}
-            className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-7 py-3.5 font-semibold transition-all duration-300 hover:-translate-y-1 hover:from-blue-500 hover:to-cyan-400 hover:shadow-2xl hover:shadow-blue-500/30 active:scale-95">
+              onClick={() => navigate("/signup")}
+              className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-7 py-3.5 font-semibold transition-all duration-300 hover:-translate-y-1 hover:from-blue-500 hover:to-cyan-400 hover:shadow-2xl hover:shadow-blue-500/30 active:scale-95"
+            >
               Start Free
               <ArrowRight
                 size={18}
@@ -95,7 +167,10 @@ function Hero() {
               />
             </button>
 
-            <button className="group flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-900/70 px-7 py-3.5 font-semibold transition-all duration-300 hover:border-blue-500 hover:bg-slate-800 hover:shadow-xl hover:shadow-blue-500/20">
+            <button
+              onClick={() => navigate("/Discover")}
+              className="group flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-900/70 px-7 py-3.5 font-semibold transition-all duration-300 hover:border-blue-500 hover:bg-slate-800 hover:shadow-xl hover:shadow-blue-500/20"
+            >
               <Sparkles
                 size={21}
                 className="text-blue-400 transition-transform duration-300 group-hover:scale-110"
@@ -153,33 +228,36 @@ function Hero() {
             </div>
 
             {/* Chat */}
-            <div className="space-y-3">
-              <div className="rounded-xl border border-blue-500/30 bg-blue-600/20 p-4 text-sm sm:text-base">
-                👋 Hello Student!
-              </div>
-
-              {assistantMessages.map(({ icon: Icon, text }) => (
+            <div className="max-h-[320px] space-y-3 overflow-y-auto pr-2">
+              {chat.map((item, index) => (
                 <div
-                  key={text}
-                  className="flex items-center gap-3 rounded-xl bg-slate-800 p-4 text-sm sm:text-base"
+                  key={index}
+                  className={`rounded-xl p-4 text-sm ${
+                    item.type === "user"
+                      ? "ml-auto w-fit max-w-[80%] bg-blue-600 text-white"
+                      : "border border-blue-500/30 bg-blue-600/10 text-gray-200"
+                  }`}
                 >
-                  <Icon size={18} className="shrink-0 text-blue-400" />
-                  <span>{text}</span>
+                  {item.text}
                 </div>
               ))}
 
-              <div className="flex items-center gap-2 pt-2">
-                <span className="h-2 w-2 animate-bounce rounded-full bg-blue-400" />
-                <span
-                  className="h-2 w-2 animate-bounce rounded-full bg-blue-400"
-                  style={{ animationDelay: "0.2s" }}
-                />
-                <span
-                  className="h-2 w-2 animate-bounce rounded-full bg-blue-400"
-                  style={{ animationDelay: "0.4s" }}
-                />
-                <span className="ml-2 text-sm text-gray-400">AI is typing...</span>
-              </div>
+              {isTyping && (
+                <div className="flex w-fit items-center gap-2 rounded-xl border border-blue-500/30 bg-blue-600/10 px-4 py-3 text-sm text-gray-300">
+                  <span className="h-2 w-2 animate-bounce rounded-full bg-blue-400" />
+                  <span
+                    className="h-2 w-2 animate-bounce rounded-full bg-blue-400"
+                    style={{ animationDelay: "0.2s" }}
+                  />
+                  <span
+                    className="h-2 w-2 animate-bounce rounded-full bg-blue-400"
+                    style={{ animationDelay: "0.4s" }}
+                  />
+                  <span className="ml-1 text-xs text-gray-400">AI is typing...</span>
+                </div>
+              )}
+
+              <div ref={chatEndRef}></div>
             </div>
           </div>
 
@@ -193,6 +271,28 @@ function Hero() {
             </div>
             <CheckCircle2 size={22} className="shrink-0 text-green-400" />
           </div>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              sendMessage();
+            }}
+            className="mt-4 flex gap-2"
+          >
+            <input
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Ask your AI assistant..."
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+            />
+
+            <button
+              type="submit"
+              className="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 font-semibold"
+            >
+              Send
+            </button>
+          </form>
         </motion.div>
       </div>
     </section>

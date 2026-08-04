@@ -2,226 +2,576 @@ import {
   Briefcase,
   Users,
   Rocket,
-  Code
+  Code,
+  Brain,
+  GraduationCap,
+  Sparkles,
+  ArrowRight,
+  Target
 } from "lucide-react";
 
 import { motion } from "framer-motion";
+
 import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
 
 
 const opportunities = [
+
   {
     icon: Code,
     title: "Frontend Developer Intern",
     description:
-      "Work with React, Tailwind CSS and build modern AI powered interfaces."
+      "Build modern React interfaces and create smooth experiences for students."
   },
 
   {
-    icon: Rocket,
+    icon: Brain,
     title: "AI/ML Intern",
     description:
-      "Explore machine learning solutions and AI based student tools."
+      "Develop intelligent solutions using machine learning and AI technologies."
   },
 
   {
     icon: Users,
     title: "Community Manager",
     description:
-      "Help students connect, collaborate and grow together."
+      "Build student communities and help learners grow together."
   }
+
 ];
 
 
-function Careers() {
 
-  return (
+const benefits = [
 
-    <div className="bg-slate-950 min-h-screen text-white">
-
-      <Navbar />
-
-
-      {/* Hero */}
-
-      <section className="
-      py-20
-      text-center
-      px-6
-      ">
-
-        <h1 className="
-        text-4xl
-        md:text-5xl
-        font-bold
-        ">
-          Build The Future With
-          <span className="text-indigo-400">
-            {" "}CampusHub AI
-          </span>
-        </h1>
+  {
+    icon: Rocket,
+    title:"Real Product Experience",
+    description:
+    "Work on features used by students and solve real problems."
+  },
 
 
-        <p className="
-        mt-6
-        max-w-2xl
-        mx-auto
-        text-slate-400
-        ">
-          Join our team and help us create smarter solutions
-          for students around the world.
-        </p>
+  {
+    icon: GraduationCap,
+    title:"Learn & Grow",
+    description:
+    "Improve your skills with mentorship and practical projects."
+  },
 
 
-      </section>
+  {
+    icon: Target,
+    title:"Career Growth",
+    description:
+    "Build experience that helps you achieve your career goals."
+  }
+
+];
 
 
 
-      {/* Opportunities */}
+function Careers(){
 
-      <section className="
-      pb-20
-      px-6
-      ">
+return (
 
-        <div className="
-        max-w-6xl
-        mx-auto
-        ">
-
-          <h2 className="
-          text-3xl
-          font-bold
-          text-center
-          mb-12
-          ">
-            Open Opportunities
-          </h2>
+<div className="
+min-h-screen
+bg-slate-950
+text-white
+overflow-hidden
+">
 
 
-          <div className="
-          grid
-          md:grid-cols-3
-          gap-8
-          ">
+<Navbar />
 
 
-          {
-            opportunities.map((item,index)=>{
 
-              const Icon = item.icon;
+{/* HERO */}
 
-
-              return (
-
-                <motion.div
-
-                key={index}
-
-                initial={{
-                  opacity:0,
-                  y:40
-                }}
-
-                whileInView={{
-                  opacity:1,
-                  y:0
-                }}
-
-                transition={{
-                  duration:0.5,
-                  delay:index*0.2
-                }}
-
-                viewport={{
-                  once:true
-                }}
-
-                className="
-                bg-slate-900
-                border
-                border-slate-800
-                rounded-2xl
-                p-8
-                text-center
-                transition-all
-                duration-300
-                hover:-translate-y-2
-                hover:border-indigo-500
-                hover:shadow-xl
-                "
-
-                >
-
-                  <div className="
-                  mx-auto
-                  mb-6
-                  w-16
-                  h-16
-                  flex
-                  items-center
-                  justify-center
-                  rounded-full
-                  bg-indigo-500/20
-                  text-indigo-400
-                  ">
-
-                    <Icon size={32}/>
-
-                  </div>
+<section className="
+relative
+px-6
+py-24
+text-center
+">
 
 
-                  <h3 className="
-                  text-xl
-                  font-semibold
-                  mb-3
-                  ">
-                    {item.title}
-                  </h3>
+<div className="
+absolute
+-top-20
+left-1/2
+h-96
+w-96
+-translate-x-1/2
+rounded-full
+bg-blue-600/20
+blur-[120px]
+"/>
 
 
-                  <p className="
-                  text-slate-400
-                  ">
-                    {item.description}
-                  </p>
+
+<motion.div
+
+initial={{
+opacity:0,
+y:30
+}}
+
+animate={{
+opacity:1,
+y:0
+}}
+
+transition={{
+duration:0.6
+}}
+
+className="relative"
+
+>
 
 
-                  <button className="
-                  mt-6
-                  rounded-lg
-                  bg-indigo-500
-                  px-6
-                  py-2
-                  font-medium
-                  hover:bg-indigo-600
-                  transition
-                  ">
-                    Apply Now
-                  </button>
+<div className="
+inline-flex
+items-center
+gap-2
+rounded-full
+border
+border-blue-500/20
+bg-slate-900/70
+px-4
+py-2
+text-sm
+text-blue-400
+">
+
+<Sparkles size={16}/>
+
+Join CampusHub AI Team
+
+</div>
 
 
-                </motion.div>
-
-              )
-
-            })
-          }
 
 
-          </div>
+<h1 className="
+mt-6
+text-4xl
+md:text-6xl
+font-extrabold
+">
 
-        </div>
 
-      </section>
+Build The Future With
 
 
-      <Footer />
+<span className="
+bg-gradient-to-r
+from-blue-500
+to-cyan-400
+bg-clip-text
+text-transparent
+">
 
-    </div>
+CampusHub AI
 
-  );
+</span>
+
+
+</h1>
+
+
+
+<p className="
+mx-auto
+mt-6
+max-w-2xl
+text-lg
+text-gray-400
+">
+
+Join us in building AI-powered tools that help
+students learn smarter and grow faster.
+
+</p>
+
+
+</motion.div>
+
+
+</section>
+
+
+
+
+
+{/* OPEN ROLES */}
+
+
+<section className="
+px-6
+py-20
+">
+
+
+<div className="
+mx-auto
+max-w-6xl
+">
+
+
+<h2 className="
+text-center
+text-3xl
+font-bold
+mb-12
+">
+
+Open Opportunities
+
+</h2>
+
+
+
+
+<div className="
+grid
+gap-8
+md:grid-cols-3
+">
+
+
+{
+
+opportunities.map((item,index)=>{
+
+const Icon=item.icon;
+
+
+return (
+
+<motion.div
+
+key={index}
+
+initial={{
+opacity:0,
+y:40
+}}
+
+whileInView={{
+opacity:1,
+y:0
+}}
+
+transition={{
+duration:0.5,
+delay:index*0.15
+}}
+
+viewport={{
+once:true
+}}
+
+
+className="
+group
+rounded-3xl
+border
+border-slate-800
+bg-slate-900/70
+p-8
+text-center
+backdrop-blur-xl
+transition-all
+duration-300
+hover:-translate-y-3
+hover:border-blue-500/50
+hover:shadow-xl
+hover:shadow-blue-500/20
+"
+
+>
+
+
+<div className="
+mx-auto
+mb-6
+flex
+h-16
+w-16
+items-center
+justify-center
+rounded-2xl
+bg-blue-500/20
+text-blue-400
+transition
+duration-300
+group-hover:scale-110
+">
+
+<Icon size={30}/>
+
+</div>
+
+
+
+<h3 className="
+text-xl
+font-bold
+">
+
+{item.title}
+
+</h3>
+
+
+
+<p className="
+mt-4
+text-gray-400
+">
+
+{item.description}
+
+</p>
+
+
+
+<button className="
+mt-6
+flex
+mx-auto
+items-center
+gap-2
+rounded-xl
+bg-gradient-to-r
+from-blue-600
+to-cyan-500
+px-6
+py-3
+font-semibold
+transition
+hover:-translate-y-1
+hover:shadow-lg
+hover:shadow-blue-500/30
+">
+
+Apply Now
+
+<ArrowRight size={17}/>
+
+</button>
+
+
+
+</motion.div>
+
+
+)
+
+})
+
+
 }
 
-export default Careers; 
+
+
+</div>
+
+
+</div>
+
+
+</section>
+
+
+
+
+
+{/* WHY JOIN */}
+
+
+
+<section className="
+bg-slate-900/50
+px-6
+py-20
+">
+
+
+<div className="
+mx-auto
+max-w-6xl
+">
+
+
+<h2 className="
+text-center
+text-3xl
+font-bold
+mb-12
+">
+
+Why Join CampusHub AI?
+
+</h2>
+
+
+
+
+<div className="
+grid
+gap-8
+md:grid-cols-3
+">
+
+
+{
+
+benefits.map((item,index)=>{
+
+
+const Icon=item.icon;
+
+
+return (
+
+<div
+
+key={index}
+
+className="
+rounded-2xl
+border
+border-slate-800
+bg-slate-950/70
+p-7
+transition
+hover:-translate-y-2
+hover:border-blue-500/40
+"
+
+>
+
+
+<Icon
+size={32}
+className="text-blue-400"
+/>
+
+
+<h3 className="
+mt-5
+text-xl
+font-semibold
+">
+
+{item.title}
+
+</h3>
+
+
+<p className="
+mt-3
+text-gray-400
+">
+
+{item.description}
+
+</p>
+
+
+</div>
+
+
+)
+
+
+})
+
+
+}
+
+
+
+</div>
+
+
+</div>
+
+
+</section>
+
+
+
+
+
+{/* CTA */}
+
+
+<section className="
+px-6
+py-20
+text-center
+">
+
+
+<h2 className="
+text-4xl
+font-bold
+">
+
+Ready To Build With Us?
+
+</h2>
+
+
+
+<p className="
+mt-4
+text-gray-400
+">
+
+Become a part of the future of AI-powered education.
+
+</p>
+
+
+
+<button className="
+mt-8
+rounded-xl
+bg-gradient-to-r
+from-blue-600
+to-cyan-500
+px-8
+py-3
+font-semibold
+hover:shadow-xl
+hover:shadow-blue-500/30
+">
+
+Start Your Journey
+
+</button>
+
+
+</section>
+
+
+
+
+<Footer />
+
+</div>
+
+
+);
+
+}
+
+
+export default Careers;

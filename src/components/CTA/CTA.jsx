@@ -240,13 +240,7 @@ function CTA() {
 
                 type="button"
 
-                onClick={() =>
-                  document
-                    .getElementById("features")
-                    ?.scrollIntoView({
-                      behavior: "smooth",
-                    })
-                }
+                onClick={() => navigate("/discover")}
 
                 className="
                   group/btn

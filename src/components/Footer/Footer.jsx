@@ -108,9 +108,19 @@ function Footer() {
                   to="/privacy"
                   className="transition-colors duration-300 hover:text-blue-400"
                 >
-                  Privacy
+                  Privacy Policy
                 </Link>
               </li>
+
+              <li>
+                <Link
+                  to="/terms"
+                  className="transition-colors duration-300 hover:text-blue-400"
+                >
+                  Terms & Conditions
+                </Link>
+              </li>
+
 
               <li>
                 <a

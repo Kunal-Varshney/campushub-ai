@@ -1,5 +1,6 @@
 import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Brain,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 
 function About() {
+  const navigate = useNavigate();
   return (
     <main className="bg-slate-950 text-white min-h-screen">
 
@@ -667,6 +669,7 @@ function About() {
             </p>
 
             <button
+              onClick={() => navigate("/signup")}
               className="
                 mt-10
                 rounded-xl
@@ -677,15 +680,16 @@ function About() {
                 font-semibold
                 transition-all
                 duration-300
-                hover:bg-indigo-700
-                hover:scale-105
+                hover:-translate-y-1
+                hover:shadow-2xl
+                hover:shadow-blue-500/30
+                active:scale-95
               "
             >
 
-              Explore CampusHub AI →
+              Get Started →
 
             </button>
-
           </motion.div>
 
         </div>
