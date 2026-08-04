@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import {
   Brain,
   BookOpen,
@@ -12,41 +13,41 @@ import { motion } from "framer-motion";
 
 const features = [
   {
-    id: "ai-assistant",
+    route: "ai-assistant",
     icon: Brain,
     title: "AI Study Assistant",
     description:
       "Get instant answers and personalized learning support using artificial intelligence.",
   },
   {
-    id: "smart-notes",
+    route: "smart-notes",
     icon: BookOpen,
     title: "Smart Notes Sharing",
     description:
       "Create, share and access quality notes with students across campuses.",
   },
   {
-    id: "community",
+    route: "community",
     icon: Users,
     title: "Campus Community",
     description:
       "Connect with students and collaborate with your campus community.",
   },
   {
-    id: "internship-finder",
+    route: "internship-finder",
     icon: Briefcase,
     title: "Internship Finder",
     description:
       "Discover internships and career opportunities based on your skills.",
   },
   {
-    id: "ai-resume-builder",
+    route: "ai-resume-builder",
     icon: FileText,
     title: "AI Resume Builder",
     description: "Build professional resumes with AI-powered suggestions.",
   },
   {
-    id: "skill-roadmap",
+    route: "skill-roadmap",
     icon: Target,
     title: "Skill Roadmap",
     description:
@@ -64,6 +65,7 @@ const cardVariants = {
 };
 
 function Features() {
+  const navigate = useNavigate();
   return (
     <section
       id="features"
@@ -104,8 +106,8 @@ function Features() {
 
             return (
               <motion.article
-                key={item.id}
-                id={item.id}
+                key={item.route}
+                id={item.route}
                 custom={index}
                 initial="hidden"
                 whileInView="visible"
@@ -132,6 +134,7 @@ function Features() {
                   <div className="mt-8 border-t border-slate-800 pt-6">
                     <button
                       type="button"
+                      onClick={() => navigate(item.route)}
                       aria-label={`Learn more about ${item.title}`}
                       className="group/cta inline-flex w-fit items-center gap-2 rounded-lg text-sm font-semibold text-blue-400 transition-colors duration-300 hover:text-blue-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
                     >
