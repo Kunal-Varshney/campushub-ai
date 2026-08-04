@@ -111,6 +111,14 @@ const handleNavigation = (item) => {
 
 };
 
+const handleSignUp = () => {
+
+  setOpen(false);
+
+  navigate("/signup");
+
+};
+
   return (
 
     <header className="
@@ -233,37 +241,87 @@ const handleNavigation = (item) => {
 
 
 
-        {/* Hamburger */}
+        {/* Right side — Desktop Sign Up + Mobile Hamburger */}
 
-        <button
-
-          onClick={() => setOpen(!open)}
-
+        <div
           className="
-            rounded-xl
-            border
-            border-slate-700
-            p-2
-            text-white
-            transition-all
-            duration-300
-            hover:border-indigo-500
-            hover:bg-slate-900
-            hover:scale-105
+            flex
+            items-center
+            gap-4
           "
-
         >
 
-          {
-            open
-            ?
-            <X size={24}/>
-            :
-            <Menu size={24}/>
-          }
+          {/* Desktop Sign Up */}
+
+          <button
+
+            onClick={handleSignUp}
+
+            className="
+              hidden
+              md:flex
+              items-center
+              gap-2
+              rounded-xl
+              bg-gradient-to-r
+              from-indigo-600
+              to-blue-600
+              px-5
+              py-2.5
+              font-semibold
+              text-white
+              transition-all
+              duration-300
+              hover:-translate-y-0.5
+              hover:from-indigo-500
+              hover:to-blue-500
+              hover:shadow-lg
+              hover:shadow-indigo-500/30
+              active:scale-95
+            "
+
+          >
+
+            Sign Up
+
+            <ArrowRight size={16} />
+
+          </button>
+
+          {/* Hamburger — Mobile only */}
+
+          <button
+
+            onClick={() => setOpen(!open)}
+
+            className="
+              md:hidden
+              rounded-xl
+              border
+              border-slate-700
+              p-2
+              text-white
+              transition-all
+              duration-300
+              hover:border-indigo-500
+              hover:bg-slate-900
+              hover:scale-105
+            "
+
+          >
+
+            {
+              open
+              ?
+              <X size={24}/>
+              :
+              <Menu size={24}/>
+            }
 
 
-        </button>
+          </button>
+
+        </div>
 
 
       </div>
@@ -343,20 +401,29 @@ const handleNavigation = (item) => {
 
 
 
-              <button className="
+              <button
+
+                onClick={handleSignUp}
+
+                className="
                 flex
                 items-center
                 justify-center
                 gap-2
-                bg-indigo-600
-                hover:bg-indigo-700
+                bg-gradient-to-r
+                from-indigo-600
+                to-blue-600
+                hover:from-indigo-500
+                hover:to-blue-500
                 rounded-xl
                 py-3
-                font-medium
+                font-semibold
+                text-white
                 transition
+                active:scale-95
               ">
 
-                Get Started
+                Sign Up
 
                 <ArrowRight size={18}/>
 

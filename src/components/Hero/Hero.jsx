@@ -96,11 +96,11 @@ function Hero() {
             </button>
 
             <button className="group flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-900/70 px-7 py-3.5 font-semibold transition-all duration-300 hover:border-blue-500 hover:bg-slate-800 hover:shadow-xl hover:shadow-blue-500/20">
-              <PlayCircle
+              <Sparkles
                 size={21}
                 className="text-blue-400 transition-transform duration-300 group-hover:scale-110"
               />
-              Explore Features
+              Discover CampusHub
             </button>
           </div>
 
