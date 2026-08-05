@@ -1,10 +1,19 @@
 // src/components/Dashboard/Topbar.jsx
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search, Bell, ChevronDown, User, Settings, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 function Topbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+   const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    navigate("/login");
+  };
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-slate-800 bg-slate-950/80 px-6 py-4 backdrop-blur-xl">
@@ -60,18 +69,21 @@ function Topbar() {
               >
                 <button
                   type="button"
+                  onClick={() => navigate("/profile")}
                   className="flex w-full items-center gap-2 px-4 py-3 text-sm text-gray-300 transition-colors duration-300 hover:bg-slate-800 hover:text-white"
                 >
                   <User size={16} /> Profile
                 </button>
                 <button
                   type="button"
+                  onClick={() => navigate("/settings")}
                   className="flex w-full items-center gap-2 px-4 py-3 text-sm text-gray-300 transition-colors duration-300 hover:bg-slate-800 hover:text-white"
                 >
                   <Settings size={16} /> Settings
                 </button>
                 <button
                   type="button"
+                  onClick={handleLogout}
                   className="flex w-full items-center gap-2 border-t border-slate-800 px-4 py-3 text-sm text-red-400 transition-colors duration-300 hover:bg-red-500/10"
                 >
                   <LogOut size={16} /> Logout

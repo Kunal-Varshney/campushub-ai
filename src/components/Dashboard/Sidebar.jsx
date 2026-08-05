@@ -1,6 +1,6 @@
 // src/components/Dashboard/Sidebar.jsx
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Bot,
@@ -71,6 +71,14 @@ const menuItems = [
 ];
 
 function SidebarContent({ pathname, onNavigate }) {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login")
+  };
+
   return (
     <div className="flex h-full flex-col">
       <Link
@@ -121,6 +129,7 @@ function SidebarContent({ pathname, onNavigate }) {
       <div className="border-t border-slate-800 px-3 py-5">
         <button
           type="button"
+           onClick={handleLogout}
           className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-400 transition-colors duration-300 hover:bg-red-500/10 hover:text-red-400"
         >
           <LogOut size={18} />

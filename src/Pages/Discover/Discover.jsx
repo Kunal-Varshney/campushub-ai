@@ -12,9 +12,6 @@ import {
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
-import Navbar from "../../components/Navbar/Navbar";
-import Footer from "../../components/Footer/Footer";
-
 
 const features = [
   {
@@ -80,9 +77,6 @@ function Discover() {
   return (
 
     <div className="min-h-screen bg-slate-950 text-white">
-
-
-      <Navbar />
 
 
       {/* HERO */}
@@ -789,9 +783,6 @@ function Discover() {
 
 
       </section>
-
-
-      <Footer />
 
 
     </div>

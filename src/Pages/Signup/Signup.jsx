@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import API from "../../services/api";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Mail,
   Lock,
@@ -20,6 +21,7 @@ import {
 import { motion } from "framer-motion";
 
 function Signup() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -39,10 +41,59 @@ function Signup() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
-    alert("Account Created Successfully 🚀");
+
+    if(formData.password !== formData.confirmPassword){
+      alert("Password does not match");
+      return;
+    }
+
+    try {
+      const response = await API.post("/auth/register", {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        college: formData.college,
+        role: formData.role,
+      });
+
+      console.log(response.data);
+
+      if (response.data.success) {
+
+        localStorage.setItem(
+          "token",
+          response.data.token
+        );
+
+        localStorage.setItem(
+          "user",
+          JSON.stringify(response.data.user)
+        );
+
+        alert("Account Created Successfully 🚀");
+
+        navigate("/dashboard");
+
+      } else {
+
+        alert(
+          response.data.message || "Signup Failed"
+        );
+
+      }
+
+    } catch(error) {
+
+      console.log(error);
+
+      alert(
+        error.response?.data?.message ||
+        "Signup Failed"
+      );
+
+    }
   };
 
   const features = [

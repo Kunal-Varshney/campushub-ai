@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import API from "../../services/api";
 import {
   Mail,
   Lock,
@@ -16,6 +17,7 @@ import {
 import { motion } from "framer-motion";
 
 function Login() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
@@ -31,14 +33,45 @@ function Login() {
     });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log({
-      email: formData.email,
-      password: formData.password,
-    });
-    alert("Login Successful 🚀");
-  };
+  const handleSubmit = async (e) => {
+      e.preventDefault();
+
+      try {
+        const response = await API.post(
+          "/auth/login",
+          {
+            email: formData.email,
+            password: formData.password,
+          }
+        );
+
+        console.log(response.data);
+
+        // save token
+        localStorage.setItem(
+          "token",
+          response.data.token
+        );
+
+        // save user
+        localStorage.setItem(
+          "user",
+          JSON.stringify(response.data.user)
+        );
+
+        alert("Login Successful 🚀");
+
+        navigate("/dashboard");
+
+      } catch (error) {
+        console.error(error);
+
+        alert(
+          error.response?.data?.message ||
+          "Login Failed"
+        );
+      }
+    };
 
   const features = [
     {

@@ -16,6 +16,7 @@ import Forgot from "./Pages/Forgot/ForgotPassword";
 import StudentDashboard from "./Pages/Dashboard/StudentDashboard";
 import Discover from "./Pages/Discover/Discover";
 import Settings from "./Pages/Settings/Settings";
+import Profile from "./Pages/Profile/Profile";
 
 import AIAssistant from "./Pages/Features/AIAssistant";
 import SmartNotes from "./Pages/Features/SmartNotes";
@@ -130,6 +131,11 @@ function App() {
         <Route 
           path="/settings" 
           element={<Settings />} 
+        />
+
+        <Route 
+          path="/profile" 
+          element={<Profile />} 
         />
 
 

@@ -493,7 +493,7 @@ function About() {
               },
               {
                 icon: Briefcase,
-                title: "Career Growth",
+                title: "Internship & Career Opportunities",
                 desc: "Explore internships and career opportunities based on your skills."
               },
               {
