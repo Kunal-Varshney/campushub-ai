@@ -13,41 +13,41 @@ import { motion } from "framer-motion";
 
 const features = [
   {
-    route: "ai-assistant",
+    route: "/ai-assistant",
     icon: Brain,
     title: "AI Study Assistant",
     description:
       "Get instant answers and personalized learning support using artificial intelligence.",
   },
   {
-    route: "smart-notes",
+    route: "/smart-notes",
     icon: BookOpen,
     title: "Smart Notes Sharing",
     description:
       "Create, share and access quality notes with students across campuses.",
   },
   {
-    route: "community",
+    route: "/community",
     icon: Users,
     title: "Campus Community",
     description:
       "Connect with students and collaborate with your campus community.",
   },
   {
-    route: "internship-finder",
+    route: "/internship-finder",
     icon: Briefcase,
     title: "Internship Finder",
     description:
       "Discover internships and career opportunities based on your skills.",
   },
   {
-    route: "ai-resume-builder",
+    route: "/resume-builder",
     icon: FileText,
-    title: "AI Resume Builder",
+    title: " AI Resume Builder",
     description: "Build professional resumes with AI-powered suggestions.",
   },
   {
-    route: "skill-roadmap",
+    route: "/skill-roadmap",
     icon: Target,
     title: "Skill Roadmap",
     description:

@@ -3,24 +3,33 @@ import {
   Route
 } from "react-router-dom";
 
-import Home from "./pages/Home/Home";
-import About from "./pages/About/About";
-import Careers from "./pages/Careers/Careers";
-import Privacy from "./pages/Privacy/Privacy";
-import Terms from "./pages/Terms/Terms";
+import Home from "./Pages/Home/Home";
+import About from "./Pages/About/About";
+import Careers from "./Pages/Careers/Careers";
+import Privacy from "./Pages/Privacy/Privacy";
+import Terms from "./Pages/Terms/Terms";
+
+import Signup from "./Pages/Signup/Signup";
+import Login from "./Pages/Login/Login";
+import Forgot from "./Pages/Forgot/ForgotPassword";
+
+import StudentDashboard from "./Pages/Dashboard/StudentDashboard";
+import Discover from "./Pages/Discover/Discover";
+import Settings from "./Pages/Settings/Settings";
+
+import AIAssistant from "./Pages/Features/AIAssistant";
+import SmartNotes from "./Pages/Features/SmartNotes";
+import ResumeBuilder from "./Pages/Features/ResumeBuilder";
+import MockInterview from "./Pages/Features/MockInterview";
+import InternshipFinder from "./Pages/Features/InternshipFinder";
+import SkillRoadmap from "./Pages/Features/SkillRoadmap";
+import Certificates from "./Pages/Features/Certificates";
+import Community from "./Pages/Features/Community";
 
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop";
 
-import Signup from "./pages/Signup/Signup";
-import Login from "./pages/Login/Login";
+import MainLayout from "./layouts/MainLayout";
 
-import StudentDashboard from "./pages/Dashboard/StudentDashboard";
-import Discover from "./pages/Discover/Discover";
-
-import Forgot from "./pages/Forgot/ForgotPassword";
-import Settings from "./pages/Settings/Settings";
-import AIAssistant from "./Pages/Features/AIAssistant";
-import SmartNotes from "./Pages/Features/SmartNotes";
 
 function App() {
 
@@ -30,30 +39,67 @@ function App() {
 
       <Routes>
 
-        <Route 
-          path="/" 
-          element={<Home />} 
-        />
+        {/* Main Website Layout */}
+        <Route element={<MainLayout />}>
 
-        <Route 
-          path="/about" 
-          element={<About />} 
-        />
+          <Route path="/" element={<Home />} />
 
-        <Route 
-          path="/careers" 
-          element={<Careers />} 
-        />
+          <Route path="/about" element={<About />} />
 
-        <Route 
-          path="/privacy" 
-          element={<Privacy />} 
-        />
+          <Route path="/careers" element={<Careers />} />
 
-        <Route 
-          path="/terms" 
-          element={<Terms />} 
-        />
+          <Route path="/privacy" element={<Privacy />} />
+
+          <Route path="/terms" element={<Terms />} />
+
+
+          {/* Features */}
+          <Route 
+            path="/discover" 
+            element={<Discover />} 
+          />
+
+          <Route 
+            path="/ai-assistant" 
+            element={<AIAssistant />} 
+          />
+          
+          <Route 
+            path="/smart-notes" 
+            element={<SmartNotes />} 
+          />
+
+          <Route 
+            path="/resume-builder" 
+            element={<ResumeBuilder />} 
+          />
+
+          <Route 
+            path="/mock-interview" 
+            element={<MockInterview />} 
+          />
+
+          <Route 
+            path="/internship-finder" 
+            element={<InternshipFinder />} 
+          />
+
+          <Route
+            path="/community"
+            element={<Community />}
+          />
+
+          <Route 
+            path="/skill-roadmap" 
+            element={<SkillRoadmap />} 
+          />
+
+          <Route 
+            path="/certificates" 
+            element={<Certificates />} 
+          />
+
+        </Route>
 
 
         {/* Authentication */}
@@ -73,13 +119,8 @@ function App() {
           element={<Forgot />} 
         />
 
-        <Route
-          path="/settings"
-          element={<Settings />}
-        />
 
-
-        {/* Main Pages */}
+        {/* Dashboard */}
 
         <Route 
           path="/dashboard" 
@@ -87,18 +128,8 @@ function App() {
         />
 
         <Route 
-          path="/discover" 
-          element={<Discover />} 
-        />
-
-        <Route 
-          path="/ai-assistant" 
-          element={<AIAssistant />} 
-        />
-
-        <Route 
-          path="/smart-notes" 
-          element={<SmartNotes />} 
+          path="/settings" 
+          element={<Settings />} 
         />
 
 
@@ -106,5 +137,6 @@ function App() {
     </>
   );
 }
+
 
 export default App;

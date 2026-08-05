@@ -1,5 +1,3 @@
-import Navbar from "../../components/Navbar/Navbar";
-import Footer from "../../components/Footer/Footer";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -17,7 +15,6 @@ function About() {
   return (
     <main className="bg-slate-950 text-white min-h-screen">
 
-      <Navbar />
 
       {/* Hero Section */}
 
@@ -695,8 +692,6 @@ function About() {
         </div>
 
       </section>
-
-      <Footer />
 
     </main>
   );

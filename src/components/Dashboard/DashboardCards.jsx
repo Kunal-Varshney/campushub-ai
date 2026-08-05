@@ -1,8 +1,9 @@
-// src/components/Dashboard/DashboardCards.jsx
+import { useNavigate } from "react-router-dom";
 import { ArrowRight, Flame } from "lucide-react";
 import { motion } from "framer-motion";
 
 function DashboardCards() {
+  const navigate = useNavigate();
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

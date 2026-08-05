@@ -1,4 +1,4 @@
-// src/components/Dashboard/ContinueLearning.jsx
+
 import { Clock, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 

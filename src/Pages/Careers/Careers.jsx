@@ -12,10 +12,6 @@ import {
 
 import { motion } from "framer-motion";
 
-import Navbar from "../../components/Navbar/Navbar";
-import Footer from "../../components/Footer/Footer";
-
-
 const opportunities = [
 
   {
@@ -82,9 +78,6 @@ bg-slate-950
 text-white
 overflow-hidden
 ">
-
-
-<Navbar />
 
 
 
@@ -560,11 +553,6 @@ Start Your Journey
 
 
 </section>
-
-
-
-
-<Footer />
 
 </div>
 

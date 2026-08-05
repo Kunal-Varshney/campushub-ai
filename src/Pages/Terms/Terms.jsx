@@ -10,10 +10,6 @@ import {
 
 import { motion } from "framer-motion";
 
-import Navbar from "../../components/Navbar/Navbar";
-import Footer from "../../components/Footer/Footer";
-
-
 function Terms() {
 
 
@@ -61,9 +57,6 @@ function Terms() {
   return (
 
     <div className="min-h-screen bg-slate-950 text-white">
-
-
-      <Navbar />
 
 
       {/* Hero */}
@@ -974,12 +967,6 @@ function Terms() {
 
 
       </section>
-
-
-
-
-
-      <Footer />
 
 
 

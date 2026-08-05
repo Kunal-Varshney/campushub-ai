@@ -12,9 +12,6 @@ import {
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
-import Navbar from "../../components/Navbar/Navbar";
-import Footer from "../../components/Footer/Footer";
-
 
 function Privacy() {
 
@@ -75,8 +72,6 @@ function Privacy() {
 
     <div className="min-h-screen bg-slate-950 text-white">
 
-
-      <Navbar />
 
 
       {/* Hero Section */}
@@ -1108,7 +1103,6 @@ function Privacy() {
           </motion.div>
         </div>
       </section>
-      <Footer />
     </div>
   );
 }

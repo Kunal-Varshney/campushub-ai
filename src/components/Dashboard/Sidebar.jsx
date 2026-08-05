@@ -20,14 +20,54 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const menuItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-  { label: "AI Assistant", icon: Bot, path: "/dashboard/ai-assistant" },
-  { label: "Smart Notes", icon: BookOpen, path: "/dashboard/notes" },
-  { label: "Resume Builder", icon: FileText, path: "/dashboard/resume" },
-  { label: "Internships", icon: Briefcase, path: "/dashboard/internships" },
-  { label: "Skill Roadmap", icon: Target, path: "/dashboard/roadmap" },
-  { label: "Mock Interview", icon: Mic, path: "/dashboard/interview" },
-  { label: "Certificates", icon: Award, path: "/dashboard/certificates" },
-  { label: "Settings", icon: Settings, path: "/dashboard/settings" },
+
+  { 
+    label: "AI Assistant", 
+    icon: Bot, 
+    path: "/ai-assistant" 
+  },
+
+  { 
+    label: "Smart Notes", 
+    icon: BookOpen, 
+    path: "/smart-notes" 
+  },
+
+  { 
+    label: "Resume Builder", 
+    icon: FileText, 
+    path: "/resume-builder" 
+  },
+
+  { 
+    label: "Internships", 
+    icon: Briefcase, 
+    path: "/internship-finder" 
+  },
+
+  { 
+    label: "Skill Roadmap", 
+    icon: Target, 
+    path: "/skill-roadmap" 
+  },
+
+  { 
+    label: "Mock Interview", 
+    icon: Mic, 
+    path: "/mock-interview" 
+  },
+
+  { 
+    label: "Certificates", 
+    icon: Award, 
+    path: "/certificates" 
+  },
+
+  { 
+    label: "Settings", 
+    icon: Settings, 
+    path: "/settings" 
+  },
 ];
 
 function SidebarContent({ pathname, onNavigate }) {

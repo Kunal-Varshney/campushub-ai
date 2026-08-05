@@ -1,6 +1,6 @@
-// src/components/Dashboard/AIAssistant.jsx
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Bot, Send, FileText, BookOpen, Briefcase, Code2 } from "lucide-react";
+import { Bot, Send, FileText, BookOpen, Briefcase, Code2, Users } from "lucide-react";
 import { motion } from "framer-motion";
 
 const prompts = [
@@ -11,6 +11,7 @@ const prompts = [
 ];
 
 function AIAssistant() {
+  const navigate = useNavigate();
   const [message, setMessage] = useState("");
 
   return (
@@ -29,6 +30,13 @@ function AIAssistant() {
           <p className="text-xs text-gray-400">Ask anything, anytime</p>
         </div>
       </div>
+      <button
+        onClick={() => navigate("/ai-assistant")}
+        className="mb-5 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800/60 px-4 py-2.5 text-sm text-gray-300 transition-colors duration-300 hover:border-blue-500 hover:text-blue-400"
+      >
+        <Users size={16} />
+        Open Full AI Assistant
+      </button>
 
       <div className="mb-4 space-y-3">
         <div className="rounded-xl border border-blue-500/30 bg-blue-600/10 p-3 text-sm text-gray-200">
