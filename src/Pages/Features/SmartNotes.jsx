@@ -1,3 +1,5 @@
+import { saveLastVisited } from "../../utils/lastVisited";
+import { useEffect } from "react";
 import { useState } from "react";
 import {
   Sparkles,
@@ -88,6 +90,10 @@ const benefits = [
 function generateDummyNotes(content, subject, difficulty) {
   const trimmed = content.trim();
   const topic = trimmed.length > 40 ? `${trimmed.slice(0, 40)}...` : trimmed;
+
+  useEffect(() => {
+    saveLastVisited("/smart-notes");
+  }, []);
 
   return {
     subject: subject || "General Studies",

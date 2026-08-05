@@ -370,6 +370,7 @@ const FAQS = [
    SHARED UI PIECES
 ============================================================ */
 function GlowBackground() {
+
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
       <motion.div

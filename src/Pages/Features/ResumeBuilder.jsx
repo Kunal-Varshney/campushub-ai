@@ -1,4 +1,5 @@
-import React, { useState } from "react"
+import { useEffect, useState } from "react";
+import { saveLastVisited } from "../../utils/lastVisited";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -169,6 +170,7 @@ const faqs = [
 ];
 
 function GlowBackground() {
+    
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
       <div className="absolute -top-40 left-1/4 h-96 w-96 rounded-full bg-cyan-500/20 blur-[120px]" />
@@ -371,6 +373,11 @@ function FAQItem({ item, isOpen, onClick }) {
 }
 
 export default function ResumeBuilder() {
+
+    useEffect(() => {
+        saveLastVisited("/resume-builder");
+    }, []);
+
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",

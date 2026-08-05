@@ -1,3 +1,4 @@
+import { saveLastVisited } from "../../utils/lastVisited";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -105,6 +106,10 @@ const benefits = [
 ];
 
 function AIAssistant() {
+  useEffect(() => {
+    saveLastVisited("/ai-assistant");
+  }, []);
+
   const navigate = useNavigate();
 
   const [message, setMessage] = useState("");

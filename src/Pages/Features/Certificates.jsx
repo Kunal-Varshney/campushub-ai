@@ -2,6 +2,7 @@ import { Award, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
 function Certificates() {
+   
   return (
     <div className="min-h-screen bg-slate-950 px-6 py-28 text-white sm:px-10 lg:px-20">
 

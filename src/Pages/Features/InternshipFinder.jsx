@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { saveLastVisited } from "../../utils/lastVisited";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Rocket,
@@ -224,6 +225,7 @@ const trackerStages = [
 ];
 
 function GlowBackground() {
+
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
       <motion.div
@@ -389,6 +391,11 @@ function FAQItem({ item, isOpen, onClick }) {
 }
 
 export default function InternshipFinder() {
+
+    useEffect(() => {
+        saveLastVisited("/internship-finder");
+    }, []);
+
   const [searchForm, setSearchForm] = useState({
     skills: "",
     role: "",
@@ -461,8 +468,19 @@ export default function InternshipFinder() {
       );
     }
 
-    if (filters.location !== "All") {
-      list = list.filter((item) => item.location === filters.location);
+    if (filters.category !== "All") {
+    const categoryMap = {
+        Developer: ["developer", "sde", "software"],
+        Design: ["design", "ui", "ux"],
+        Data: ["data", "analyst"],
+        Engineering: ["engineering", "cloud"],
+    };
+
+    list = list.filter((item) =>
+        categoryMap[filters.category].some((word) =>
+        item.role.toLowerCase().includes(word)
+        )
+    );
     }
 
     if (filters.category !== "All") {

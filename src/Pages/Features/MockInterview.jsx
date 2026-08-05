@@ -1,7 +1,13 @@
+import { useEffect, useState } from "react";
+import { saveLastVisited } from "../../utils/lastVisited";
 import { Mic, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
 function MockInterview() {
+    useEffect(() => {
+        saveLastVisited("/mock-interview");
+    }, []);
+
   return (
     <div className="min-h-screen bg-slate-950 px-6 py-28 text-white sm:px-10 lg:px-20">
 
