@@ -1,3 +1,5 @@
+// import Navbar from "../../components/Navbar/Navbar";
+// import Footer from "../../components/Footer/Footer";
 import {
   Sparkles,
   Brain,
@@ -77,6 +79,8 @@ function Discover() {
   return (
 
     <div className="min-h-screen bg-slate-950 text-white">
+
+
 
 
       {/* HERO */}
