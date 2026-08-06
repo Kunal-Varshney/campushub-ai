@@ -1,3 +1,4 @@
+import API from "../../services/api";
 import { saveLastVisited } from "../../utils/lastVisited";
 import { useEffect } from "react";
 import { useState } from "react";
@@ -118,17 +119,80 @@ function SmartNotes() {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedNotes, setGeneratedNotes] = useState(null);
 
-  const handleGenerate = () => {
-    if (!inputText.trim() || isLoading) return;
+  const handleGenerate = async () => {
 
-    setIsLoading(true);
-    setGeneratedNotes(null);
+    if(!inputText.trim() || isLoading) return;
 
-    setTimeout(() => {
-      setGeneratedNotes(generateDummyNotes(inputText, subject, difficulty));
-      setIsLoading(false);
-    }, 1800);
-  };
+      try {
+
+        setIsLoading(true);
+        setGeneratedNotes(null);
+
+
+        const response = await API.post(
+          "/notes",
+          {
+            title: `${subject} Notes`,
+            description: inputText,
+            subject,
+            branch:"AI & ML",
+            year:2,
+            fileUrl:"https://example.com/notes.pdf"
+          }
+        );
+
+
+        console.log(
+          "NOTE RESPONSE:",
+          response.data
+        );
+
+
+        const note = response.data.note;
+
+
+        setGeneratedNotes({
+
+          subject: note.subject,
+
+          chapter: note.title,
+
+          difficulty,
+
+          points:[
+            note.description,
+            "Important concepts extracted",
+            "Exam focused revision points",
+            "Quick learning material",
+          ],
+
+          summary:
+          "Notes successfully saved in CampusHub AI."
+
+        });
+
+
+      }
+      catch(error){
+
+        console.log(
+          "NOTE ERROR:",
+          error.response?.data || error.message
+        );
+
+        alert(
+          error.response?.data?.message ||
+          "Note generation failed"
+        );
+
+      }
+      finally{
+
+        setIsLoading(false);
+
+      }
+
+    };
 
   return (
     <div className="relative w-full overflow-hidden bg-slate-950 text-white">
