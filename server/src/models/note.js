@@ -30,8 +30,32 @@ const noteSchema = new mongoose.Schema(
 
     fileUrl: {
       type: String,
-      required: true,
+      default: "",
     },
+
+    // ===== SMART NOTES =====
+    summary: {
+      type: String,
+      default: "",
+    },
+
+    points: [
+      {
+        type: String,
+      },
+    ],
+
+    keywords: [
+      {
+        type: String,
+      },
+    ],
+
+    examTips: [
+      {
+        type: String,
+      },
+    ],
 
     uploadedBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -43,7 +67,6 @@ const noteSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-
 
 const Note = mongoose.model("Note", noteSchema);
 

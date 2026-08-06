@@ -88,37 +88,35 @@ const benefits = [
   "Helps quick revision",
 ];
 
-function generateDummyNotes(content, subject, difficulty) {
-  const trimmed = content.trim();
-  const topic = trimmed.length > 40 ? `${trimmed.slice(0, 40)}...` : trimmed;
-
-  useEffect(() => {
-    saveLastVisited("/smart-notes");
-  }, []);
-
-  return {
-    subject: subject || "General Studies",
-    chapter: topic || "Untitled Chapter",
-    difficulty,
-    points: [
-      "Core concept identified and simplified for quick understanding.",
-      "Key definitions extracted and explained in simple terms.",
-      "Important formulas or rules highlighted for revision.",
-      "Common exam-relevant points marked for priority study.",
-      "Real-world examples added to reinforce the concept.",
-    ],
-    summary:
-      "This topic covers the fundamental ideas needed to build a strong base. Focus on the highlighted points before your exam for the fastest recall.",
-  };
-}
-
 function SmartNotes() {
   const [inputText, setInputText] = useState("");
   const [subject, setSubject] = useState("Computer Science");
   const [difficulty, setDifficulty] = useState("Intermediate");
   const [isLoading, setIsLoading] = useState(false);
   const [generatedNotes, setGeneratedNotes] = useState(null);
+  const [savedNotes, setSavedNotes] = useState([]);
 
+  const fetchNotes = async () => {
+    try {
+
+      const response = await API.get("/notes");
+
+      console.log(response.data);
+
+      setSavedNotes(response.data.notes);
+
+    } catch (error) {
+
+      console.log("FETCH ERROR:", error);
+
+    }
+  };
+
+   useEffect(() => {
+    saveLastVisited("/smart-notes");
+    fetchNotes();
+  }, []);
+  
   const handleGenerate = async () => {
 
     if(!inputText.trim() || isLoading) return;
@@ -130,14 +128,10 @@ function SmartNotes() {
 
 
         const response = await API.post(
-          "/notes",
+          "/notes/generate",
           {
-            title: `${subject} Notes`,
             description: inputText,
             subject,
-            branch:"AI & ML",
-            year:2,
-            fileUrl:"https://example.com/notes.pdf"
           }
         );
 
@@ -150,27 +144,18 @@ function SmartNotes() {
 
         const note = response.data.note;
 
-
         setGeneratedNotes({
-
           subject: note.subject,
-
           chapter: note.title,
-
           difficulty,
 
-          points:[
-            note.description,
-            "Important concepts extracted",
-            "Exam focused revision points",
-            "Quick learning material",
-          ],
-
-          summary:
-          "Notes successfully saved in CampusHub AI."
-
+          points: note.points,
+          summary: note.summary,
+          keywords: note.keywords,
+          examTips: note.examTips,
         });
-
+       
+        fetchNotes();
 
       }
       catch(error){
@@ -428,21 +413,81 @@ function SmartNotes() {
                     </span>
                   </div>
 
-                  <div className="space-y-2.5">
-                    {generatedNotes.points.map((point, index) => (
-                      <div key={index} className="flex items-start gap-2 text-sm text-gray-300">
-                        <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-blue-400" />
-                        <span>{point}</span>
-                      </div>
-                    ))}
+                  {/* Summary */}
+                  <div className="mt-5 rounded-xl border border-blue-500/30 bg-blue-600/10 p-4">
+                    <h3 className="mb-2 text-blue-400 font-semibold">
+                      Summary
+                    </h3>
+
+                    <p className="text-gray-300">
+                      {generatedNotes.summary}
+                    </p>
                   </div>
 
-                  <div className="mt-5 rounded-xl border border-blue-500/30 bg-blue-600/10 p-4 text-sm text-gray-200">
-                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-blue-400">
-                      Summary
-                    </p>
-                    {generatedNotes.summary}
+                  {/* Key Points */}
+                  <div className="mt-6">
+                    <h3 className="mb-3 font-semibold text-lg">
+                      Key Points
+                    </h3>
+
+                    <div className="space-y-2">
+                      {generatedNotes.points?.map((point, index) => (
+                        <div
+                          key={index}
+                          className="flex gap-2 items-start"
+                        >
+                          <CheckCircle2
+                            className="text-green-400 mt-1"
+                            size={18}
+                          />
+
+                          <span>{point}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
+
+                  {/* Keywords */}
+                  <div className="mt-6">
+                    <h3 className="mb-3 font-semibold text-lg">
+                      Keywords
+                    </h3>
+
+                    <div className="flex flex-wrap gap-2">
+                      {generatedNotes.keywords?.map((word, index) => (
+                        <span
+                          key={index}
+                          className="px-3 py-1 rounded-full bg-blue-600/20 border border-blue-500 text-sm"
+                        >
+                          {word}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Exam Tips */}
+                  <div className="mt-6">
+                    <h3 className="mb-3 font-semibold text-lg">
+                      Exam Tips
+                    </h3>
+
+                    <div className="space-y-2">
+                      {generatedNotes.examTips?.map((tip, index) => (
+                        <div
+                          key={index}
+                          className="flex gap-2 items-start"
+                        >
+                          <CheckCircle2
+                            className="text-yellow-400 mt-1"
+                            size={18}
+                          />
+
+                          <span>{tip}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                 
                 </motion.div>
               )}
             </AnimatePresence>

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://campushub-ai-um6d.onrender.com/api",
+  baseURL: "http://localhost:5000/api",
 });
 
 // Token automatically attach karega
