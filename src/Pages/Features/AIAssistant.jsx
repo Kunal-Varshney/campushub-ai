@@ -1,5 +1,9 @@
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import API from "../../services/api";
 import { saveLastVisited } from "../../utils/lastVisited";
 import { useState, useEffect, useRef } from "react";
+
 import { useNavigate } from "react-router-dom";
 import {
   Brain,
@@ -26,21 +30,6 @@ const suggestedPrompts = [
   "Help me build a resume",
   "Prepare me for interviews",
 ];
-
-function getAIReply(userMessage) {
-  const message = userMessage.toLowerCase();
-
-  if (message.includes("resume")) {
-    return "I can help you build an ATS friendly resume with strong projects and measurable impact.";
-  }
-  if (message.includes("interview")) {
-    return "Let's prepare together — I can run mock interview questions and give feedback on your answers.";
-  }
-  if (message.includes("binary search") || message.includes("dsa")) {
-    return "Binary search works by repeatedly halving a sorted array until you find the target value.";
-  }
-  return "I can help with coding, notes, interviews, career guidance and study planning — what's on your mind?";
-}
 
 const capabilities = [
   {
@@ -123,18 +112,54 @@ function AIAssistant() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [chat, isTyping]);
 
-  const sendMessage = (text) => {
-    const trimmed = (text ?? message).trim();
+  const sendMessage = async (text) => {
+  const trimmed = (text ?? message).trim();
+
     if (!trimmed) return;
 
-    setChat((prev) => [...prev, { type: "user", text: trimmed }]);
+    setChat((prev) => [
+      ...prev,
+      {
+        type: "user",
+        text: trimmed,
+      },
+    ]);
+
     setMessage("");
     setIsTyping(true);
 
-    setTimeout(() => {
-      setChat((prev) => [...prev, { type: "ai", text: getAIReply(trimmed) }]);
+    try {
+
+      const response = await API.post("/assistant/chat", {
+        message: trimmed,
+      });
+
+
+      setChat((prev) => [
+        ...prev,
+        {
+          type: "ai",
+          text: response.data.reply,
+        },
+      ]);
+
+    } catch (error) {
+
+      console.log(error);
+
+      setChat((prev) => [
+        ...prev,
+        {
+          type: "ai",
+          text: "Sorry, AI service is currently unavailable.",
+        },
+      ]);
+
+    } finally {
+
       setIsTyping(false);
-    }, 1000);
+
+    }
   };
 
   return (
@@ -278,7 +303,7 @@ function AIAssistant() {
               </div>
             </div>
 
-            <div className="max-h-[320px] space-y-3 overflow-y-auto pr-2">
+            <div className="max-h-[450px] space-y-3 overflow-y-auto pr-2">
               {chat.map((item, index) => (
                 <div
                   key={index}
@@ -288,7 +313,54 @@ function AIAssistant() {
                       : "border border-blue-500/30 bg-blue-600/10 text-gray-200"
                   }`}
                 >
-                  {item.text}
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      p: ({ children }) => (
+                        <p className="mb-3 leading-7">
+                          {children}
+                        </p>
+                      ),
+
+                      h1: ({ children }) => (
+                        <h1 className="mb-3 mt-4 text-xl font-bold text-white">
+                          {children}
+                        </h1>
+                      ),
+
+                      h2: ({ children }) => (
+                        <h2 className="mb-3 mt-4 text-lg font-bold text-white">
+                          {children}
+                        </h2>
+                      ),
+
+                      h3: ({ children }) => (
+                        <h3 className="mb-2 mt-3 font-semibold text-white">
+                          {children}
+                        </h3>
+                      ),
+
+                      ul: ({ children }) => (
+                        <ul className="mb-3 ml-5 list-disc space-y-1">
+                          {children}
+                        </ul>
+                      ),
+
+                      ol: ({ children }) => (
+                        <ol className="mb-3 ml-5 list-decimal space-y-1">
+                          {children}
+                        </ol>
+                      ),
+
+                      code: ({ children }) => (
+                        <code className="rounded bg-slate-800 px-1.5 py-1 text-sm text-cyan-300">
+                          {children}
+                        </code>
+                      ),
+                    }}
+                  >
+                    {item.text}
+                  </ReactMarkdown>
                 </div>
               ))}
 
@@ -331,10 +403,12 @@ function AIAssistant() {
                 className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
               />
               <button
+                disabled={isTyping}
                 type="submit"
                 aria-label="Send message"
-                className="flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 font-semibold transition-transform duration-300 hover:scale-105 active:scale-95"
+                className="flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 font-semibold transition-transform duration-300 hover:scale-105 active:scale-95 disabled:opacity-50"
               >
+              
                 <Send size={16} />
               </button>
             </form>

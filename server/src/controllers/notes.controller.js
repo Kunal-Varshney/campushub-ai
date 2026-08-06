@@ -1,21 +1,17 @@
+import "dotenv/config";
 import Note from "../models/note.js";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 
+console.log("GROQ_API_KEY =", process.env.GROQ_API_KEY);
 
-const genAI = new GoogleGenerativeAI(
-  process.env.GEMINI_API_KEY
-);
-
-
-const model = genAI.getGenerativeModel({
-  model: "gemini-2.0-flash",
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
 });
 
 console.log(
-  "Gemini Key:",
-  process.env.GEMINI_API_KEY ? "Loaded ✅" : "Missing ❌"
+  "Groq Key:",
+  process.env.GROQ_API_KEY ? "Loaded ✅" : "Missing ❌"
 );
-
 
 
 // =======================
@@ -99,7 +95,7 @@ message:"Description required"
 
 
 
-// Gemini Prompt
+// Groq Prompt
 
 const prompt = `
 
@@ -141,21 +137,26 @@ Format:
 
 
 
-// Gemini API Call
+// Groq API Call
 
-const result = await model.generateContent(prompt);
+const completion = await groq.chat.completions.create({
+  model: "llama-3.3-70b-versatile",
+  messages: [
+    {
+      role: "user",
+      content: prompt,
+    },
+  ],
+  temperature: 0.4,
+});
 
 
-let text = result.response.text();
-
-// Remove markdown if Gemini adds it
+let text = completion.choices[0].message.content;
 
 text = text
 .replace(/```json/g,"")
 .replace(/```/g,"")
 .trim();
-
-
 
 const aiNotes = JSON.parse(text);
 
@@ -207,9 +208,6 @@ uploadedBy:req.user.id,
 });
 
 
-
-
-
 res.status(201).json({
 
 success:true,
@@ -226,7 +224,7 @@ note
 catch(error){
 
 
-console.log("GEMINI ERROR:",error);
+console.log("GROQ ERROR:",error);
 
 
 res.status(500).json({

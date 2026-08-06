@@ -4,6 +4,7 @@ import cors from "cors";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import notesRoutes from "./routes/notes.routes.js";
+import assistantRoutes from "./routes/assistant.routes.js";
 
 const app = express();
 
@@ -27,6 +28,8 @@ app.use("/api/user", userRoutes);
 
 // Notes Routes
 app.use("/api/notes", notesRoutes);
+
+app.use("/api/assistant", assistantRoutes);
 
 
 export default app;

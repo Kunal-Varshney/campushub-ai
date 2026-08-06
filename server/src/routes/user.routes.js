@@ -3,6 +3,7 @@ import express from "express";
 import {
   getProfile,
   updateProfile,
+  getDashboard,
 } from "../controllers/user.controller.js";
 
 import authMiddleware from "../middleware/auth.middleware.js";
@@ -24,6 +25,14 @@ router.put(
   "/profile",
   authMiddleware,
   updateProfile
+);
+
+
+// GET DASHBOARD DATA
+router.get(
+  "/dashboard",
+  authMiddleware,
+  getDashboard
 );
 
 

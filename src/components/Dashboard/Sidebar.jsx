@@ -76,7 +76,7 @@ function SidebarContent({ pathname, onNavigate }) {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    navigate("/login")
+    navigate("/login");
   };
 
   return (

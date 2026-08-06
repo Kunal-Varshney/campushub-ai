@@ -38,39 +38,39 @@ function Footer() {
             <ul className="space-y-3 text-gray-400">
 
               <li>
-                <a
-                  href="#ai-assistant"
+                <Link
+                  to="/ai-assistant"
                   className="transition-colors duration-300 hover:text-blue-400"
                 >
                   AI Assistant
-                </a>
+                </Link>
               </li>
 
               <li>
-                <a
-                  href="#smart-notes"
+                <Link
+                  to="/smart-notes"
                   className="transition-colors duration-300 hover:text-blue-400"
                 >
                   Smart Notes
-                </a>
+                </Link>
               </li>
 
               <li>
-                <a
-                  href="#internship-finder"
+                <Link
+                  to="/internship-finder"
                   className="transition-colors duration-300 hover:text-blue-400"
                 >
                   Internship Finder
-                </a>
+                </Link>
               </li>
 
               <li>
-                <a
-                  href="#community"
+                <Link
+                  to="/community"
                   className="transition-colors duration-300 hover:text-blue-400"
                 >
                   Community
-                </a>
+                </Link>
               </li>
 
             </ul>
