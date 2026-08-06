@@ -3,6 +3,7 @@ import cors from "cors";
 
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import notesRoutes from "./routes/notes.routes.js";
 
 const app = express();
 
@@ -23,6 +24,9 @@ app.use("/api/auth", authRoutes);
 
 // User Routes
 app.use("/api/user", userRoutes);
+
+// Notes Routes
+app.use("/api/notes", notesRoutes);
 
 
 export default app;
