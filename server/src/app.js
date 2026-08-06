@@ -9,16 +9,20 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+
 app.get("/", (req, res) => {
   res.json({
     message: "CampusHub AI Backend Running 🚀",
   });
 });
 
+
 // Auth Routes
 app.use("/api/auth", authRoutes);
 
+
 // User Routes
 app.use("/api/user", userRoutes);
+
 
 export default app;
