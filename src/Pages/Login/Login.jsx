@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import API from "../../services/api";
+
+
+console.log("CHECK API:", API.defaults.baseURL);
 import {
   Mail,
   Lock,
@@ -36,6 +39,8 @@ function Login() {
   const handleSubmit = async (e) => {
       e.preventDefault();
 
+      console.log("LOGIN CLICKED", formData)
+
       try {
         const response = await API.post(
           "/auth/login",
@@ -45,7 +50,7 @@ function Login() {
           }
         );
 
-        console.log(response.data);
+        console.log("SUCCESS:", response.data);
 
         // save token
         localStorage.setItem(
@@ -59,12 +64,15 @@ function Login() {
           JSON.stringify(response.data.user)
         );
 
-        alert("Login Successful 🚀");
+        // alert("Login Successful 🚀");
 
         navigate("/dashboard");
 
       } catch (error) {
-        console.error(error);
+          console.log("FULL ERROR:", error);
+          console.log("STATUS:", error.response?.status);
+          console.log("DATA:", error.response?.data);
+
 
         alert(
           error.response?.data?.message ||
@@ -320,6 +328,7 @@ function Login() {
               {/* Login Button */}
               <button
                 type="submit"
+                 onClick={() => console.log("BUTTON CLICKED")}
                 className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 py-3.5 font-semibold transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/30 active:scale-95"
               >
                 Login to CampusHub

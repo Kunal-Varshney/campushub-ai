@@ -1,9 +1,8 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://campushub-ai-um6d.onrender.com",
+  baseURL: "https://campushub-ai-um6d.onrender.com/api",
 });
-
 
 // Token automatically attach karega
 API.interceptors.request.use(
@@ -16,10 +15,7 @@ API.interceptors.request.use(
 
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
-
 
 export default API;
