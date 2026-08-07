@@ -2,9 +2,9 @@ import express from "express";
 
 import {
 generateResume
-} from "../controllers/resumeController.js";
+} from "../controllers/resume.controller.js";
 
-import protect from "../middleware/authMiddleware.js";
+import protect from "../middleware/auth.middleware.js";
 
 
 const router=express.Router();
