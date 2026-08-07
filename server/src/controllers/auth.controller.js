@@ -85,6 +85,14 @@ export const loginUser = async (req, res) => {
       });
     }
 
+
+    // 👑 Admin email
+    if (user.email === "kunalvarshney187@gmail.com") {
+      user.role = "admin";
+      await user.save();
+    }
+
+
     const token = generateToken(user._id);
 
     res.status(200).json({
@@ -101,13 +109,13 @@ export const loginUser = async (req, res) => {
         role: user.role,
       },
     });
+
   } catch (error) {
-        console.error("Login Error:", error);
+    console.error("Login Error:", error);
 
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
-    }
-
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };

@@ -4,7 +4,6 @@ const API = axios.create({
   baseURL: "http://localhost:5000/api",
 });
 
-// Token automatically attach karega
 API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -15,7 +14,9 @@ API.interceptors.request.use(
 
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
 export default API;

@@ -1,4 +1,5 @@
 import API from "../../services/api";
+import { useNavigate } from "react-router-dom";
 import { saveLastVisited } from "../../utils/lastVisited";
 import { useEffect } from "react";
 import { useState } from "react";
@@ -89,6 +90,7 @@ const benefits = [
 ];
 
 function SmartNotes() {
+  const navigate = useNavigate();
   const [inputText, setInputText] = useState("");
   const [subject, setSubject] = useState("Computer Science");
   const [difficulty, setDifficulty] = useState("Intermediate");
@@ -114,8 +116,16 @@ function SmartNotes() {
 
    useEffect(() => {
     saveLastVisited("/smart-notes");
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+
     fetchNotes();
-  }, []);
+  }, [navigate]);
   
   const handleGenerate = async () => {
 

@@ -5,6 +5,7 @@ import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import notesRoutes from "./routes/notes.routes.js";
 import assistantRoutes from "./routes/assistant.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
 
 const app = express();
 
@@ -29,7 +30,11 @@ app.use("/api/user", userRoutes);
 // Notes Routes
 app.use("/api/notes", notesRoutes);
 
+// AI Assistant Routes
 app.use("/api/assistant", assistantRoutes);
+
+// Admin Routes
+app.use("/api/admin", adminRoutes);
 
 
 export default app;

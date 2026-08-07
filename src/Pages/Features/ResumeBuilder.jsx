@@ -1,3 +1,4 @@
+import API from "../../services/api";
 import { useEffect, useState } from "react";
 import { saveLastVisited } from "../../utils/lastVisited";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
@@ -402,27 +403,49 @@ export default function ResumeBuilder() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleGenerate = () => {
-    setIsGenerating(true);
-    setGeneratedResume(null);
+  const handleGenerate = async()=>{
 
-    setTimeout(() => {
-      const baseScore = experienceLevel === "Experienced" ? 94 : experienceLevel === "Intermediate" ? 90 : 87;
-      setGeneratedResume({
-        ...formData,
-        fullName: formData.fullName || "Aarav Sharma",
-        email: formData.email || "aarav@email.com",
-        phone: formData.phone || "+91 98765 43210",
-        education: formData.education || "B.Tech Computer Science, XYZ University, 2022 - 2026",
-        skills: formData.skills || "React, Node.js, MongoDB, Tailwind CSS, Express",
-        projects: formData.projects || "CampusHub AI - SaaS platform for internships & placements",
-        experience: formData.experience || "Frontend Intern at TechCorp - Built reusable UI components in React",
-        achievements: formData.achievements || "Winner - Smart India Hackathon 2025",
-        atsScore: baseScore,
-      });
-      setIsGenerating(false);
-    }, 2200);
-  };
+    try{
+
+    setIsGenerating(true);
+
+    const response = await API.post(
+    "/resume/generate",
+    formData
+    );
+
+
+    console.log(
+    "RESUME RESPONSE",
+    response.data
+    );
+
+
+    setGeneratedResume(
+    response.data.resume
+    );
+
+
+    }
+    catch(error){
+
+    console.log(error);
+
+    alert(
+    error.response?.data?.message ||
+    "Resume generation failed"
+    );
+
+
+    }
+    finally{
+
+    setIsGenerating(false);
+
+    }
+
+
+    };
 
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden bg-slate-950 text-slate-100">

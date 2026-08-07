@@ -64,9 +64,12 @@ function Login() {
           JSON.stringify(response.data.user)
         );
 
-        // alert("Login Successful 🚀");
-
-        navigate("/dashboard");
+        // Role based redirect
+        if (response.data.user.role === "admin") {
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/dashboard");
+        }
 
       } catch (error) {
           console.log("FULL ERROR:", error);
