@@ -25,7 +25,7 @@ const noteSchema = new mongoose.Schema(
 
     year: {
       type: Number,
-      default: 1,
+      default: null,
     },
 
     fileUrl: {

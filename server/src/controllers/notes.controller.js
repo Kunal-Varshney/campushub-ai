@@ -77,7 +77,9 @@ try{
 
 const {
   description,
-  subject
+  subject,
+  branch,
+  year
 }=req.body;
 
 
@@ -166,45 +168,20 @@ const aiNotes = JSON.parse(text);
 // Save Notes
 
 const note = await Note.create({
+  title: aiNotes.title || `${subject} Notes`,
+  description,
+  subject,
 
-title:
-aiNotes.title || `${subject} Notes`,
+  summary: aiNotes.summary || "",
+  points: aiNotes.points || [],
+  keywords: aiNotes.keywords || [],
+  examTips: aiNotes.examTips || [],
 
+  branch: branch || "",
+  year: year || null,
 
-description,
-
-
-subject,
-
-
-summary:
-aiNotes.summary || "",
-
-
-points:
-aiNotes.points || [],
-
-
-keywords:
-aiNotes.keywords || [],
-
-
-examTips:
-aiNotes.examTips || [],
-
-
-branch:"AI & ML",
-
-
-year:2,
-
-
-fileUrl:"",
-
-
-uploadedBy:req.user.id,
-
-
+  fileUrl: "",
+  uploadedBy: req.user.id,
 });
 
 
@@ -252,7 +229,9 @@ export const getNotes = async(req,res)=>{
 try{
 
 
-const notes = await Note.find()
+const notes = await Note.find({
+  uploadedBy: req.user.id,
+})
 
 .populate(
 "uploadedBy",

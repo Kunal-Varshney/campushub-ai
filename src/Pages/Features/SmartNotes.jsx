@@ -132,6 +132,8 @@ function SmartNotes() {
           {
             description: inputText,
             subject,
+             branch: "AI & ML",
+             year: 2,
           }
         );
 
