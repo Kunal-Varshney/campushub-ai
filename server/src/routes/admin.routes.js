@@ -1,7 +1,6 @@
-const express = require("express");
-const router = express.Router();
+import express from "express";
 
-const {
+import {
   getAdminStats,
   getAllUsers,
   getUserById,
@@ -19,44 +18,142 @@ const {
   getAnalytics,
   getAIUsage,
   updateUserPermissions,
-} = require("../controllers/adminController");
+} from "../controllers/admin.controller.js";
 
-const { isAdminOrModerator, isAdmin, checkPermission } = require("../middleware/adminMiddleware");
+import {
+  isAdminOrModerator,
+  isAdmin,
+  checkPermission,
+} from "../middleware/admin.middleware.js";
 
-// NOTE: mount this router behind your existing auth middleware, e.g.:
-//   const { protect } = require("../middleware/authMiddleware");
-//   app.use("/api/admin", protect, adminRoutes);
-// so that req.user is populated before these routes run.
+const router = express.Router();
+
+/* ============================================================
+   ADMIN / MODERATOR ACCESS
+   ============================================================ */
 
 router.use(isAdminOrModerator);
 
-/* Dashboard */
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+
 router.get("/stats", getAdminStats);
 
-/* Users */
-router.get("/users", checkPermission("manageUsers"), getAllUsers);
-router.get("/users/:id", checkPermission("manageUsers"), getUserById);
-router.get("/users/:id/activity", checkPermission("manageUsers"), getUserActivity);
-router.patch("/users/:id/block", checkPermission("manageUsers"), blockUser);
-router.patch("/users/:id/unblock", checkPermission("manageUsers"), unblockUser);
-router.delete("/users/:id", checkPermission("manageUsers"), deleteUser);
-router.patch("/users/:id/permissions", isAdmin, updateUserPermissions);
+/* ============================================================
+   USERS
+   ============================================================ */
 
-/* Notes */
-router.get("/notes", checkPermission("manageNotes"), getAllNotes);
-router.get("/notes/categories", checkPermission("manageNotes"), getNoteCategories);
-router.patch("/notes/:id/approve", checkPermission("manageNotes"), approveNote);
-router.patch("/notes/:id/reject", checkPermission("manageNotes"), rejectNote);
-router.put("/notes/:id", checkPermission("manageNotes"), updateNote);
-router.delete("/notes/:id", checkPermission("manageNotes"), deleteNote);
+router.get(
+  "/users",
+  checkPermission("manageUsers"),
+  getAllUsers
+);
 
-/* Downloads */
-router.get("/download-history", checkPermission("viewAnalytics"), getDownloadHistory);
+router.get(
+  "/users/:id",
+  checkPermission("manageUsers"),
+  getUserById
+);
 
-/* Analytics */
-router.get("/analytics", checkPermission("viewAnalytics"), getAnalytics);
+router.get(
+  "/users/:id/activity",
+  checkPermission("manageUsers"),
+  getUserActivity
+);
 
-/* AI Assistant monitoring */
-router.get("/ai-usage", checkPermission("viewAnalytics"), getAIUsage);
+router.patch(
+  "/users/:id/block",
+  checkPermission("manageUsers"),
+  blockUser
+);
 
-module.exports = router;
+router.patch(
+  "/users/:id/unblock",
+  checkPermission("manageUsers"),
+  unblockUser
+);
+
+router.delete(
+  "/users/:id",
+  checkPermission("manageUsers"),
+  deleteUser
+);
+
+router.patch(
+  "/users/:id/permissions",
+  isAdmin,
+  updateUserPermissions
+);
+
+/* ============================================================
+   NOTES
+   ============================================================ */
+
+router.get(
+  "/notes",
+  checkPermission("manageNotes"),
+  getAllNotes
+);
+
+router.get(
+  "/notes/categories",
+  checkPermission("manageNotes"),
+  getNoteCategories
+);
+
+router.patch(
+  "/notes/:id/approve",
+  checkPermission("manageNotes"),
+  approveNote
+);
+
+router.patch(
+  "/notes/:id/reject",
+  checkPermission("manageNotes"),
+  rejectNote
+);
+
+router.put(
+  "/notes/:id",
+  checkPermission("manageNotes"),
+  updateNote
+);
+
+router.delete(
+  "/notes/:id",
+  checkPermission("manageNotes"),
+  deleteNote
+);
+
+/* ============================================================
+   DOWNLOAD HISTORY
+   ============================================================ */
+
+router.get(
+  "/download-history",
+  checkPermission("viewAnalytics"),
+  getDownloadHistory
+);
+
+/* ============================================================
+   ANALYTICS
+   ============================================================ */
+
+router.get(
+  "/analytics",
+  checkPermission("viewAnalytics"),
+  getAnalytics
+);
+
+/* ============================================================
+   AI USAGE
+   ============================================================ */
+
+router.get(
+  "/ai-usage",
+  checkPermission("viewAnalytics"),
+  getAIUsage
+);
+
+export default router;

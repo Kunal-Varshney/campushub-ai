@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const aiUsageSchema = new mongoose.Schema(
   {
@@ -7,11 +7,39 @@ const aiUsageSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    question: { type: String, required: true },
-    category: { type: String, default: "General" },
-    createdAt: { type: Date, default: Date.now },
+
+    question: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    category: {
+      type: String,
+      default: "General",
+      trim: true,
+    },
+
+    response: {
+      type: String,
+      default: "",
+    },
+
+    model: {
+      type: String,
+      default: "Groq",
+    },
+
+    tokensUsed: {
+      type: Number,
+      default: 0,
+    },
   },
-  { timestamps: false }
+  {
+    timestamps: true,
+  }
 );
 
-module.exports = mongoose.model("AIUsage", aiUsageSchema);
+const AIUsage = mongoose.model("AIUsage", aiUsageSchema);
+
+export default AIUsage;

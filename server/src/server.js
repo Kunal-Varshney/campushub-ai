@@ -1,10 +1,12 @@
-import dotenv from "dotenv";
-dotenv.config();
-
-console.log("SERVER GROQ KEY =", process.env.GROQ_API_KEY);
+import "dotenv/config";
 
 import app from "./app.js";
 import connectDB from "./config/db.js";
+
+console.log(
+  "GROQ KEY:",
+  process.env.GROQ_API_KEY ? "LOADED ✅" : "MISSING ❌"
+);
 
 // Connect MongoDB
 connectDB();

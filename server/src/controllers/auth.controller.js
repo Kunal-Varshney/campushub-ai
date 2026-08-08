@@ -1,3 +1,4 @@
+
 import User from "../models/User.js";
 import generateToken from "../utils/generateToken.js";
 
@@ -7,7 +8,15 @@ import generateToken from "../utils/generateToken.js";
 export const registerUser = async (req, res) => {
   try {
     console.log("BODY:", req.body);
-    const { name, email, password, college, branch, year } = req.body;
+
+    const {
+      name,
+      email,
+      password,
+      college,
+      branch,
+      year,
+    } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -36,7 +45,7 @@ export const registerUser = async (req, res) => {
 
     const token = generateToken(user._id);
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Registration Successful",
       token,
@@ -51,13 +60,13 @@ export const registerUser = async (req, res) => {
       },
     });
   } catch (error) {
-        console.error("Register Error:", error);
+    console.error("Register Error:", error);
 
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
-    }
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
 
 // ==========================
@@ -67,7 +76,10 @@ export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    // IMPORTANT:
+    // password has select:false in User model,
+    // so explicitly include it during login.
+    const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
       return res.status(401).json({
@@ -76,6 +88,15 @@ export const loginUser = async (req, res) => {
       });
     }
 
+    // Check if account is blocked
+    if (user.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been blocked by admin.",
+      });
+    }
+
+    // Compare entered password with hashed password
     const isMatch = await user.comparePassword(password);
 
     if (!isMatch) {
@@ -85,17 +106,17 @@ export const loginUser = async (req, res) => {
       });
     }
 
-
     // 👑 Admin email
     if (user.email === "kunalvarshney187@gmail.com") {
       user.role = "admin";
+
+      // Save admin role
       await user.save();
     }
 
-
     const token = generateToken(user._id);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Login Successful",
       token,
@@ -109,11 +130,10 @@ export const loginUser = async (req, res) => {
         role: user.role,
       },
     });
-
   } catch (error) {
     console.error("Login Error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });

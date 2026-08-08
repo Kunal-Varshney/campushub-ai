@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const downloadHistorySchema = new mongoose.Schema(
   {
@@ -7,20 +7,46 @@ const downloadHistorySchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    userName: { type: String, required: true },
-    userEmail: { type: String, required: true },
+
+    userName: {
+      type: String,
+      default: "",
+    },
+
+    userEmail: {
+      type: String,
+      default: "",
+    },
+
     noteId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Note",
       required: true,
     },
-    noteTitle: { type: String, required: true },
-    category: { type: String, required: true },
-    downloadedAt: { type: Date, default: Date.now },
+
+    noteTitle: {
+      type: String,
+      default: "",
+    },
+
+    category: {
+      type: String,
+      default: "General",
+    },
+
+    downloadedAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-downloadHistorySchema.index({ userName: 1, noteTitle: 1, downloadedAt: -1 });
+const DownloadHistory = mongoose.model(
+  "DownloadHistory",
+  downloadHistorySchema
+);
 
-module.exports = mongoose.model("DownloadHistory", downloadHistorySchema);
+export default DownloadHistory;
