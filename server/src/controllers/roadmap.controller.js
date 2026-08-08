@@ -1,0 +1,2672 @@
+// import Roadmap from "../models/Roadmap.js";
+
+// // ============================================================
+// // ALLOWED CAREERS
+// // ============================================================
+
+// const allowedCareers = [
+//   "frontend",
+//   "backend",
+//   "fullstack",
+//   "ai",
+//   "ml",
+//   "data",
+//   "cyber",
+//   "cloud",
+//   "devops",
+//   "android",
+//   "uiux",
+// ];
+
+// // ============================================================
+// // ALLOWED LEVELS
+// // ============================================================
+
+// const allowedLevels = [
+//   "Beginner",
+//   "Intermediate",
+//   "Advanced",
+// ];
+
+// // ============================================================
+// // CAREER DISPLAY NAMES
+// // ============================================================
+
+// const careerNames = {
+//   frontend: "Frontend Developer",
+//   backend: "Backend Developer",
+//   fullstack: "Full Stack Developer",
+//   ai: "AI Engineer",
+//   ml: "Machine Learning Engineer",
+//   data: "Data Scientist",
+//   cyber: "Cyber Security",
+//   cloud: "Cloud Engineer",
+//   devops: "DevOps Engineer",
+//   android: "Android Developer",
+//   uiux: "UI/UX Designer",
+// };
+
+// // ============================================================
+// // NORMALIZE CAREER
+// // ============================================================
+
+// const normalizeCareer = (career) => {
+//   if (!career) {
+//     return null;
+//   }
+
+//   // If frontend sends an object
+//   if (typeof career === "object") {
+//     career =
+//       career.id ||
+//       career.value ||
+//       career.careerId ||
+//       career.career ||
+//       career.name ||
+//       career.title;
+//   }
+
+//   if (!career) {
+//     return null;
+//   }
+
+//   const value = String(career)
+//     .trim()
+//     .toLowerCase()
+//     .replace(/\s+/g, " ");
+
+//   const careerMap = {
+//     // Frontend
+//     frontend: "frontend",
+//     "frontend developer": "frontend",
+//     "front end developer": "frontend",
+
+//     // Backend
+//     backend: "backend",
+//     "backend developer": "backend",
+//     "back end developer": "backend",
+
+//     // Full Stack
+//     fullstack: "fullstack",
+//     "full stack": "fullstack",
+//     "fullstack developer": "fullstack",
+//     "full stack developer": "fullstack",
+
+//     // AI
+//     ai: "ai",
+//     "ai engineer": "ai",
+//     "artificial intelligence": "ai",
+//     "artificial intelligence engineer": "ai",
+
+//     // ML
+//     ml: "ml",
+//     "machine learning": "ml",
+//     "machine learning engineer": "ml",
+
+//     // Data
+//     data: "data",
+//     "data science": "data",
+//     "data scientist": "data",
+
+//     // Cyber
+//     cyber: "cyber",
+//     cybersecurity: "cyber",
+//     "cyber security": "cyber",
+//     "cyber security specialist": "cyber",
+
+//     // Cloud
+//     cloud: "cloud",
+//     "cloud engineer": "cloud",
+//     "cloud computing": "cloud",
+
+//     // DevOps
+//     devops: "devops",
+//     "devops engineer": "devops",
+
+//     // Android
+//     android: "android",
+//     "android developer": "android",
+
+//     // UI/UX
+//     uiux: "uiux",
+//     "ui/ux": "uiux",
+//     "ui/ux designer": "uiux",
+//     "ui ux designer": "uiux",
+//     "uiux designer": "uiux",
+//   };
+
+//   return careerMap[value] || null;
+// };
+
+// // ============================================================
+// // NORMALIZE LEVEL
+// // ============================================================
+
+// const normalizeLevel = (level) => {
+//   if (!level) {
+//     return null;
+//   }
+
+//   const value = String(level).trim().toLowerCase();
+
+//   const levelMap = {
+//     beginner: "Beginner",
+//     intermediate: "Intermediate",
+//     advanced: "Advanced",
+//   };
+
+//   return levelMap[value] || null;
+// };
+
+// // ============================================================
+// // GENERATE ROADMAP
+// // ============================================================
+
+// export const generateRoadmap = async (req, res) => {
+//   try {
+//     const userId = req.user?._id;
+
+//     // --------------------------------------------------------
+//     // RAW REQUEST
+//     // --------------------------------------------------------
+
+//     const { career, careerId, level, skillLevel, experienceLevel } =
+//       req.body;
+
+//     console.log("=================================");
+//     console.log("ROADMAP REQUEST");
+//     console.log("BODY:", JSON.stringify(req.body, null, 2));
+//     console.log("USER ID:", userId);
+//     console.log("=================================");
+
+//     // --------------------------------------------------------
+//     // AUTH CHECK
+//     // --------------------------------------------------------
+
+//     if (!userId) {
+//       return res.status(401).json({
+//         success: false,
+//         message: "Unauthorized",
+//       });
+//     }
+
+//     // --------------------------------------------------------
+//     // EXTRACT CAREER
+//     // --------------------------------------------------------
+
+//     let careerInput = careerId || career;
+
+//     // If career is an object
+//     if (career && typeof career === "object") {
+//       careerInput =
+//         career.id ||
+//         career.value ||
+//         career.careerId ||
+//         career.career ||
+//         career.name ||
+//         career.title ||
+//         careerInput;
+//     }
+
+//     // --------------------------------------------------------
+//     // EXTRACT LEVEL
+//     // --------------------------------------------------------
+
+//     let levelInput =
+//       level ||
+//       skillLevel ||
+//       experienceLevel;
+
+//     // If career object contains level
+//     if (career && typeof career === "object") {
+//       levelInput =
+//         levelInput ||
+//         career.level ||
+//         career.skillLevel ||
+//         career.experienceLevel;
+//     }
+
+//     console.log("Career input:", careerInput);
+//     console.log("Level input:", levelInput);
+
+//     // --------------------------------------------------------
+//     // CAREER REQUIRED
+//     // --------------------------------------------------------
+
+//     if (!careerInput) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Career is required",
+//         receivedBody: req.body,
+//       });
+//     }
+
+//     // --------------------------------------------------------
+//     // NORMALIZE CAREER
+//     // --------------------------------------------------------
+
+//     const normalizedCareer =
+//       normalizeCareer(careerInput);
+
+//     console.log(
+//       "Normalized career:",
+//       normalizedCareer
+//     );
+
+//     // --------------------------------------------------------
+//     // CAREER VALIDATION
+//     // --------------------------------------------------------
+
+//     if (!normalizedCareer) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid career path",
+//         receivedCareer: careerInput,
+//         allowedCareers,
+//       });
+//     }
+
+//     // --------------------------------------------------------
+//     // LEVEL REQUIRED
+//     // --------------------------------------------------------
+
+//     if (!levelInput) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Skill level is required",
+//         receivedBody: req.body,
+//       });
+//     }
+
+//     // --------------------------------------------------------
+//     // NORMALIZE LEVEL
+//     // --------------------------------------------------------
+
+//     const normalizedLevel =
+//       normalizeLevel(levelInput);
+
+//     console.log(
+//       "Normalized level:",
+//       normalizedLevel
+//     );
+
+//     // --------------------------------------------------------
+//     // LEVEL VALIDATION
+//     // --------------------------------------------------------
+
+//     if (!normalizedLevel) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid skill level",
+//         receivedLevel: levelInput,
+//         allowedLevels,
+//       });
+//     }
+
+//     // --------------------------------------------------------
+//     // CAREER NAME
+//     // --------------------------------------------------------
+
+//     const careerName =
+//       careerNames[normalizedCareer];
+
+//     // --------------------------------------------------------
+//     // CREATE ROADMAP DATA
+//     // --------------------------------------------------------
+
+//     const roadmapSteps = createRoadmap(
+//       normalizedCareer,
+//       normalizedLevel
+//     );
+
+//     const weeklyPlan = createWeeklyPlan(
+//       normalizedCareer
+//     );
+
+//     const projects = createProjects(
+//       normalizedCareer
+//     );
+
+//     const skillAnalysis =
+//       createSkillAnalysis(normalizedLevel);
+
+//     // --------------------------------------------------------
+//     // SAVE / UPDATE ROADMAP
+//     // --------------------------------------------------------
+
+//     console.log("Saving roadmap...");
+//     console.log("Career:", normalizedCareer);
+//     console.log("Level:", normalizedLevel);
+
+//     const roadmap =
+//       await Roadmap.findOneAndUpdate(
+//         {
+//           user: userId,
+//           career: normalizedCareer,
+//           level: normalizedLevel,
+//         },
+//         {
+//           user: userId,
+//           career: normalizedCareer,
+//           level: normalizedLevel,
+//           roadmapSteps,
+//           weeklyPlan,
+//           projects,
+//           skillAnalysis,
+//         },
+//         {
+//           new: true,
+//           upsert: true,
+//           setDefaultsOnInsert: true,
+//         }
+//       );
+
+//     // --------------------------------------------------------
+//     // SUCCESS RESPONSE
+//     // --------------------------------------------------------
+
+//     console.log(
+//       "Roadmap generated successfully:",
+//       roadmap._id
+//     );
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Roadmap generated successfully",
+
+//       roadmap: {
+//         id: roadmap._id,
+//         career: careerName,
+//         careerId: normalizedCareer,
+//         level: roadmap.level,
+//         roadmapSteps: roadmap.roadmapSteps,
+//         weeklyPlan: roadmap.weeklyPlan,
+//         projects: roadmap.projects,
+//         skillAnalysis: roadmap.skillAnalysis,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("=================================");
+//     console.error("GENERATE ROADMAP ERROR");
+//     console.error("Message:", error.message);
+//     console.error("Name:", error.name);
+//     console.error("Stack:", error.stack);
+//     console.error("=================================");
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to generate roadmap",
+//       error: error.message,
+//     });
+//   }
+// };
+
+// // ============================================================
+// // GET USER ROADMAPS
+// // ============================================================
+
+// export const getMyRoadmaps = async (req, res) => {
+//   try {
+//     const userId = req.user?._id;
+
+//     if (!userId) {
+//       return res.status(401).json({
+//         success: false,
+//         message: "Unauthorized",
+//       });
+//     }
+
+//     const roadmaps = await Roadmap.find({
+//       user: userId,
+//     }).sort({
+//       createdAt: -1,
+//     });
+
+//     return res.status(200).json({
+//       success: true,
+//       count: roadmaps.length,
+//       roadmaps,
+//     });
+//   } catch (error) {
+//     console.error(
+//       "Get Roadmaps Error:",
+//       error
+//     );
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch roadmaps",
+//       error: error.message,
+//     });
+//   }
+// };
+
+// // ============================================================
+// // GET SINGLE ROADMAP
+// // ============================================================
+
+// export const getRoadmapById = async (req, res) => {
+//   try {
+//     const userId = req.user?._id;
+
+//     const { id } = req.params;
+
+//     if (!userId) {
+//       return res.status(401).json({
+//         success: false,
+//         message: "Unauthorized",
+//       });
+//     }
+
+//     const roadmap = await Roadmap.findOne({
+//       _id: id,
+//       user: userId,
+//     });
+
+//     if (!roadmap) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Roadmap not found",
+//       });
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       roadmap,
+//     });
+//   } catch (error) {
+//     console.error(
+//       "Get Roadmap Error:",
+//       error
+//     );
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch roadmap",
+//       error: error.message,
+//     });
+//   }
+// };
+
+// // ============================================================
+// // ROADMAP GENERATOR
+// // ============================================================
+
+// const createRoadmap = (career, level) => {
+//   const data = {
+//     // ========================================================
+//     // FRONTEND
+//     // ========================================================
+
+//     frontend: [
+//       {
+//         title: "HTML & CSS Fundamentals",
+//         difficulty: "Beginner",
+//         time: "1 Week",
+//         description:
+//           "Learn semantic HTML, CSS fundamentals, Flexbox, Grid and responsive design.",
+//       },
+//       {
+//         title: "JavaScript Essentials",
+//         difficulty: "Beginner",
+//         time: "3 Weeks",
+//         description:
+//           "Master variables, functions, arrays, objects, DOM, ES6+ and async JavaScript.",
+//       },
+//       {
+//         title: "Git & GitHub",
+//         difficulty: "Beginner",
+//         time: "1 Week",
+//         description:
+//           "Learn version control, branches, commits, pull requests and GitHub workflows.",
+//       },
+//       {
+//         title: "React.js",
+//         difficulty: "Intermediate",
+//         time: "3 Weeks",
+//         description:
+//           "Learn components, props, state, hooks, routing and reusable architecture.",
+//       },
+//       {
+//         title: "Advanced Frontend",
+//         difficulty: "Advanced",
+//         time: "3 Weeks",
+//         description:
+//           "Learn performance optimization, advanced state management and production patterns.",
+//       },
+//       {
+//         title: "Projects & Portfolio",
+//         difficulty: "Advanced",
+//         time: "3 Weeks",
+//         description:
+//           "Build production-ready projects and create a strong developer portfolio.",
+//       },
+//       {
+//         title: "Deployment",
+//         difficulty: "Advanced",
+//         time: "1 Week",
+//         description:
+//           "Deploy frontend applications and understand production configuration.",
+//       },
+//       {
+//         title: "Interview Preparation",
+//         difficulty: "Advanced",
+//         time: "2 Weeks",
+//         description:
+//           "Practice JavaScript, React, frontend system questions and coding problems.",
+//       },
+//     ],
+
+//     // ========================================================
+//     // BACKEND
+//     // ========================================================
+
+//     backend: [
+//       {
+//         title: "Programming Fundamentals",
+//         difficulty: "Beginner",
+//         time: "2 Weeks",
+//         description:
+//           "Build strong programming logic using JavaScript and understand core concepts.",
+//       },
+//       {
+//         title: "Node.js",
+//         difficulty: "Intermediate",
+//         time: "2 Weeks",
+//         description:
+//           "Learn Node.js runtime, modules, event loop, asynchronous programming and APIs.",
+//       },
+//       {
+//         title: "Express.js",
+//         difficulty: "Intermediate",
+//         time: "2 Weeks",
+//         description:
+//           "Learn routing, middleware, controllers, REST APIs and backend architecture.",
+//       },
+//       {
+//         title: "MongoDB",
+//         difficulty: "Intermediate",
+//         time: "2 Weeks",
+//         description:
+//           "Learn NoSQL databases, schemas, Mongoose, queries and aggregation.",
+//       },
+//       {
+//         title: "Authentication & Security",
+//         difficulty: "Advanced",
+//         time: "2 Weeks",
+//         description:
+//           "Implement JWT authentication, authorization, password hashing and API security.",
+//       },
+//       {
+//         title: "Backend Projects",
+//         difficulty: "Advanced",
+//         time: "4 Weeks",
+//         description:
+//           "Build production-style REST APIs and complete backend applications.",
+//       },
+//       {
+//         title: "Deployment & APIs",
+//         difficulty: "Advanced",
+//         time: "1 Week",
+//         description:
+//           "Deploy backend services and configure environment variables and production APIs.",
+//       },
+//       {
+//         title: "Backend Interview Preparation",
+//         difficulty: "Advanced",
+//         time: "2 Weeks",
+//         description:
+//           "Prepare for Node.js, databases, APIs, authentication and backend interviews.",
+//       },
+//     ],
+//   };
+
+//   let steps = data[career];
+
+//   // ========================================================
+//   // GENERIC CAREERS
+//   // ========================================================
+
+//   if (!steps) {
+//     steps = [
+//       {
+//         title: `${career} Fundamentals`,
+//         difficulty: "Beginner",
+//         time: "2 Weeks",
+//         description:
+//           `Learn the fundamentals required to start a career as a ${career}.`,
+//       },
+//       {
+//         title: `${career} Core Skills`,
+//         difficulty: "Intermediate",
+//         time: "3 Weeks",
+//         description:
+//           `Develop the core technical skills required for ${career}.`,
+//       },
+//       {
+//         title: "Projects",
+//         difficulty: "Intermediate",
+//         time: "3 Weeks",
+//         description:
+//           "Build practical projects to apply your technical knowledge.",
+//       },
+//       {
+//         title: "Advanced Skills",
+//         difficulty: "Advanced",
+//         time: "3 Weeks",
+//         description:
+//           "Learn advanced concepts and industry-standard development practices.",
+//       },
+//       {
+//         title: "Portfolio & Deployment",
+//         difficulty: "Advanced",
+//         time: "2 Weeks",
+//         description:
+//           "Create portfolio projects and deploy them for real-world usage.",
+//       },
+//       {
+//         title: "Interview Preparation",
+//         difficulty: "Advanced",
+//         time: "2 Weeks",
+//         description:
+//           "Prepare for technical interviews and placement opportunities.",
+//       },
+//     ];
+//   }
+
+//   // ========================================================
+//   // ADD PROGRESS
+//   // ========================================================
+
+//   return steps.map((step, index) => ({
+//     ...step,
+
+//     status:
+//       level === "Beginner" && index === 0
+//         ? "in-progress"
+//         : index === 0
+//         ? "completed"
+//         : "pending",
+
+//     progress:
+//       level === "Beginner" && index === 0
+//         ? 40
+//         : index === 0
+//         ? 100
+//         : 0,
+//   }));
+// };
+
+// // ============================================================
+// // WEEKLY PLAN
+// // ============================================================
+
+// const createWeeklyPlan = (career) => {
+//   return [
+//     {
+//       week: "Week 1",
+//       topics: [
+//         "Fundamentals",
+//         "Core Concepts",
+//         "Environment Setup",
+//       ],
+//       assignment:
+//         `Learn the fundamentals of ${career} development.`,
+//       miniProject:
+//         `${career} Starter Project`,
+//       hours: 10,
+//     },
+
+//     {
+//       week: "Week 2",
+//       topics: [
+//         "Practical Skills",
+//         "APIs",
+//         "Git & GitHub",
+//       ],
+//       assignment:
+//         "Practice the concepts by building small features.",
+//       miniProject:
+//         "Practice Application",
+//       hours: 12,
+//     },
+
+//     {
+//       week: "Week 3",
+//       topics: [
+//         "Advanced Concepts",
+//         "Debugging",
+//         "Best Practices",
+//       ],
+//       assignment:
+//         "Build a complete feature using the learned concepts.",
+//       miniProject:
+//         "Feature-Based Project",
+//       hours: 14,
+//     },
+
+//     {
+//       week: "Week 4",
+//       topics: [
+//         "Project",
+//         "Deployment",
+//         "Portfolio",
+//       ],
+//       assignment:
+//         "Build and deploy a portfolio-ready project.",
+//       miniProject:
+//         "Final Portfolio Project",
+//       hours: 15,
+//     },
+//   ];
+// };
+
+// // ============================================================
+// // PROJECTS
+// // ============================================================
+
+// const createProjects = (career) => {
+//   // --------------------------------------------------------
+//   // BACKEND
+//   // --------------------------------------------------------
+
+//   if (career === "backend") {
+//     return [
+//       {
+//         name: "REST API",
+//         difficulty: "Beginner",
+//         skills: ["Node.js", "Express"],
+//         time: "1 Week",
+//       },
+//       {
+//         name: "Authentication API",
+//         difficulty: "Intermediate",
+//         skills: [
+//           "Node.js",
+//           "JWT",
+//           "MongoDB",
+//         ],
+//         time: "2 Weeks",
+//       },
+//       {
+//         name: "Task Manager API",
+//         difficulty: "Intermediate",
+//         skills: [
+//           "Express",
+//           "MongoDB",
+//           "JWT",
+//         ],
+//         time: "2 Weeks",
+//       },
+//       {
+//         name: "Realtime Chat Backend",
+//         difficulty: "Advanced",
+//         skills: [
+//           "Node.js",
+//           "Socket.IO",
+//           "MongoDB",
+//         ],
+//         time: "3 Weeks",
+//       },
+//     ];
+//   }
+
+//   // --------------------------------------------------------
+//   // FRONTEND
+//   // --------------------------------------------------------
+
+//   if (career === "frontend") {
+//     return [
+//       {
+//         name: "Responsive Portfolio",
+//         difficulty: "Beginner",
+//         skills: [
+//           "HTML",
+//           "CSS",
+//           "JavaScript",
+//         ],
+//         time: "1 Week",
+//       },
+//       {
+//         name: "Weather Dashboard",
+//         difficulty: "Beginner",
+//         skills: [
+//           "JavaScript",
+//           "API",
+//           "CSS",
+//         ],
+//         time: "1 Week",
+//       },
+//       {
+//         name: "React Dashboard",
+//         difficulty: "Intermediate",
+//         skills: [
+//           "React",
+//           "Hooks",
+//           "API",
+//         ],
+//         time: "2 Weeks",
+//       },
+//       {
+//         name: "E-commerce Frontend",
+//         difficulty: "Advanced",
+//         skills: [
+//           "React",
+//           "State Management",
+//           "API",
+//         ],
+//         time: "3 Weeks",
+//       },
+//     ];
+//   }
+
+//   // --------------------------------------------------------
+//   // FULL STACK
+//   // --------------------------------------------------------
+
+//   if (career === "fullstack") {
+//     return [
+//       {
+//         name: "Full Stack Portfolio",
+//         difficulty: "Beginner",
+//         skills: [
+//           "HTML",
+//           "CSS",
+//           "JavaScript",
+//         ],
+//         time: "1 Week",
+//       },
+//       {
+//         name: "MERN Authentication App",
+//         difficulty: "Intermediate",
+//         skills: [
+//           "React",
+//           "Node.js",
+//           "Express",
+//           "MongoDB",
+//           "JWT",
+//         ],
+//         time: "2 Weeks",
+//       },
+//       {
+//         name: "Task Management Platform",
+//         difficulty: "Intermediate",
+//         skills: [
+//           "React",
+//           "Node.js",
+//           "Express",
+//           "MongoDB",
+//         ],
+//         time: "3 Weeks",
+//       },
+//       {
+//         name: "Production MERN Application",
+//         difficulty: "Advanced",
+//         skills: [
+//           "React",
+//           "Node.js",
+//           "Express",
+//           "MongoDB",
+//           "JWT",
+//           "Deployment",
+//         ],
+//         time: "4 Weeks",
+//       },
+//     ];
+//   }
+
+//   // --------------------------------------------------------
+//   // GENERIC
+//   // --------------------------------------------------------
+
+//   return [
+//     {
+//       name: `${career} Starter Project`,
+//       difficulty: "Beginner",
+//       skills: [
+//         "Fundamentals",
+//         "Git",
+//       ],
+//       time: "1 Week",
+//     },
+//     {
+//       name: `${career} Practical Project`,
+//       difficulty: "Intermediate",
+//       skills: [
+//         "Core Skills",
+//         "API",
+//       ],
+//       time: "2 Weeks",
+//     },
+//     {
+//       name: `${career} Advanced Project`,
+//       difficulty: "Advanced",
+//       skills: [
+//         "Advanced Concepts",
+//         "Deployment",
+//       ],
+//       time: "3 Weeks",
+//     },
+//   ];
+// };
+
+// // ============================================================
+// // SKILL ANALYSIS
+// // ============================================================
+
+// const createSkillAnalysis = (level) => {
+//   if (level === "Beginner") {
+//     return {
+//       currentSkills: 25,
+//       missingSkills: 75,
+//       industryReadiness: 20,
+//       interviewReadiness: 15,
+//       confidenceScore: 30,
+//     };
+//   }
+
+//   if (level === "Intermediate") {
+//     return {
+//       currentSkills: 60,
+//       missingSkills: 40,
+//       industryReadiness: 60,
+//       interviewReadiness: 50,
+//       confidenceScore: 65,
+//     };
+//   }
+
+//   return {
+//     currentSkills: 85,
+//     missingSkills: 15,
+//     industryReadiness: 85,
+//     interviewReadiness: 80,
+//     confidenceScore: 88,
+//   };
+// };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import Roadmap from "../models/Roadmap.js";
+
+// ============================================================
+// ALLOWED CAREERS
+// ============================================================
+
+const allowedCareers = [
+  "frontend",
+  "backend",
+  "fullstack",
+  "ai",
+  "ml",
+  "data",
+  "cyber",
+  "cloud",
+  "devops",
+  "android",
+  "uiux",
+];
+
+// ============================================================
+// ALLOWED LEVELS
+// ============================================================
+
+const allowedLevels = [
+  "Beginner",
+  "Intermediate",
+  "Advanced",
+];
+
+// ============================================================
+// CAREER NAMES
+// ============================================================
+
+const careerNames = {
+  frontend: "Frontend Developer",
+  backend: "Backend Developer",
+  fullstack: "Full Stack Developer",
+  ai: "AI Engineer",
+  ml: "Machine Learning Engineer",
+  data: "Data Scientist",
+  cyber: "Cyber Security Specialist",
+  cloud: "Cloud Engineer",
+  devops: "DevOps Engineer",
+  android: "Android Developer",
+  uiux: "UI/UX Designer",
+};
+
+// ============================================================
+// NORMALIZE CAREER
+// ============================================================
+
+const normalizeCareer = (career) => {
+  if (!career) return null;
+
+  // If frontend sends object
+  if (typeof career === "object") {
+    career =
+      career.id ||
+      career.value ||
+      career.careerId ||
+      career.career ||
+      career.name ||
+      career.title;
+  }
+
+  if (!career) return null;
+
+  const value = String(career)
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+
+  const careerMap = {
+    // Frontend
+    frontend: "frontend",
+    "frontend developer": "frontend",
+    "front end developer": "frontend",
+
+    // Backend
+    backend: "backend",
+    "backend developer": "backend",
+    "back end developer": "backend",
+
+    // Full Stack
+    fullstack: "fullstack",
+    "full stack": "fullstack",
+    "fullstack developer": "fullstack",
+    "full stack developer": "fullstack",
+
+    // AI
+    ai: "ai",
+    "ai engineer": "ai",
+    "artificial intelligence": "ai",
+    "artificial intelligence engineer": "ai",
+
+    // ML
+    ml: "ml",
+    "machine learning": "ml",
+    "machine learning engineer": "ml",
+
+    // Data
+    data: "data",
+    "data science": "data",
+    "data scientist": "data",
+
+    // Cyber
+    cyber: "cyber",
+    cybersecurity: "cyber",
+    "cyber security": "cyber",
+    "cyber security specialist": "cyber",
+
+    // Cloud
+    cloud: "cloud",
+    "cloud engineer": "cloud",
+    "cloud computing": "cloud",
+
+    // DevOps
+    devops: "devops",
+    "devops engineer": "devops",
+
+    // Android
+    android: "android",
+    "android developer": "android",
+
+    // UI/UX
+    uiux: "uiux",
+    "ui/ux": "uiux",
+    "ui ux": "uiux",
+    "ui/ux designer": "uiux",
+    "ui ux designer": "uiux",
+    "uiux designer": "uiux",
+  };
+
+  return careerMap[value] || null;
+};
+
+// ============================================================
+// NORMALIZE LEVEL
+// ============================================================
+
+const normalizeLevel = (level) => {
+  if (!level) return null;
+
+  const value = String(level)
+    .trim()
+    .toLowerCase();
+
+  const levelMap = {
+    beginner: "Beginner",
+    intermediate: "Intermediate",
+    advanced: "Advanced",
+  };
+
+  return levelMap[value] || null;
+};
+
+// ============================================================
+// GENERATE ROADMAP
+// ============================================================
+
+export const generateRoadmap = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+
+    const body = req.body || {};
+
+    console.log("\n=================================");
+    console.log("ROADMAP GENERATION REQUEST");
+    console.log("BODY:", JSON.stringify(body, null, 2));
+    console.log("USER:", userId);
+    console.log("=================================\n");
+
+    // --------------------------------------------------------
+    // AUTH
+    // --------------------------------------------------------
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    // --------------------------------------------------------
+    // GET CAREER
+    // --------------------------------------------------------
+
+    let careerInput =
+      body.careerId ||
+      body.career ||
+      body.careerPath ||
+      body.selectedCareer;
+
+    // --------------------------------------------------------
+    // GET LEVEL
+    // --------------------------------------------------------
+
+    let levelInput =
+      body.level ||
+      body.skillLevel ||
+      body.skill_level ||
+      body.selectedLevel;
+
+    console.log("Career input:", careerInput);
+    console.log("Level input:", levelInput);
+
+    // --------------------------------------------------------
+    // CAREER REQUIRED
+    // --------------------------------------------------------
+
+    if (!careerInput) {
+      return res.status(400).json({
+        success: false,
+        message: "Career is required",
+        receivedBody: body,
+      });
+    }
+
+    // --------------------------------------------------------
+    // NORMALIZE CAREER
+    // --------------------------------------------------------
+
+    const normalizedCareer =
+      normalizeCareer(careerInput);
+
+    console.log(
+      "Normalized career:",
+      normalizedCareer
+    );
+
+    if (!normalizedCareer) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid career path",
+        receivedCareer: careerInput,
+        allowedCareers,
+      });
+    }
+
+    // --------------------------------------------------------
+    // LEVEL REQUIRED
+    // --------------------------------------------------------
+
+    if (!levelInput) {
+      return res.status(400).json({
+        success: false,
+        message: "Skill level is required",
+        receivedBody: body,
+      });
+    }
+
+    // --------------------------------------------------------
+    // NORMALIZE LEVEL
+    // --------------------------------------------------------
+
+    const normalizedLevel =
+      normalizeLevel(levelInput);
+
+    console.log(
+      "Normalized level:",
+      normalizedLevel
+    );
+
+    if (!normalizedLevel) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid skill level",
+        receivedLevel: levelInput,
+        allowedLevels,
+      });
+    }
+
+    // --------------------------------------------------------
+    // CAREER NAME
+    // --------------------------------------------------------
+
+    const careerName =
+      careerNames[normalizedCareer];
+
+    // --------------------------------------------------------
+    // CREATE ROADMAP
+    // --------------------------------------------------------
+
+    const roadmapSteps = createRoadmap(
+      normalizedCareer,
+      normalizedLevel
+    );
+
+    const weeklyPlan = createWeeklyPlan(
+      normalizedCareer,
+      normalizedLevel
+    );
+
+    const projects = createProjects(
+      normalizedCareer
+    );
+
+    const skillAnalysis =
+      createSkillAnalysis(
+        normalizedCareer,
+        normalizedLevel
+      );
+
+    const interviewPreparation =
+      createInterviewPreparation(
+        normalizedCareer
+      );
+
+    // --------------------------------------------------------
+    // SAVE / UPDATE
+    // --------------------------------------------------------
+
+    const roadmap =
+      await Roadmap.findOneAndUpdate(
+        {
+          user: userId,
+          career: normalizedCareer,
+          level: normalizedLevel,
+        },
+        {
+          user: userId,
+          career: normalizedCareer,
+          level: normalizedLevel,
+          roadmapSteps,
+          weeklyPlan,
+          projects,
+          skillAnalysis,
+          interviewPreparation,
+        },
+        {
+          new: true,
+          upsert: true,
+          setDefaultsOnInsert: true,
+        }
+      );
+
+    // --------------------------------------------------------
+    // RESPONSE
+    // --------------------------------------------------------
+
+    return res.status(200).json({
+      success: true,
+      message: "Roadmap generated successfully",
+
+      roadmap: {
+        id: roadmap._id,
+        career: careerName,
+        careerId: normalizedCareer,
+        level: roadmap.level,
+        roadmapSteps: roadmap.roadmapSteps,
+        weeklyPlan: roadmap.weeklyPlan,
+        projects: roadmap.projects,
+        skillAnalysis: roadmap.skillAnalysis,
+        interviewPreparation:
+          roadmap.interviewPreparation,
+      },
+    });
+  } catch (error) {
+    console.error("\n=================================");
+    console.error("GENERATE ROADMAP ERROR");
+    console.error(error);
+    console.error("=================================\n");
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to generate roadmap",
+      error: error.message,
+    });
+  }
+};
+
+// ============================================================
+// GET USER ROADMAPS
+// ============================================================
+
+export const getMyRoadmaps = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const roadmaps = await Roadmap.find({
+      user: userId,
+    }).sort({
+      createdAt: -1,
+    });
+
+    return res.status(200).json({
+      success: true,
+      count: roadmaps.length,
+      roadmaps,
+    });
+  } catch (error) {
+    console.error(
+      "Get Roadmaps Error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch roadmaps",
+      error: error.message,
+    });
+  }
+};
+
+// ============================================================
+// GET SINGLE ROADMAP
+// ============================================================
+
+export const getRoadmapById = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+
+    const { id } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const roadmap =
+      await Roadmap.findOne({
+        _id: id,
+        user: userId,
+      });
+
+    if (!roadmap) {
+      return res.status(404).json({
+        success: false,
+        message: "Roadmap not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      roadmap,
+    });
+  } catch (error) {
+    console.error(
+      "Get Roadmap Error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch roadmap",
+      error: error.message,
+    });
+  }
+};
+
+// ============================================================
+// ROADMAP DATA
+// ============================================================
+
+const roadmapData = {
+
+  // ========================================================
+  // FRONTEND
+  // ========================================================
+
+  frontend: [
+    {
+      title: "HTML & Semantic Web",
+      difficulty: "Beginner",
+      time: "1 Week",
+      description:
+        "Master semantic HTML, forms, accessibility, SEO-friendly structure and modern web standards.",
+    },
+    {
+      title: "CSS & Responsive Design",
+      difficulty: "Beginner",
+      time: "2 Weeks",
+      description:
+        "Learn Flexbox, Grid, responsive layouts, animations, positioning and mobile-first design.",
+    },
+    {
+      title: "JavaScript Core",
+      difficulty: "Beginner",
+      time: "3 Weeks",
+      description:
+        "Master variables, functions, arrays, objects, DOM, ES6+, promises, async/await and events.",
+    },
+    {
+      title: "Git & GitHub",
+      difficulty: "Beginner",
+      time: "1 Week",
+      description:
+        "Learn Git workflow, branches, pull requests, merge conflicts and professional collaboration.",
+    },
+    {
+      title: "React.js",
+      difficulty: "Intermediate",
+      time: "3 Weeks",
+      description:
+        "Learn components, props, state, hooks, routing, forms, API integration and reusable components.",
+    },
+    {
+      title: "Advanced React",
+      difficulty: "Advanced",
+      time: "3 Weeks",
+      description:
+        "Learn performance optimization, advanced hooks, state architecture, lazy loading and production patterns.",
+    },
+    {
+      title: "Frontend Projects",
+      difficulty: "Advanced",
+      time: "4 Weeks",
+      description:
+        "Build portfolio-quality applications with authentication, APIs, responsive UI and real-world features.",
+    },
+    {
+      title: "Deployment & Interview",
+      difficulty: "Advanced",
+      time: "2 Weeks",
+      description:
+        "Deploy applications and prepare JavaScript, React, browser and frontend interview questions.",
+    },
+  ],
+
+  // ========================================================
+  // BACKEND
+  // ========================================================
+
+  backend: [
+    {
+      title: "Programming & JavaScript Fundamentals",
+      difficulty: "Beginner",
+      time: "2 Weeks",
+      description:
+        "Build strong programming logic with JavaScript, functions, objects, arrays, modules and error handling.",
+    },
+    {
+      title: "Node.js",
+      difficulty: "Beginner",
+      time: "2 Weeks",
+      description:
+        "Understand Node.js runtime, npm, modules, event loop, asynchronous programming and file systems.",
+    },
+    {
+      title: "Express.js & REST APIs",
+      difficulty: "Intermediate",
+      time: "2 Weeks",
+      description:
+        "Build professional REST APIs using routes, controllers, middleware, validation and error handling.",
+    },
+    {
+      title: "MongoDB & Mongoose",
+      difficulty: "Intermediate",
+      time: "2 Weeks",
+      description:
+        "Learn database design, schemas, CRUD, relationships, indexes, aggregation and Mongoose.",
+    },
+    {
+      title: "Authentication & Authorization",
+      difficulty: "Intermediate",
+      time: "2 Weeks",
+      description:
+        "Implement JWT authentication, password hashing, roles, permissions and protected APIs.",
+    },
+    {
+      title: "Backend Architecture",
+      difficulty: "Advanced",
+      time: "3 Weeks",
+      description:
+        "Learn MVC architecture, services, controllers, validation, security, logging and scalable backend design.",
+    },
+    {
+      title: "Production Backend Projects",
+      difficulty: "Advanced",
+      time: "4 Weeks",
+      description:
+        "Build complete backend systems involving authentication, databases, APIs and real-time features.",
+    },
+    {
+      title: "Deployment & Backend Interviews",
+      difficulty: "Advanced",
+      time: "2 Weeks",
+      description:
+        "Deploy APIs and prepare Node.js, Express, MongoDB, REST API, JWT and backend interview questions.",
+    },
+  ],
+
+  // ========================================================
+  // FULL STACK
+  // ========================================================
+
+  fullstack: [
+    {
+      title: "Web Fundamentals",
+      difficulty: "Beginner",
+      time: "2 Weeks",
+      description:
+        "Master HTML, CSS, responsive design and browser fundamentals before moving into application development.",
+    },
+    {
+      title: "JavaScript Mastery",
+      difficulty: "Beginner",
+      time: "3 Weeks",
+      description:
+        "Learn modern JavaScript, ES6+, DOM, asynchronous programming, promises, modules and APIs.",
+    },
+    {
+      title: "React Frontend Development",
+      difficulty: "Intermediate",
+      time: "3 Weeks",
+      description:
+        "Build modern interfaces using React, hooks, routing, forms, state management and API integration.",
+    },
+    {
+      title: "Node.js & Express",
+      difficulty: "Intermediate",
+      time: "3 Weeks",
+      description:
+        "Create REST APIs using Node.js and Express with routing, middleware, validation and error handling.",
+    },
+    {
+      title: "MongoDB & Authentication",
+      difficulty: "Intermediate",
+      time: "3 Weeks",
+      description:
+        "Design databases and implement JWT authentication, authorization, password security and user roles.",
+    },
+    {
+      title: "Full Stack Architecture",
+      difficulty: "Advanced",
+      time: "3 Weeks",
+      description:
+        "Connect frontend and backend systems using scalable architecture, API patterns and secure data flow.",
+    },
+    {
+      title: "Production Full Stack Project",
+      difficulty: "Advanced",
+      time: "4 Weeks",
+      description:
+        "Build a complete production-style application from database to frontend and deployment.",
+    },
+    {
+      title: "Deployment & Full Stack Interviews",
+      difficulty: "Advanced",
+      time: "2 Weeks",
+      description:
+        "Deploy the complete application and prepare JavaScript, React, Node.js, MongoDB and system questions.",
+    },
+  ],
+
+  // ========================================================
+  // AI
+  // ========================================================
+
+  ai: [
+    {
+      title: "Python Programming",
+      difficulty: "Beginner",
+      time: "2 Weeks",
+      description:
+        "Build strong Python fundamentals including functions, OOP, collections, modules and error handling.",
+    },
+    {
+      title: "Mathematics for AI",
+      difficulty: "Beginner",
+      time: "2 Weeks",
+      description:
+        "Learn the linear algebra, probability, statistics and calculus concepts required for AI.",
+    },
+    {
+      title: "Data Processing",
+      difficulty: "Intermediate",
+      time: "2 Weeks",
+      description:
+        "Use NumPy and Pandas to clean, transform, analyze and prepare datasets for AI systems.",
+    },
+    {
+      title: "Machine Learning Foundations",
+      difficulty: "Intermediate",
+      time: "4 Weeks",
+      description:
+        "Learn supervised and unsupervised learning, feature engineering, evaluation and model selection.",
+    },
+    {
+      title: "Deep Learning",
+      difficulty: "Advanced",
+      time: "4 Weeks",
+      description:
+        "Learn neural networks, CNNs, RNNs, optimization and deep learning workflows.",
+    },
+    {
+      title: "Generative AI & LLMs",
+      difficulty: "Advanced",
+      time: "3 Weeks",
+      description:
+        "Learn transformers, embeddings, prompt engineering, RAG and LLM application development.",
+    },
+    {
+      title: "AI Application Development",
+      difficulty: "Advanced",
+      time: "4 Weeks",
+      description:
+        "Build practical AI applications and integrate trained models into real software systems.",
+    },
+    {
+      title: "AI Portfolio & Interviews",
+      difficulty: "Advanced",
+      time: "2 Weeks",
+      description:
+        "Build AI projects and prepare machine learning, deep learning and AI engineering interviews.",
+    },
+  ],
+
+  // ========================================================
+  // ML
+  // ========================================================
+
+  ml: [
+    {
+      title: "Python for Machine Learning",
+      difficulty: "Beginner",
+      time: "2 Weeks",
+      description:
+        "Master Python, NumPy, Pandas and programming techniques required for machine learning.",
+    },
+    {
+      title: "Statistics & Probability",
+      difficulty: "Beginner",
+      time: "3 Weeks",
+      description:
+        "Learn distributions, probability, hypothesis testing, correlation and statistical reasoning.",
+    },
+    {
+      title: "Data Preprocessing",
+      difficulty: "Intermediate",
+      time: "2 Weeks",
+      description:
+        "Handle missing values, outliers, encoding, scaling and feature engineering.",
+    },
+    {
+      title: "Supervised Learning",
+      difficulty: "Intermediate",
+      time: "3 Weeks",
+      description:
+        "Master regression, classification, decision trees, ensembles and model evaluation.",
+    },
+    {
+      title: "Unsupervised Learning",
+      difficulty: "Advanced",
+      time: "2 Weeks",
+      description:
+        "Learn clustering, dimensionality reduction and pattern discovery techniques.",
+    },
+    {
+      title: "Deep Learning",
+      difficulty: "Advanced",
+      time: "4 Weeks",
+      description:
+        "Learn neural networks, CNNs, sequence models and deep learning optimization.",
+    },
+    {
+      title: "End-to-End ML Projects",
+      difficulty: "Advanced",
+      time: "4 Weeks",
+      description:
+        "Build complete ML systems from dataset collection and training to evaluation and deployment.",
+    },
+    {
+      title: "ML Interview Preparation",
+      difficulty: "Advanced",
+      time: "2 Weeks",
+      description:
+        "Prepare statistics, algorithms, model evaluation, ML system and practical coding interviews.",
+    },
+  ],
+
+  // ========================================================
+  // DATA SCIENCE
+  // ========================================================
+
+  data: [
+    {
+      title: "Python for Data Science",
+      difficulty: "Beginner",
+      time: "2 Weeks",
+      description:
+        "Learn Python, NumPy, Pandas and programming techniques used for data analysis.",
+    },
+    {
+      title: "Statistics & Probability",
+      difficulty: "Beginner",
+      time: "3 Weeks",
+      description:
+        "Build statistical thinking using distributions, probability, hypothesis testing and sampling.",
+    },
+    {
+      title: "Data Cleaning & EDA",
+      difficulty: "Intermediate",
+      time: "3 Weeks",
+      description:
+        "Clean messy datasets and perform exploratory analysis to identify useful patterns.",
+    },
+    {
+      title: "Data Visualization",
+      difficulty: "Intermediate",
+      time: "2 Weeks",
+      description:
+        "Create meaningful visualizations and dashboards using Matplotlib, Seaborn and visualization principles.",
+    },
+    {
+      title: "Machine Learning",
+      difficulty: "Advanced",
+      time: "4 Weeks",
+      description:
+        "Apply regression, classification, clustering and model evaluation to real datasets.",
+    },
+    {
+      title: "SQL & Data Analysis",
+      difficulty: "Intermediate",
+      time: "3 Weeks",
+      description:
+        "Master SQL queries, joins, aggregations, subqueries and analytical data workflows.",
+    },
+    {
+      title: "Data Science Projects",
+      difficulty: "Advanced",
+      time: "4 Weeks",
+      description:
+        "Complete end-to-end data science projects using real-world datasets.",
+    },
+    {
+      title: "Data Science Interviews",
+      difficulty: "Advanced",
+      time: "2 Weeks",
+      description:
+        "Prepare statistics, SQL, Python, machine learning and case-study interviews.",
+    },
+  ],
+
+  // ========================================================
+  // CYBER SECURITY
+  // ========================================================
+
+  cyber: [
+    {
+      title: "Networking Fundamentals",
+      difficulty: "Beginner",
+      time: "3 Weeks",
+      description:
+        "Learn TCP/IP, DNS, HTTP, ports, protocols, routing and network architecture.",
+    },
+    {
+      title: "Linux & System Fundamentals",
+      difficulty: "Beginner",
+      time: "2 Weeks",
+      description:
+        "Learn Linux commands, permissions, processes, filesystems and system administration.",
+    },
+    {
+      title: "Cyber Security Fundamentals",
+      difficulty: "Intermediate",
+      time: "3 Weeks",
+      description:
+        "Understand CIA triad, threats, vulnerabilities, risk management and security controls.",
+    },
+    {
+      title: "Web Application Security",
+      difficulty: "Intermediate",
+      time: "3 Weeks",
+      description:
+        "Study common web vulnerabilities, secure authentication and defensive development practices.",
+    },
+    {
+      title: "Ethical Hacking",
+      difficulty: "Advanced",
+      time: "4 Weeks",
+      description:
+        "Learn authorized security testing methodology, reconnaissance, vulnerability assessment and reporting.",
+    },
+    {
+      title: "Security Tools & Monitoring",
+      difficulty: "Advanced",
+      time: "3 Weeks",
+      description:
+        "Work with security monitoring, logs, vulnerability scanners and incident investigation workflows.",
+    },
+    {
+      title: "Security Projects",
+      difficulty: "Advanced",
+      time: "4 Weeks",
+      description:
+        "Build defensive security projects and document security assessments professionally.",
+    },
+    {
+      title: "Cyber Security Interviews",
+      difficulty: "Advanced",
+      time: "2 Weeks",
+      description:
+        "Prepare networking, Linux, security concepts, web security and scenario-based interviews.",
+    },
+  ],
+
+  // ========================================================
+  // CLOUD
+  // ========================================================
+
+  cloud: [
+    {
+      title: "Linux Fundamentals",
+      difficulty: "Beginner",
+      time: "2 Weeks",
+      description:
+        "Learn Linux commands, permissions, processes, services and shell fundamentals.",
+    },
+    {
+      title: "Networking Fundamentals",
+      difficulty: "Beginner",
+      time: "3 Weeks",
+      description:
+        "Understand IP addressing, DNS, HTTP, routing, firewalls and cloud networking concepts.",
+    },
+    {
+      title: "Cloud Fundamentals",
+      difficulty: "Intermediate",
+      time: "2 Weeks",
+      description:
+        "Understand IaaS, PaaS, SaaS, regions, availability zones, storage and compute services.",
+    },
+    {
+      title: "AWS / Azure Services",
+      difficulty: "Intermediate",
+      time: "4 Weeks",
+      description:
+        "Learn compute, storage, databases, networking, IAM and monitoring using a major cloud platform.",
+    },
+    {
+      title: "Cloud Security",
+      difficulty: "Advanced",
+      time: "2 Weeks",
+      description:
+        "Implement IAM, least privilege, encryption, network security and secure cloud architecture.",
+    },
+    {
+      title: "Cloud Architecture",
+      difficulty: "Advanced",
+      time: "3 Weeks",
+      description:
+        "Design scalable, reliable and cost-aware cloud systems.",
+    },
+    {
+      title: "Cloud Projects",
+      difficulty: "Advanced",
+      time: "4 Weeks",
+      description:
+        "Deploy real applications using cloud infrastructure, databases, networking and monitoring.",
+    },
+    {
+      title: "Cloud Certification & Interviews",
+      difficulty: "Advanced",
+      time: "2 Weeks",
+      description:
+        "Prepare cloud architecture, networking, security and scenario-based interviews.",
+    },
+  ],
+
+  // ========================================================
+  // DEVOPS
+  // ========================================================
+
+  devops: [
+    {
+      title: "Linux & Shell",
+      difficulty: "Beginner",
+      time: "2 Weeks",
+      description:
+        "Master Linux administration, processes, permissions, services and shell scripting.",
+    },
+    {
+      title: "Git & GitHub",
+      difficulty: "Beginner",
+      time: "1 Week",
+      description:
+        "Learn professional Git workflows, branching, pull requests and collaboration.",
+    },
+    {
+      title: "Docker",
+      difficulty: "Intermediate",
+      time: "2 Weeks",
+      description:
+        "Containerize applications, create images, manage containers and use Docker Compose.",
+    },
+    {
+      title: "CI/CD",
+      difficulty: "Intermediate",
+      time: "3 Weeks",
+      description:
+        "Build automated pipelines for testing, building and deploying applications.",
+    },
+    {
+      title: "Cloud Infrastructure",
+      difficulty: "Advanced",
+      time: "3 Weeks",
+      description:
+        "Deploy applications on cloud platforms and understand scalable infrastructure.",
+    },
+    {
+      title: "Kubernetes",
+      difficulty: "Advanced",
+      time: "4 Weeks",
+      description:
+        "Learn containers orchestration, pods, deployments, services, scaling and cluster concepts.",
+    },
+    {
+      title: "Infrastructure as Code",
+      difficulty: "Advanced",
+      time: "3 Weeks",
+      description:
+        "Automate infrastructure using configuration and infrastructure-as-code practices.",
+    },
+    {
+      title: "DevOps Projects & Interviews",
+      difficulty: "Advanced",
+      time: "3 Weeks",
+      description:
+        "Build production-style CI/CD systems and prepare DevOps interviews.",
+    },
+  ],
+
+  // ========================================================
+  // ANDROID
+  // ========================================================
+
+  android: [
+    {
+      title: "Kotlin Fundamentals",
+      difficulty: "Beginner",
+      time: "3 Weeks",
+      description:
+        "Learn Kotlin syntax, functions, classes, collections, null safety and object-oriented programming.",
+    },
+    {
+      title: "Android Studio & UI",
+      difficulty: "Beginner",
+      time: "2 Weeks",
+      description:
+        "Learn Android Studio, project structure, layouts, resources and modern UI development.",
+    },
+    {
+      title: "Android Components",
+      difficulty: "Intermediate",
+      time: "3 Weeks",
+      description:
+        "Understand activities, fragments, lifecycle, intents, navigation and app architecture.",
+    },
+    {
+      title: "Jetpack Compose",
+      difficulty: "Intermediate",
+      time: "3 Weeks",
+      description:
+        "Build modern Android interfaces using declarative UI and Compose.",
+    },
+    {
+      title: "APIs & Local Storage",
+      difficulty: "Intermediate",
+      time: "3 Weeks",
+      description:
+        "Connect applications with REST APIs and implement local data storage.",
+    },
+    {
+      title: "Android Architecture",
+      difficulty: "Advanced",
+      time: "3 Weeks",
+      description:
+        "Learn MVVM, repositories, ViewModel, dependency management and scalable architecture.",
+    },
+    {
+      title: "Production Android App",
+      difficulty: "Advanced",
+      time: "4 Weeks",
+      description:
+        "Build a complete production-style Android application with authentication and APIs.",
+    },
+    {
+      title: "Publishing & Interviews",
+      difficulty: "Advanced",
+      time: "2 Weeks",
+      description:
+        "Prepare Android interviews and learn app release and deployment workflows.",
+    },
+  ],
+
+  // ========================================================
+  // UI UX
+  // ========================================================
+
+  uiux: [
+    {
+      title: "Design Fundamentals",
+      difficulty: "Beginner",
+      time: "2 Weeks",
+      description:
+        "Learn typography, color theory, spacing, hierarchy, composition and visual balance.",
+    },
+    {
+      title: "UX Research",
+      difficulty: "Beginner",
+      time: "2 Weeks",
+      description:
+        "Learn user research, interviews, personas, user journeys and problem identification.",
+    },
+    {
+      title: "Wireframing",
+      difficulty: "Intermediate",
+      time: "2 Weeks",
+      description:
+        "Create low and high fidelity wireframes focused on user flows and usability.",
+    },
+    {
+      title: "Figma",
+      difficulty: "Intermediate",
+      time: "3 Weeks",
+      description:
+        "Master Figma components, auto layout, variants, prototypes and design systems.",
+    },
+    {
+      title: "Design Systems",
+      difficulty: "Advanced",
+      time: "2 Weeks",
+      description:
+        "Create reusable components, tokens, patterns and scalable product design systems.",
+    },
+    {
+      title: "Prototyping & Usability",
+      difficulty: "Advanced",
+      time: "3 Weeks",
+      description:
+        "Build interactive prototypes and validate designs through usability testing.",
+    },
+    {
+      title: "Portfolio Projects",
+      difficulty: "Advanced",
+      time: "4 Weeks",
+      description:
+        "Create complete case studies covering research, wireframes, UI, prototype and final solution.",
+    },
+    {
+      title: "UI/UX Interview Preparation",
+      difficulty: "Advanced",
+      time: "2 Weeks",
+      description:
+        "Prepare design challenges, portfolio presentation and UX problem-solving interviews.",
+    },
+  ],
+};
+
+// ============================================================
+// CREATE ROADMAP
+// ============================================================
+
+const createRoadmap = (career, level) => {
+  const baseSteps =
+    roadmapData[career] || [];
+
+  return baseSteps.map((step, index) => {
+    let status = "pending";
+    let progress = 0;
+
+    if (level === "Beginner") {
+      if (index === 0) {
+        status = "in-progress";
+        progress = 35;
+      }
+    }
+
+    if (level === "Intermediate") {
+      if (index < 2) {
+        status = "completed";
+        progress = 100;
+      } else if (index === 2) {
+        status = "in-progress";
+        progress = 45;
+      }
+    }
+
+    if (level === "Advanced") {
+      if (index < 4) {
+        status = "completed";
+        progress = 100;
+      } else if (index === 4) {
+        status = "in-progress";
+        progress = 55;
+      }
+    }
+
+    return {
+      ...step,
+      stepNumber: index + 1,
+      status,
+      progress,
+    };
+  });
+};
+
+// ============================================================
+// WEEKLY PLAN
+// ============================================================
+
+const createWeeklyPlan = (
+  career,
+  level
+) => {
+  const plans = {
+
+    frontend: [
+      ["HTML, CSS", "Build responsive landing page"],
+      ["JavaScript", "Build DOM-based application"],
+      ["React", "Build React dashboard"],
+      ["API Integration", "Connect real API"],
+      ["State Management", "Build complex UI"],
+      ["Performance", "Optimize React application"],
+      ["Portfolio", "Build portfolio project"],
+      ["Deployment", "Deploy final project"],
+    ],
+
+    backend: [
+      ["Node.js", "Build basic server"],
+      ["Express", "Create REST API"],
+      ["MongoDB", "Design database"],
+      ["Authentication", "Implement JWT auth"],
+      ["Authorization", "Implement roles"],
+      ["Security", "Secure APIs"],
+      ["Backend Project", "Build complete API"],
+      ["Deployment", "Deploy backend"],
+    ],
+
+    fullstack: [
+      ["HTML/CSS", "Build responsive UI"],
+      ["JavaScript", "Build interactive frontend"],
+      ["React", "Build React application"],
+      ["Node/Express", "Create REST API"],
+      ["MongoDB", "Connect database"],
+      ["JWT", "Implement authentication"],
+      ["Full Stack Project", "Connect complete stack"],
+      ["Deployment", "Deploy full application"],
+    ],
+
+    ai: [
+      ["Python", "Build Python mini project"],
+      ["NumPy/Pandas", "Analyze dataset"],
+      ["Statistics", "Perform statistical analysis"],
+      ["Machine Learning", "Train ML model"],
+      ["Deep Learning", "Build neural network"],
+      ["LLM", "Build AI application"],
+      ["RAG", "Build knowledge-based AI"],
+      ["AI Project", "Deploy AI application"],
+    ],
+
+    ml: [
+      ["Python", "Build data processing script"],
+      ["Statistics", "Analyze dataset"],
+      ["Preprocessing", "Clean real dataset"],
+      ["Regression", "Build prediction model"],
+      ["Classification", "Build classifier"],
+      ["Clustering", "Perform segmentation"],
+      ["Deep Learning", "Train neural network"],
+      ["ML Project", "Deploy ML model"],
+    ],
+
+    data: [
+      ["Python", "Practice Pandas"],
+      ["SQL", "Solve analytical queries"],
+      ["Statistics", "Analyze business data"],
+      ["EDA", "Explore real dataset"],
+      ["Visualization", "Create dashboard"],
+      ["Machine Learning", "Build prediction model"],
+      ["Case Study", "Solve business problem"],
+      ["Portfolio", "Publish data project"],
+    ],
+
+    cyber: [
+      ["Networking", "Analyze network traffic"],
+      ["Linux", "Practice Linux administration"],
+      ["Security Basics", "Perform security assessment"],
+      ["Web Security", "Study web vulnerabilities"],
+      ["Monitoring", "Analyze security logs"],
+      ["Ethical Hacking", "Perform authorized lab testing"],
+      ["Security Project", "Create security report"],
+      ["Interview", "Practice security scenarios"],
+    ],
+
+    cloud: [
+      ["Linux", "Deploy Linux server"],
+      ["Networking", "Configure cloud networking"],
+      ["Cloud Basics", "Deploy first cloud service"],
+      ["Compute", "Deploy application"],
+      ["Storage", "Design storage solution"],
+      ["Database", "Deploy cloud database"],
+      ["Security", "Configure IAM"],
+      ["Architecture", "Build cloud project"],
+    ],
+
+    devops: [
+      ["Linux", "Automate shell task"],
+      ["Git", "Create Git workflow"],
+      ["Docker", "Containerize application"],
+      ["Docker Compose", "Run multi-container app"],
+      ["CI/CD", "Create pipeline"],
+      ["Cloud", "Deploy application"],
+      ["Kubernetes", "Deploy containerized app"],
+      ["DevOps Project", "Build CI/CD system"],
+    ],
+
+    android: [
+      ["Kotlin", "Build Kotlin application"],
+      ["Android Studio", "Create Android app"],
+      ["UI", "Build app screens"],
+      ["Navigation", "Implement app navigation"],
+      ["API", "Connect REST API"],
+      ["Storage", "Implement local storage"],
+      ["Architecture", "Build MVVM application"],
+      ["Final App", "Publish production app"],
+    ],
+
+    uiux: [
+      ["Design Basics", "Create visual style guide"],
+      ["UX Research", "Create user persona"],
+      ["User Flow", "Design complete user journey"],
+      ["Wireframes", "Create low-fidelity wireframes"],
+      ["Figma", "Create high-fidelity UI"],
+      ["Prototype", "Build interactive prototype"],
+      ["Usability", "Test design with users"],
+      ["Case Study", "Publish portfolio case study"],
+    ],
+  };
+
+  const selected =
+    plans[career] ||
+    plans.fullstack;
+
+  const hoursByLevel = {
+    Beginner: [8, 8, 10, 10, 10, 12, 12, 12],
+    Intermediate: [10, 10, 12, 12, 14, 14, 15, 15],
+    Advanced: [12, 12, 14, 15, 16, 16, 18, 18],
+  };
+
+  return selected.map(
+    ([topic, assignment], index) => ({
+      week: `Week ${index + 1}`,
+      topics: [topic],
+      assignment,
+      miniProject:
+        `${careerNames[career]} - ${topic} Project`,
+      hours:
+        hoursByLevel[level][index],
+    })
+  );
+};
+
+// ============================================================
+// PROJECTS
+// ============================================================
+
+const projectData = {
+
+  frontend: [
+    ["Responsive Portfolio", "Beginner", ["HTML", "CSS", "JavaScript"], "1 Week"],
+    ["Weather Dashboard", "Beginner", ["JavaScript", "REST API"], "1 Week"],
+    ["React Task Manager", "Intermediate", ["React", "Hooks", "API"], "2 Weeks"],
+    ["E-Commerce Frontend", "Advanced", ["React", "State Management", "API"], "4 Weeks"],
+  ],
+
+  backend: [
+    ["REST API", "Beginner", ["Node.js", "Express"], "1 Week"],
+    ["Authentication API", "Intermediate", ["Node.js", "JWT", "MongoDB"], "2 Weeks"],
+    ["Task Manager API", "Intermediate", ["Express", "MongoDB", "JWT"], "2 Weeks"],
+    ["Realtime Chat Backend", "Advanced", ["Node.js", "Socket.IO", "MongoDB"], "4 Weeks"],
+  ],
+
+  fullstack: [
+    ["Portfolio Website", "Beginner", ["React", "CSS"], "1 Week"],
+    ["Authentication System", "Intermediate", ["React", "Node.js", "JWT"], "2 Weeks"],
+    ["Task Management SaaS", "Advanced", ["React", "Express", "MongoDB"], "3 Weeks"],
+    ["Full Stack E-Commerce", "Advanced", ["React", "Node.js", "MongoDB", "JWT"], "5 Weeks"],
+  ],
+
+  ai: [
+    ["AI Chatbot", "Beginner", ["Python", "API"], "1 Week"],
+    ["Recommendation System", "Intermediate", ["Python", "Pandas", "ML"], "2 Weeks"],
+    ["Image Classification", "Advanced", ["Python", "CNN", "Deep Learning"], "3 Weeks"],
+    ["RAG AI Assistant", "Advanced", ["Python", "LLM", "Embeddings"], "4 Weeks"],
+  ],
+
+  ml: [
+    ["House Price Prediction", "Beginner", ["Python", "Regression"], "1 Week"],
+    ["Customer Churn Prediction", "Intermediate", ["Pandas", "Scikit-learn"], "2 Weeks"],
+    ["Recommendation Engine", "Advanced", ["Python", "ML"], "3 Weeks"],
+    ["End-to-End ML Platform", "Advanced", ["ML", "API", "Deployment"], "4 Weeks"],
+  ],
+
+  data: [
+    ["Sales Data Analysis", "Beginner", ["Python", "Pandas"], "1 Week"],
+    ["SQL Analytics Dashboard", "Intermediate", ["SQL", "Python"], "2 Weeks"],
+    ["Customer Segmentation", "Advanced", ["Python", "Clustering"], "3 Weeks"],
+    ["Business Intelligence Case Study", "Advanced", ["SQL", "Python", "Visualization"], "4 Weeks"],
+  ],
+
+  cyber: [
+    ["Network Analysis Lab", "Beginner", ["Networking", "Linux"], "1 Week"],
+    ["Security Assessment", "Intermediate", ["Security", "Linux"], "2 Weeks"],
+    ["Web Security Lab", "Advanced", ["Web Security", "OWASP"], "3 Weeks"],
+    ["SOC Monitoring Project", "Advanced", ["Logs", "Monitoring", "Security"], "4 Weeks"],
+  ],
+
+  cloud: [
+    ["Cloud Static Website", "Beginner", ["Cloud Storage", "DNS"], "1 Week"],
+    ["Cloud API Deployment", "Intermediate", ["Compute", "API"], "2 Weeks"],
+    ["Scalable Web Architecture", "Advanced", ["Cloud", "Networking"], "3 Weeks"],
+    ["Production Cloud System", "Advanced", ["Cloud", "Security", "Database"], "4 Weeks"],
+  ],
+
+  devops: [
+    ["Dockerized App", "Beginner", ["Docker"], "1 Week"],
+    ["CI/CD Pipeline", "Intermediate", ["GitHub Actions", "Docker"], "2 Weeks"],
+    ["Kubernetes Deployment", "Advanced", ["Kubernetes", "Docker"], "3 Weeks"],
+    ["Production DevOps Platform", "Advanced", ["CI/CD", "Cloud", "Kubernetes"], "4 Weeks"],
+  ],
+
+  android: [
+    ["Calculator App", "Beginner", ["Kotlin", "Android"], "1 Week"],
+    ["Weather App", "Intermediate", ["Kotlin", "REST API"], "2 Weeks"],
+    ["Expense Manager", "Advanced", ["Kotlin", "Room", "MVVM"], "3 Weeks"],
+    ["Production Android App", "Advanced", ["Kotlin", "API", "MVVM"], "4 Weeks"],
+  ],
+
+  uiux: [
+    ["Mobile App Redesign", "Beginner", ["Figma", "UI"], "1 Week"],
+    ["Food Delivery UX", "Intermediate", ["UX Research", "Figma"], "2 Weeks"],
+    ["FinTech Product Design", "Advanced", ["Figma", "Design System"], "3 Weeks"],
+    ["Complete Product Case Study", "Advanced", ["Research", "UI", "Prototype"], "4 Weeks"],
+  ],
+};
+
+// ============================================================
+// CREATE PROJECTS
+// ============================================================
+
+const createProjects = (career) => {
+  const projects =
+    projectData[career] ||
+    projectData.fullstack;
+
+  return projects.map(
+    ([name, difficulty, skills, time]) => ({
+      name,
+      difficulty,
+      skills,
+      time,
+    })
+  );
+};
+
+// ============================================================
+// SKILL ANALYSIS
+// ============================================================
+
+const createSkillAnalysis = (
+  career,
+  level
+) => {
+  const scores = {
+    Beginner: {
+      currentSkills: 25,
+      missingSkills: 75,
+      industryReadiness: 20,
+      interviewReadiness: 15,
+      confidenceScore: 30,
+    },
+
+    Intermediate: {
+      currentSkills: 55,
+      missingSkills: 45,
+      industryReadiness: 55,
+      interviewReadiness: 45,
+      confidenceScore: 60,
+    },
+
+    Advanced: {
+      currentSkills: 82,
+      missingSkills: 18,
+      industryReadiness: 85,
+      interviewReadiness: 78,
+      confidenceScore: 88,
+    },
+  };
+
+  return {
+    ...scores[level],
+    career: careerNames[career],
+  };
+};
+
+// ============================================================
+// INTERVIEW PREPARATION
+// ============================================================
+
+const interviewData = {
+
+  frontend: [
+    "HTML semantic elements",
+    "CSS Flexbox and Grid",
+    "JavaScript fundamentals",
+    "Closures and asynchronous JavaScript",
+    "React hooks",
+    "State management",
+    "Browser rendering",
+    "Frontend performance",
+    "REST APIs",
+    "Frontend coding problems",
+  ],
+
+  backend: [
+    "Node.js event loop",
+    "Express middleware",
+    "REST API design",
+    "MongoDB schema design",
+    "Indexes and aggregation",
+    "JWT authentication",
+    "Authorization",
+    "API security",
+    "Caching",
+    "Backend system design",
+  ],
+
+  fullstack: [
+    "JavaScript fundamentals",
+    "React architecture",
+    "Node.js event loop",
+    "REST API design",
+    "MongoDB",
+    "JWT authentication",
+    "Frontend-backend communication",
+    "Security",
+    "Deployment",
+    "Full stack system design",
+  ],
+
+  ai: [
+    "Python",
+    "Linear algebra",
+    "Statistics",
+    "Machine learning",
+    "Neural networks",
+    "Transformers",
+    "LLMs",
+    "Embeddings",
+    "RAG",
+    "AI system design",
+  ],
+
+  ml: [
+    "Probability",
+    "Statistics",
+    "Regression",
+    "Classification",
+    "Feature engineering",
+    "Model evaluation",
+    "Overfitting",
+    "Clustering",
+    "Deep learning",
+    "ML system design",
+  ],
+
+  data: [
+    "Python",
+    "Pandas",
+    "SQL",
+    "Statistics",
+    "EDA",
+    "Data visualization",
+    "Hypothesis testing",
+    "Machine learning",
+    "Business case studies",
+    "Data interpretation",
+  ],
+
+  cyber: [
+    "Networking",
+    "TCP/IP",
+    "Linux",
+    "Authentication",
+    "Web security",
+    "OWASP concepts",
+    "Threat modeling",
+    "Incident response",
+    "Security monitoring",
+    "Security scenarios",
+  ],
+
+  cloud: [
+    "Cloud fundamentals",
+    "Networking",
+    "IAM",
+    "Compute",
+    "Storage",
+    "Databases",
+    "Cloud security",
+    "Scalability",
+    "Availability",
+    "Cloud architecture",
+  ],
+
+  devops: [
+    "Linux",
+    "Git",
+    "Docker",
+    "CI/CD",
+    "Cloud",
+    "Kubernetes",
+    "Infrastructure",
+    "Monitoring",
+    "Deployment strategies",
+    "DevOps architecture",
+  ],
+
+  android: [
+    "Kotlin",
+    "Android lifecycle",
+    "Activities",
+    "Jetpack Compose",
+    "Navigation",
+    "REST APIs",
+    "Local storage",
+    "MVVM",
+    "Performance",
+    "Android architecture",
+  ],
+
+  uiux: [
+    "UX research",
+    "Personas",
+    "User journeys",
+    "Wireframing",
+    "Typography",
+    "Color theory",
+    "Figma",
+    "Design systems",
+    "Usability testing",
+    "Design case studies",
+  ],
+};
+
+// ============================================================
+// CREATE INTERVIEW PREPARATION
+// ============================================================
+
+const createInterviewPreparation = (
+  career
+) => {
+  return {
+    focus: careerNames[career],
+    topics:
+      interviewData[career] ||
+      interviewData.fullstack,
+    mockInterviews: 5,
+    codingChallenges: 10,
+    portfolioReview: true,
+  };
+};

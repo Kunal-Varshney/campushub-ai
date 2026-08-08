@@ -7,6 +7,7 @@ import notesRoutes from "./routes/notes.routes.js";
 import assistantRoutes from "./routes/assistant.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import resumeRoutes from "./routes/resume.routes.js";
+import roadmapRoutes from "./routes/roadmap.routes.js";
 
 import authMiddleware from "./middleware/auth.middleware.js";
 
@@ -54,6 +55,17 @@ app.use("/api/notes", notesRoutes);
 
 
 // ==========================
+// Skill Roadmap Routes
+// ==========================
+
+app.use(
+  "/api/roadmap",
+  authMiddleware,
+  roadmapRoutes
+);
+
+
+// ==========================
 // AI Assistant Routes
 // ==========================
 
@@ -80,6 +92,8 @@ app.use(
 // ==========================
 
 app.use("/api/resume", resumeRoutes);
+
+
 
 
 // ==========================
