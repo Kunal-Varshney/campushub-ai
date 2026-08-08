@@ -1,40 +1,17 @@
-import express from "express";
-
-import {
-  createNote,
-  generateNote,
-  getNotes,
-} from "../controllers/notes.controller.js";
-
-import authMiddleware from "../middleware/auth.middleware.js";
-
+/**
+ * This is only the ONE new route CampusHub AI needs for download
+ * tracking. Add it into your EXISTING note routes file — don't
+ * replace your current notes router with this, just merge this
+ * route in alongside your upload/list/search routes.
+ */
+const express = require("express");
 const router = express.Router();
 
-// =====================
-// SMART NOTE GENERATOR
-// =====================
-router.post(
-  "/generate",
-  authMiddleware,
-  generateNote
-);
+const { recordNoteDownload } = require("../controllers/adminController");
+// Replace with your actual auth middleware import:
+const { protect } = require("../middleware/authMiddleware");
 
-// =====================
-// CREATE NOTE
-// =====================
-router.post(
-  "/",
-  authMiddleware,
-  createNote
-);
+// POST /api/notes/:id/download
+router.post("/:id/download", protect, recordNoteDownload);
 
-// =====================
-// GET NOTES
-// =====================
-router.get(
-  "/",
-  authMiddleware,
-  getNotes
-);
-
-export default router;
+module.exports = router;

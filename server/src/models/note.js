@@ -1,73 +1,53 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
+
+const NOTE_CATEGORIES = [
+  "DSA",
+  "Machine Learning",
+  "DBMS",
+  "Web Development",
+  "Programming",
+];
 
 const noteSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: true,
+      required: [true, "Title is required"],
       trim: true,
     },
-
     description: {
       type: String,
+      trim: true,
       default: "",
     },
-
-    subject: {
+    category: {
       type: String,
-      required: true,
+      enum: NOTE_CATEGORIES,
+      required: [true, "Category is required"],
     },
-
-    branch: {
-      type: String,
-      default: "",
-    },
-
-    year: {
-      type: Number,
-      default: null,
-    },
-
-    fileUrl: {
-      type: String,
-      default: "",
-    },
-
-    // ===== SMART NOTES =====
-    summary: {
-      type: String,
-      default: "",
-    },
-
-    points: [
-      {
-        type: String,
-      },
-    ],
-
-    keywords: [
-      {
-        type: String,
-      },
-    ],
-
-    examTips: [
-      {
-        type: String,
-      },
-    ],
-
     uploadedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
+    fileUrl: {
+      type: String,
+      required: [true, "File URL is required"],
+    },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
+    downloads: {
+      type: Number,
+      default: 0,
+    },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-const Note = mongoose.model("Note", noteSchema);
+noteSchema.index({ title: "text", description: "text" });
 
-export default Note;
+module.exports = mongoose.model("Note", noteSchema);
+module.exports.NOTE_CATEGORIES = NOTE_CATEGORIES;
