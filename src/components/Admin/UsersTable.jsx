@@ -109,15 +109,22 @@ const ActionButton = ({
   onClick,
   title,
   children,
-  className,
+  className = "",
 }) => {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (typeof onClick === "function") {
+          onClick();
+        }
+      }}
       title={title}
       aria-label={title}
-      className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-all duration-200 hover:scale-105 ${className}`}
+      className={`relative z-30 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border transition-all duration-200 hover:scale-105 active:scale-95 ${className}`}
     >
       {children}
     </button>
@@ -129,23 +136,88 @@ const ActionButton = ({
 // ============================================================
 
 const UsersTable = ({
-  users,
+  users = [],
   onBlock,
   onUnblock,
   onDelete,
   onViewActivity,
 }) => {
+
+  // ==========================================================
+  // ACTION HANDLERS
+  // ==========================================================
+
+  const handleView = (user) => {
+    if (!user?._id) {
+      console.error("User ID missing:", user);
+      return;
+    }
+
+    if (typeof onViewActivity !== "function") {
+      console.error(
+        "onViewActivity handler is missing."
+      );
+      return;
+    }
+
+    onViewActivity(user);
+  };
+
+  const handleBlock = (user) => {
+    if (!user?._id) {
+      console.error("User ID missing:", user);
+      return;
+    }
+
+    if (typeof onBlock !== "function") {
+      console.error(
+        "onBlock handler is missing."
+      );
+      return;
+    }
+
+    onBlock(user);
+  };
+
+  const handleUnblock = (user) => {
+    if (!user?._id) {
+      console.error("User ID missing:", user);
+      return;
+    }
+
+    if (typeof onUnblock !== "function") {
+      console.error(
+        "onUnblock handler is missing."
+      );
+      return;
+    }
+
+    onUnblock(user);
+  };
+
+  const handleDelete = (user) => {
+    if (!user?._id) {
+      console.error("User ID missing:", user);
+      return;
+    }
+
+    if (typeof onDelete !== "function") {
+      console.error(
+        "onDelete handler is missing."
+      );
+      return;
+    }
+
+    onDelete(user);
+  };
+
   // ==========================================================
   // EMPTY STATE
   // ==========================================================
 
   if (!users || users.length === 0) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/5 py-16 text-center backdrop-blur-xl">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/5">
-          <FiEye className="text-xl text-slate-500" />
-        </div>
-
+      <div className="flex min-h-[200px] flex-col items-center justify-center text-center">
         <p className="text-sm font-medium text-slate-300">
           No users found
         </p>
@@ -158,17 +230,17 @@ const UsersTable = ({
   }
 
   return (
-    <div className="w-full">
+    <div>
       {/* ======================================================
           DESKTOP TABLE
       ====================================================== */}
 
       <div className="hidden overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl md:block">
         <table className="w-full min-w-[850px] text-left">
-          {/* TABLE HEADER */}
 
           <thead>
             <tr className="border-b border-white/10 text-xs uppercase tracking-wider text-slate-500">
+
               <th className="px-5 py-4 font-medium">
                 User
               </th>
@@ -192,10 +264,9 @@ const UsersTable = ({
               <th className="px-5 py-4 text-right font-medium">
                 Actions
               </th>
+
             </tr>
           </thead>
-
-          {/* TABLE BODY */}
 
           <tbody>
             {users.map((user) => (
@@ -203,10 +274,12 @@ const UsersTable = ({
                 key={user._id}
                 className="border-b border-white/5 transition-colors duration-200 last:border-b-0 hover:bg-white/[0.04]"
               >
+
                 {/* USER */}
 
                 <td className="px-5 py-4">
                   <div className="flex items-center gap-3">
+
                     <UserAvatar
                       name={user.name}
                       avatar={user.avatar}
@@ -225,6 +298,7 @@ const UsersTable = ({
                           : "—"}
                       </p>
                     </div>
+
                   </div>
                 </td>
 
@@ -260,11 +334,12 @@ const UsersTable = ({
 
                 <td className="px-5 py-4">
                   <div className="flex items-center justify-end gap-2">
-                    {/* VIEW ACTIVITY */}
+
+                    {/* VIEW */}
 
                     <ActionButton
                       onClick={() =>
-                        onViewActivity?.(user)
+                        handleView(user)
                       }
                       title="View activity"
                       className="border-blue-500/20 bg-blue-500/10 text-blue-300 hover:border-blue-500/40 hover:bg-blue-500/20"
@@ -277,7 +352,7 @@ const UsersTable = ({
                     {user.isBlocked ? (
                       <ActionButton
                         onClick={() =>
-                          onUnblock?.(user)
+                          handleUnblock(user)
                         }
                         title="Unblock user"
                         className="border-emerald-500/20 bg-emerald-500/10 text-emerald-300 hover:border-emerald-500/40 hover:bg-emerald-500/20"
@@ -287,7 +362,7 @@ const UsersTable = ({
                     ) : (
                       <ActionButton
                         onClick={() =>
-                          onBlock?.(user)
+                          handleBlock(user)
                         }
                         title="Block user"
                         className="border-amber-500/20 bg-amber-500/10 text-amber-300 hover:border-amber-500/40 hover:bg-amber-500/20"
@@ -300,18 +375,21 @@ const UsersTable = ({
 
                     <ActionButton
                       onClick={() =>
-                        onDelete?.(user)
+                        handleDelete(user)
                       }
                       title="Delete user"
                       className="border-red-500/20 bg-red-500/10 text-red-300 hover:border-red-500/40 hover:bg-red-500/20"
                     >
                       <FiTrash2 className="text-sm" />
                     </ActionButton>
+
                   </div>
                 </td>
+
               </tr>
             ))}
           </tbody>
+
         </table>
       </div>
 
@@ -320,21 +398,26 @@ const UsersTable = ({
       ====================================================== */}
 
       <div className="space-y-3 md:hidden">
+
         {users.map((user) => (
           <div
             key={user._id}
             className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-xl"
           >
+
             {/* USER HEADER */}
 
             <div className="flex items-start justify-between gap-3">
+
               <div className="flex min-w-0 items-center gap-3">
+
                 <UserAvatar
                   name={user.name}
                   avatar={user.avatar}
                 />
 
                 <div className="min-w-0">
+
                   <p className="truncate text-sm font-semibold text-white">
                     {user.name ||
                       "Unnamed User"}
@@ -343,18 +426,20 @@ const UsersTable = ({
                   <p className="truncate text-xs text-slate-500">
                     {user.email || "—"}
                   </p>
+
                 </div>
+
               </div>
 
               <StatusBadge
                 isBlocked={user.isBlocked}
               />
+
             </div>
 
             {/* USER DETAILS */}
 
             <div className="mt-4 grid grid-cols-2 gap-3">
-              {/* ROLE */}
 
               <div className="rounded-xl border border-white/5 bg-white/[0.03] p-3">
                 <p className="mb-1 text-[11px] uppercase tracking-wide text-slate-500">
@@ -364,29 +449,27 @@ const UsersTable = ({
                 <RoleBadge role={user.role} />
               </div>
 
-              {/* JOINED */}
-
               <div className="rounded-xl border border-white/5 bg-white/[0.03] p-3">
                 <p className="mb-1 text-[11px] uppercase tracking-wide text-slate-500">
                   Joined
                 </p>
 
                 <p className="text-xs font-medium text-slate-300">
-                  {formatDate(
-                    user.createdAt
-                  )}
+                  {formatDate(user.createdAt)}
                 </p>
               </div>
+
             </div>
 
             {/* ACTIONS */}
 
             <div className="mt-4 flex items-center justify-end gap-2 border-t border-white/5 pt-4">
+
               {/* VIEW */}
 
               <ActionButton
                 onClick={() =>
-                  onViewActivity?.(user)
+                  handleView(user)
                 }
                 title="View activity"
                 className="border-blue-500/20 bg-blue-500/10 text-blue-300 hover:border-blue-500/40 hover:bg-blue-500/20"
@@ -399,7 +482,7 @@ const UsersTable = ({
               {user.isBlocked ? (
                 <ActionButton
                   onClick={() =>
-                    onUnblock?.(user)
+                    handleUnblock(user)
                   }
                   title="Unblock user"
                   className="border-emerald-500/20 bg-emerald-500/10 text-emerald-300 hover:border-emerald-500/40 hover:bg-emerald-500/20"
@@ -409,7 +492,7 @@ const UsersTable = ({
               ) : (
                 <ActionButton
                   onClick={() =>
-                    onBlock?.(user)
+                    handleBlock(user)
                   }
                   title="Block user"
                   className="border-amber-500/20 bg-amber-500/10 text-amber-300 hover:border-amber-500/40 hover:bg-amber-500/20"
@@ -422,16 +505,19 @@ const UsersTable = ({
 
               <ActionButton
                 onClick={() =>
-                  onDelete?.(user)
+                  handleDelete(user)
                 }
                 title="Delete user"
                 className="border-red-500/20 bg-red-500/10 text-red-300 hover:border-red-500/40 hover:bg-red-500/20"
               >
                 <FiTrash2 />
               </ActionButton>
+
             </div>
+
           </div>
         ))}
+
       </div>
     </div>
   );
