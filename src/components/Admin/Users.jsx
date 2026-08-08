@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+
 import {
   FiSearch,
   FiX,
@@ -18,8 +19,13 @@ import {
 } from "../../services/adminService";
 
 const Users = () => {
+  // ============================================================
+  // STATE
+  // ============================================================
+
   const [users, setUsers] = useState([]);
   const [totalUsers, setTotalUsers] = useState(0);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -31,32 +37,66 @@ const Users = () => {
   const [activityModal, setActivityModal] = useState(null);
   const [activityLoading, setActivityLoading] = useState(false);
 
+  // ============================================================
+  // TOAST
+  // ============================================================
+
   const showToast = (text) => {
     setMessage(text);
-    setTimeout(() => setMessage(""), 3000);
+
+    setTimeout(() => {
+      setMessage("");
+    }, 3000);
   };
+
+  // ============================================================
+  // FETCH USERS
+  // ============================================================
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     setError("");
 
-    const res = await getUsers({
-      search,
-      role,
-      status,
-    });
+    try {
+      const res = await getUsers({
+        search,
+        role,
+        status,
+      });
 
-    if (res?.success) {
-      setUsers(res.users || []);
-      setTotalUsers(
-        res.totalUsers ?? (res.users?.length || 0)
+      if (res?.success) {
+        setUsers(res.users || []);
+
+        setTotalUsers(
+          res.totalUsers ?? (res.users?.length || 0)
+        );
+      } else {
+        setUsers([]);
+        setTotalUsers(0);
+
+        setError(
+          res?.message || "Failed to load users"
+        );
+      }
+    } catch (error) {
+      console.error("Fetch Users Error:", error);
+
+      setUsers([]);
+      setTotalUsers(0);
+
+      setError(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to load users"
       );
-    } else {
-      setError(res?.message || "Failed to load users");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }, [search, role, status]);
+
+  // ============================================================
+  // AUTO FETCH
+  // ============================================================
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -66,243 +106,338 @@ const Users = () => {
     return () => clearTimeout(timer);
   }, [fetchUsers]);
 
-  const handleBlock = async (user) => {
-    const res = await blockUser(user._id);
+  // ============================================================
+  // BLOCK USER
+  // ============================================================
 
-    if (res?.success) {
-      showToast(`${user.name} has been blocked`);
-      fetchUsers();
-    } else {
-      showToast(res?.message || "Failed to block user");
+  const handleBlock = async (user) => {
+    try {
+      const res = await blockUser(user._id);
+
+      if (res?.success) {
+        showToast(`${user.name} has been blocked`);
+
+        await fetchUsers();
+      } else {
+        showToast(
+          res?.message || "Failed to block user"
+        );
+      }
+    } catch (error) {
+      console.error("Block User Error:", error);
+
+      showToast("Failed to block user");
     }
   };
+
+  // ============================================================
+  // UNBLOCK USER
+  // ============================================================
 
   const handleUnblock = async (user) => {
-    const res = await unblockUser(user._id);
+    try {
+      const res = await unblockUser(user._id);
 
-    if (res?.success) {
-      showToast(`${user.name} has been unblocked`);
-      fetchUsers();
-    } else {
-      showToast(res?.message || "Failed to unblock user");
+      if (res?.success) {
+        showToast(`${user.name} has been unblocked`);
+
+        await fetchUsers();
+      } else {
+        showToast(
+          res?.message || "Failed to unblock user"
+        );
+      }
+    } catch (error) {
+      console.error("Unblock User Error:", error);
+
+      showToast("Failed to unblock user");
     }
   };
 
+  // ============================================================
+  // DELETE USER
+  // ============================================================
+
   const handleDelete = async (user) => {
-    if (
-      !window.confirm(
-        `Delete ${user.name}? This cannot be undone.`
-      )
-    ) {
+    const confirmed = window.confirm(
+      `Delete ${user.name}? This cannot be undone.`
+    );
+
+    if (!confirmed) {
       return;
     }
 
-    const res = await deleteUser(user._id);
+    try {
+      const res = await deleteUser(user._id);
 
-    if (res?.success) {
-      showToast(`${user.name} was deleted`);
-      fetchUsers();
-    } else {
-      showToast(res?.message || "Failed to delete user");
+      if (res?.success) {
+        showToast(`${user.name} was deleted`);
+
+        await fetchUsers();
+      } else {
+        showToast(
+          res?.message || "Failed to delete user"
+        );
+      }
+    } catch (error) {
+      console.error("Delete User Error:", error);
+
+      showToast("Failed to delete user");
     }
   };
 
-  const handleViewActivity = async (user) => {
-    setActivityLoading(true);
+  // ============================================================
+  // VIEW USER ACTIVITY
+  // ============================================================
 
+  const handleViewActivity = async (user) => {
     setActivityModal({
       user,
       activity: null,
     });
 
-    const res = await getUserActivity(user._id);
+    setActivityLoading(true);
 
-    setActivityLoading(false);
+    try {
+      const res = await getUserActivity(user._id);
 
-    if (res?.success) {
-      setActivityModal({
-        user,
-        activity: res.activity,
-      });
-    } else {
-      showToast(
-        res?.message || "Failed to load activity"
+      if (res?.success) {
+        setActivityModal({
+          user,
+          activity: res.activity || {
+            downloadCount: 0,
+            aiQueryCount: 0,
+            recentDownloads: [],
+            recentQueries: [],
+          },
+        });
+      } else {
+        showToast(
+          res?.message || "Failed to load activity"
+        );
+
+        setActivityModal(null);
+      }
+    } catch (error) {
+      console.error(
+        "User Activity Error:",
+        error
       );
 
+      showToast("Failed to load activity");
+
       setActivityModal(null);
+    } finally {
+      setActivityLoading(false);
     }
   };
 
+  // ============================================================
+  // CLOSE ACTIVITY MODAL
+  // ============================================================
+
+  const closeActivityModal = () => {
+    if (activityLoading) {
+      return;
+    }
+
+    setActivityModal(null);
+  };
+
+  // ============================================================
+  // UI
+  // ============================================================
+
   return (
-    <div className="min-h-screen bg-slate-950">
-      <main className="relative z-10 mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-10">
+    <div className="relative min-h-full">
+      {/* ======================================================
+          HEADER
+      ====================================================== */}
 
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-            User Management
-          </h1>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+          User Management
+        </h1>
 
-          <p className="mt-1 text-sm text-slate-400 sm:text-base">
-            {totalUsers} registered user
-            {totalUsers === 1 ? "" : "s"} on the platform
-          </p>
-        </div>
+        <p className="mt-1 text-sm text-slate-400 sm:text-base">
+          {totalUsers} registered user
+          {totalUsers === 1 ? "" : "s"} on the platform
+        </p>
+      </div>
 
-        {/* Filters */}
-        <div className="mb-6 flex flex-wrap items-center gap-3">
+      {/* ======================================================
+          FILTERS
+      ====================================================== */}
 
-          {/* Search */}
-          <div className="flex min-w-[220px] flex-1 items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-            <FiSearch className="shrink-0 text-slate-400" />
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        {/* SEARCH */}
 
-            <input
-              value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
-              }
-              placeholder="Search by name or email..."
-              className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
-            />
-          </div>
+        <div className="flex min-w-[220px] flex-1 items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+          <FiSearch className="shrink-0 text-slate-400" />
 
-          {/* Role */}
-          <select
-            value={role}
+          <input
+            type="text"
+            value={search}
             onChange={(e) =>
-              setRole(e.target.value)
+              setSearch(e.target.value)
             }
-            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50"
-          >
-            <option
-              value=""
-              className="bg-slate-900"
-            >
-              All roles
-            </option>
-
-            <option
-              value="student"
-              className="bg-slate-900"
-            >
-              Student
-            </option>
-
-            <option
-              value="moderator"
-              className="bg-slate-900"
-            >
-              Moderator
-            </option>
-
-            <option
-              value="admin"
-              className="bg-slate-900"
-            >
-              Admin
-            </option>
-          </select>
-
-          {/* Status */}
-          <select
-            value={status}
-            onChange={(e) =>
-              setStatus(e.target.value)
-            }
-            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50"
-          >
-            <option
-              value=""
-              className="bg-slate-900"
-            >
-              All statuses
-            </option>
-
-            <option
-              value="active"
-              className="bg-slate-900"
-            >
-              Active
-            </option>
-
-            <option
-              value="blocked"
-              className="bg-slate-900"
-            >
-              Blocked
-            </option>
-          </select>
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div className="mb-6 rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-sm text-red-300 backdrop-blur-xl">
-            {error}
-          </div>
-        )}
-
-        {/* Users Table */}
-        {loading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 6 }).map(
-              (_, i) => (
-                <div
-                  key={i}
-                  className="h-14 animate-pulse rounded-xl bg-white/5"
-                />
-              )
-            )}
-          </div>
-        ) : (
-          <UsersTable
-            users={users}
-            onBlock={handleBlock}
-            onUnblock={handleUnblock}
-            onDelete={handleDelete}
-            onViewActivity={
-              handleViewActivity
-            }
+            placeholder="Search by name or email..."
+            className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
           />
-        )}
-      </main>
+        </div>
 
-      {/* Activity Modal */}
+        {/* ROLE */}
+
+        <select
+          value={role}
+          onChange={(e) =>
+            setRole(e.target.value)
+          }
+          className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500/50"
+        >
+          <option
+            value=""
+            className="bg-slate-900"
+          >
+            All roles
+          </option>
+
+          <option
+            value="student"
+            className="bg-slate-900"
+          >
+            Student
+          </option>
+
+          <option
+            value="moderator"
+            className="bg-slate-900"
+          >
+            Moderator
+          </option>
+
+          <option
+            value="admin"
+            className="bg-slate-900"
+          >
+            Admin
+          </option>
+        </select>
+
+        {/* STATUS */}
+
+        <select
+          value={status}
+          onChange={(e) =>
+            setStatus(e.target.value)
+          }
+          className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500/50"
+        >
+          <option
+            value=""
+            className="bg-slate-900"
+          >
+            All statuses
+          </option>
+
+          <option
+            value="active"
+            className="bg-slate-900"
+          >
+            Active
+          </option>
+
+          <option
+            value="blocked"
+            className="bg-slate-900"
+          >
+            Blocked
+          </option>
+        </select>
+      </div>
+
+      {/* ======================================================
+          ERROR
+      ====================================================== */}
+
+      {error && (
+        <div className="mb-6 rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-sm text-red-300 backdrop-blur-xl">
+          {error}
+        </div>
+      )}
+
+      {/* ======================================================
+          USERS TABLE
+      ====================================================== */}
+
+      {loading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 6 }).map(
+            (_, i) => (
+              <div
+                key={i}
+                className="h-14 animate-pulse rounded-xl bg-white/5"
+              />
+            )
+          )}
+        </div>
+      ) : (
+        <UsersTable
+          users={users}
+          onBlock={handleBlock}
+          onUnblock={handleUnblock}
+          onDelete={handleDelete}
+          onViewActivity={handleViewActivity}
+        />
+      )}
+
+      {/* ======================================================
+          ACTIVITY MODAL
+      ====================================================== */}
+
       {activityModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          {/* BACKDROP */}
 
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() =>
-              setActivityModal(null)
-            }
+            onClick={closeActivityModal}
           />
 
+          {/* MODAL */}
+
           <div className="relative w-full max-w-md overflow-hidden rounded-3xl p-[1px]">
+            {/* GRADIENT BORDER */}
 
             <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-500/40 via-purple-500/30 to-cyan-400/40" />
 
             <div className="relative rounded-3xl border border-white/10 bg-slate-900/95 p-6 backdrop-blur-xl">
+              {/* MODAL HEADER */}
 
-              {/* Modal Header */}
               <div className="mb-5 flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-semibold text-white">
+                    {activityModal.user.name}
+                    {"'s Activity"}
+                  </h3>
 
-                <h3 className="text-base font-semibold text-white">
-                  {activityModal.user.name}
-                  's Activity
-                </h3>
+                  <p className="mt-1 text-xs text-slate-500">
+                    User activity overview
+                  </p>
+                </div>
 
                 <button
-                  onClick={() =>
-                    setActivityModal(null)
-                  }
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors duration-200 hover:bg-white/10 hover:text-white"
+                  type="button"
+                  onClick={closeActivityModal}
+                  disabled={activityLoading}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors duration-200 hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <FiX className="text-lg" />
                 </button>
-
               </div>
 
-              {/* Loading */}
+              {/* LOADING */}
+
               {activityLoading ||
               !activityModal.activity ? (
                 <div className="space-y-3">
@@ -317,90 +452,118 @@ const Users = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
+                  {/* STATS */}
 
-                  {/* Stats */}
                   <div className="grid grid-cols-2 gap-3">
+                    {/* DOWNLOADS */}
 
                     <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                       <div className="mb-1 flex items-center gap-2 text-xs font-medium text-blue-300">
                         <FiDownload />
-                        Downloads
+
+                        <span>
+                          Downloads
+                        </span>
                       </div>
 
                       <p className="text-xl font-bold text-white">
-                        {
-                          activityModal
-                            .activity
-                            .downloadCount
-                        }
+                        {activityModal.activity
+                          .downloadCount ?? 0}
                       </p>
                     </div>
+
+                    {/* AI QUERIES */}
 
                     <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                       <div className="mb-1 flex items-center gap-2 text-xs font-medium text-purple-300">
                         <FiMessageSquare />
-                        AI Queries
+
+                        <span>
+                          AI Queries
+                        </span>
                       </div>
 
                       <p className="text-xl font-bold text-white">
-                        {
-                          activityModal
-                            .activity
-                            .aiQueryCount
-                        }
+                        {activityModal.activity
+                          .aiQueryCount ?? 0}
                       </p>
                     </div>
-
                   </div>
 
-                  {/* Recent Downloads */}
+                  {/* RECENT DOWNLOADS */}
+
                   {activityModal.activity
-                    .recentDownloads
-                    ?.length > 0 && (
+                    .recentDownloads?.length >
+                    0 && (
                     <div>
                       <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-400">
                         <FiActivity />
+
                         Recent downloads
                       </p>
 
-                      <div className="space-y-1.5">
+                      <div className="max-h-32 space-y-1.5 overflow-y-auto pr-1">
                         {activityModal.activity.recentDownloads.map(
-                          (download, i) => (
-                            <p
-                              key={i}
-                              className="truncate text-xs text-slate-300"
-                            >
-                              {
-                                download.noteTitle
+                          (
+                            download,
+                            i
+                          ) => (
+                            <div
+                              key={
+                                download._id ||
+                                i
                               }
-                            </p>
+                              className="rounded-lg border border-white/5 bg-white/[0.03] px-3 py-2"
+                            >
+                              <p className="truncate text-xs text-slate-300">
+                                {download.noteTitle ||
+                                  "Untitled note"}
+                              </p>
+                            </div>
                           )
                         )}
                       </div>
                     </div>
                   )}
 
+                  {/* NO DOWNLOADS */}
+
+                  {!activityModal.activity
+                    .recentDownloads
+                    ?.length && (
+                    <div className="rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-4 text-center">
+                      <FiActivity className="mx-auto mb-2 text-lg text-slate-600" />
+
+                      <p className="text-xs text-slate-500">
+                        No recent downloads
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
-
             </div>
           </div>
         </div>
       )}
 
-      {/* Toast */}
+      {/* ======================================================
+          TOAST
+      ====================================================== */}
+
       {message && (
         <div className="fixed bottom-6 right-6 z-50">
           <div className="relative overflow-hidden rounded-xl p-[1px] shadow-2xl shadow-black/40">
+            {/* GRADIENT */}
 
             <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500" />
+
+            {/* CONTENT */}
 
             <div className="relative min-w-[240px] rounded-xl bg-slate-900/90 px-5 py-3.5 backdrop-blur-xl">
               <span className="text-sm font-medium text-white">
                 {message}
               </span>
             </div>
-
           </div>
         </div>
       )}

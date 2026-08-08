@@ -1,589 +1,440 @@
-// import React from "react";
-
-
-// const formatDate = (dateString) => {
-
-//   if (!dateString) return "—";
-
-//   const date = new Date(dateString);
-
-//   if (isNaN(date)) return "—";
-
-
-//   return date.toLocaleDateString("en-US", {
-//     day: "2-digit",
-//     month: "short",
-//     year: "numeric",
-//   });
-
-// };
-
-
-
-// const RoleBadge = ({ role }) => {
-
-//   const isAdmin =
-//     role?.toLowerCase() === "admin";
-
-
-//   return (
-
-//     <span
-//       className={`
-//       inline-flex
-//       items-center
-//       px-3
-//       py-1
-//       rounded-full
-//       text-xs
-//       font-semibold
-//       border
-//       ${
-//         isAdmin
-//         ?
-//         "bg-purple-500/10 text-purple-300 border-purple-500/30"
-//         :
-//         "bg-blue-500/10 text-blue-300 border-blue-500/30"
-//       }
-//       `}
-//     >
-
-//       {role || "Student"}
-
-//     </span>
-
-//   );
-
-// };
-
-
-
-
-
-// const UserAvatar = ({name, avatar}) => {
-
-
-//   if(avatar){
-
-//     return (
-
-//       <img
-//         src={avatar}
-//         alt={name}
-//         className="
-//         h-10
-//         w-10
-//         rounded-full
-//         object-cover
-//         border
-//         border-white/20
-//         "
-//       />
-
-//     );
-
-//   }
-
-
-//   const initial =
-//     name
-//     ?
-//     name.charAt(0).toUpperCase()
-//     :
-//     "?";
-
-
-//   return (
-
-//     <div
-//       className="
-//       h-10
-//       w-10
-//       rounded-full
-//       bg-gradient-to-br
-//       from-blue-500
-//       to-purple-500
-//       flex
-//       items-center
-//       justify-center
-//       text-white
-//       font-bold
-//       "
-//     >
-
-//       {initial}
-
-//     </div>
-
-//   );
-
-// };
-
-
-
-
-
-// const UsersTable = ({users}) => {
-
-
-//   if(!users || users.length===0){
-
-//     return (
-
-//       <div
-//         className="
-//         py-16
-//         text-center
-//         text-slate-400
-//         "
-//       >
-
-//         No users found.
-
-//       </div>
-
-//     );
-
-//   }
-
-
-
-
-//   return (
-
-//     <div>
-
-
-//       {/* Desktop Table */}
-
-//       <div
-//         className="
-//         hidden
-//         md:block
-//         overflow-x-auto
-//         "
-//       >
-
-
-//         <table
-//           className="
-//           w-full
-//           text-left
-//           "
-//         >
-
-
-//           <thead>
-
-//             <tr
-//               className="
-//               border-b
-//               border-white/10
-//               text-slate-400
-//               text-sm
-//               "
-//             >
-
-//               <th className="px-6 py-4">
-//                 Profile
-//               </th>
-
-//               <th className="px-6 py-4">
-//                 Email
-//               </th>
-
-//               <th className="px-6 py-4">
-//                 College
-//               </th>
-
-//               <th className="px-6 py-4">
-//                 Branch
-//               </th>
-
-//               <th className="px-6 py-4">
-//                 Year
-//               </th>
-
-//               <th className="px-6 py-4">
-//                 Role
-//               </th>
-
-//               <th className="px-6 py-4">
-//                 Joined
-//               </th>
-
-
-//             </tr>
-
-//           </thead>
-
-
-
-
-//           <tbody>
-
-
-//           {
-//             users.map((user)=>(
-
-
-//               <tr
-//                 key={user._id}
-//                 className="
-//                 border-b
-//                 border-white/5
-//                 hover:bg-white/5
-//                 transition
-//                 "
-//               >
-
-
-//                 <td className="px-6 py-4">
-
-//                   <div className="flex items-center gap-3">
-
-
-//                     <UserAvatar
-//                       name={user.name}
-//                       avatar={user.avatar}
-//                     />
-
-
-//                     <p className="text-white font-medium">
-
-//                       {user.name || "Unnamed User"}
-
-//                     </p>
-
-
-//                   </div>
-
-
-//                 </td>
-
-
-
-//                 <td className="px-6 py-4 text-slate-300">
-
-//                   {user.email || "—"}
-
-//                 </td>
-
-
-
-//                 <td className="px-6 py-4 text-slate-300">
-
-//                   {user.college || "—"}
-
-//                 </td>
-
-
-
-//                 <td className="px-6 py-4 text-slate-300">
-
-//                   {user.branch || "—"}
-
-//                 </td>
-
-
-
-//                 <td className="px-6 py-4 text-slate-300">
-
-//                   {user.year || "—"}
-
-//                 </td>
-
-
-
-//                 <td className="px-6 py-4">
-
-//                   <RoleBadge role={user.role}/>
-
-//                 </td>
-
-
-
-//                 <td className="px-6 py-4 text-slate-300">
-
-//                   {formatDate(user.createdAt)}
-
-//                 </td>
-
-
-
-//               </tr>
-
-
-//             ))
-//           }
-
-
-//           </tbody>
-
-
-//         </table>
-
-
-//       </div>
-
-
-
-
-
-
-//       {/* Mobile Cards */}
-
-//       <div className="md:hidden space-y-4">
-
-
-//       {
-//         users.map((user)=>(
-
-
-//           <div
-//             key={user._id}
-//             className="
-//             rounded-2xl
-//             border
-//             border-white/10
-//             bg-white/5
-//             p-4
-//             "
-//           >
-
-
-//             <div className="flex items-center gap-3 mb-4">
-
-
-//               <UserAvatar
-//                 name={user.name}
-//                 avatar={user.avatar}
-//               />
-
-
-//               <div>
-
-//                 <p className="text-white font-medium">
-//                   {user.name}
-//                 </p>
-
-//                 <p className="text-xs text-slate-400">
-//                   {user.email}
-//                 </p>
-
-//               </div>
-
-
-//               <div className="ml-auto">
-
-//                 <RoleBadge role={user.role}/>
-
-//               </div>
-
-
-//             </div>
-
-
-
-//             <div className="grid grid-cols-2 gap-3 text-sm">
-
-
-//               <div>
-//                 <p className="text-xs text-slate-500">
-//                   College
-//                 </p>
-
-//                 <p className="text-slate-300">
-//                   {user.college || "—"}
-//                 </p>
-
-//               </div>
-
-
-//               <div>
-
-//                 <p className="text-xs text-slate-500">
-//                   Year
-//                 </p>
-
-//                 <p className="text-slate-300">
-//                   {user.year || "—"}
-//                 </p>
-
-//               </div>
-
-
-//               <div>
-
-//                 <p className="text-xs text-slate-500">
-//                   Branch
-//                 </p>
-
-//                 <p className="text-slate-300">
-//                   {user.branch || "—"}
-//                 </p>
-
-//               </div>
-
-
-//               <div>
-
-//                 <p className="text-xs text-slate-500">
-//                   Joined
-//                 </p>
-
-//                 <p className="text-slate-300">
-//                   {formatDate(user.createdAt)}
-//                 </p>
-
-//               </div>
-
-
-//             </div>
-
-
-//           </div>
-
-
-//         ))
-//       }
-
-
-//       </div>
-
-
-//     </div>
-
-//   );
-
-// };
-
-
-// export default UsersTable;
-
-
-
-
-
-
-
-import { FiSlash, FiCheckCircle, FiTrash2, FiEye } from "react-icons/fi";
+import {
+  FiSlash,
+  FiCheckCircle,
+  FiTrash2,
+  FiEye,
+} from "react-icons/fi";
+
+// ============================================================
+// FORMAT DATE
+// ============================================================
 
 const formatDate = (dateString) => {
   if (!dateString) return "—";
+
   const date = new Date(dateString);
-  if (isNaN(date)) return "—";
-  return date.toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" });
+
+  if (isNaN(date.getTime())) return "—";
+
+  return date.toLocaleDateString("en-US", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 };
 
+// ============================================================
+// ROLE BADGE
+// ============================================================
+
 const RoleBadge = ({ role }) => {
+  const normalizedRole =
+    role?.toLowerCase() || "student";
+
   const styles = {
-    admin: "bg-purple-500/10 text-purple-300 border-purple-500/30",
-    moderator: "bg-cyan-500/10 text-cyan-300 border-cyan-500/30",
-    student: "bg-blue-500/10 text-blue-300 border-blue-500/30",
+    admin:
+      "bg-purple-500/10 text-purple-300 border-purple-500/30",
+
+    moderator:
+      "bg-cyan-500/10 text-cyan-300 border-cyan-500/30",
+
+    student:
+      "bg-blue-500/10 text-blue-300 border-blue-500/30",
   };
+
   return (
-    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${styles[role] || styles.student}`}>
-      {role || "student"}
+    <span
+      className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${
+        styles[normalizedRole] || styles.student
+      }`}
+    >
+      {normalizedRole.charAt(0).toUpperCase() +
+        normalizedRole.slice(1)}
     </span>
   );
 };
 
-const StatusBadge = ({ isBlocked }) => (
-  <span
-    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${
-      isBlocked
-        ? "bg-red-500/10 text-red-300 border-red-500/30"
-        : "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
-    }`}
-  >
-    {isBlocked ? "Blocked" : "Active"}
-  </span>
-);
+// ============================================================
+// STATUS BADGE
+// ============================================================
+
+const StatusBadge = ({ isBlocked }) => {
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${
+        isBlocked
+          ? "border-red-500/30 bg-red-500/10 text-red-300"
+          : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+      }`}
+    >
+      {isBlocked ? "Blocked" : "Active"}
+    </span>
+  );
+};
+
+// ============================================================
+// USER AVATAR
+// ============================================================
 
 const UserAvatar = ({ name, avatar }) => {
   if (avatar) {
-    return <img src={avatar} alt={name} className="h-10 w-10 rounded-full object-cover border border-white/10 shrink-0" />;
+    return (
+      <img
+        src={avatar}
+        alt={name || "User"}
+        className="h-10 w-10 rounded-full border border-white/20 object-cover"
+        onError={(e) => {
+          e.currentTarget.style.display = "none";
+        }}
+      />
+    );
   }
-  const initial = name ? name.charAt(0).toUpperCase() : "?";
+
+  const initial = name
+    ? name.charAt(0).toUpperCase()
+    : "?";
+
   return (
-    <div className="h-10 w-10 rounded-full shrink-0 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-500 text-white font-semibold border border-white/10">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500 font-bold text-white">
       {initial}
     </div>
   );
 };
 
-const UserTable = ({ users, onBlock, onUnblock, onDelete, onViewActivity }) => {
+// ============================================================
+// ACTION BUTTON
+// ============================================================
+
+const ActionButton = ({
+  onClick,
+  title,
+  children,
+  className,
+}) => {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      aria-label={title}
+      className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-all duration-200 hover:scale-105 ${className}`}
+    >
+      {children}
+    </button>
+  );
+};
+
+// ============================================================
+// USERS TABLE
+// ============================================================
+
+const UsersTable = ({
+  users,
+  onBlock,
+  onUnblock,
+  onDelete,
+  onViewActivity,
+}) => {
+  // ==========================================================
+  // EMPTY STATE
+  // ==========================================================
+
   if (!users || users.length === 0) {
-    return <div className="py-16 text-center text-slate-400">No users found.</div>;
+    return (
+      <div className="rounded-2xl border border-white/10 bg-white/5 py-16 text-center backdrop-blur-xl">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/5">
+          <FiEye className="text-xl text-slate-500" />
+        </div>
+
+        <p className="text-sm font-medium text-slate-300">
+          No users found
+        </p>
+
+        <p className="mt-1 text-xs text-slate-500">
+          Try changing your search or filters.
+        </p>
+      </div>
+    );
   }
 
   return (
-    <div className="w-full overflow-x-auto rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl">
-      <table className="w-full text-sm text-left">
-        <thead>
-          <tr className="border-b border-white/10 bg-white/5">
-            {["User", "Email", "Role", "Status", "Joined", "Actions"].map((col) => (
-              <th key={col} className="px-5 py-4 font-medium text-slate-400 uppercase tracking-wide text-xs whitespace-nowrap">
-                {col}
+    <div className="w-full">
+      {/* ======================================================
+          DESKTOP TABLE
+      ====================================================== */}
+
+      <div className="hidden overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl md:block">
+        <table className="w-full min-w-[850px] text-left">
+          {/* TABLE HEADER */}
+
+          <thead>
+            <tr className="border-b border-white/10 text-xs uppercase tracking-wider text-slate-500">
+              <th className="px-5 py-4 font-medium">
+                User
               </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user._id} className="border-b border-white/5 last:border-b-0 hover:bg-white/5 transition-colors duration-200">
-              <td className="px-5 py-4">
-                <div className="flex items-center gap-3">
-                  <UserAvatar name={user.name} avatar={user.avatar} />
-                  <span className="text-white font-medium whitespace-nowrap">{user.name || "Unnamed User"}</span>
-                </div>
-              </td>
-              <td className="px-5 py-4 text-slate-300 whitespace-nowrap">{user.email || "—"}</td>
-              <td className="px-5 py-4 whitespace-nowrap"><RoleBadge role={user.role} /></td>
-              <td className="px-5 py-4 whitespace-nowrap"><StatusBadge isBlocked={user.isBlocked} /></td>
-              <td className="px-5 py-4 text-slate-400 whitespace-nowrap">{formatDate(user.createdAt)}</td>
-              <td className="px-5 py-4 whitespace-nowrap">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => onViewActivity?.(user)}
-                    title="View activity"
-                    className="flex items-center justify-center h-8 w-8 rounded-lg text-blue-300 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-colors duration-200"
-                  >
-                    <FiEye className="text-sm" />
-                  </button>
-                  {user.isBlocked ? (
-                    <button
-                      onClick={() => onUnblock?.(user)}
-                      title="Unblock user"
-                      className="flex items-center justify-center h-8 w-8 rounded-lg text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors duration-200"
-                    >
-                      <FiCheckCircle className="text-sm" />
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => onBlock?.(user)}
-                      title="Block user"
-                      className="flex items-center justify-center h-8 w-8 rounded-lg text-amber-300 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-colors duration-200"
-                    >
-                      <FiSlash className="text-sm" />
-                    </button>
-                  )}
-                  <button
-                    onClick={() => onDelete?.(user)}
-                    title="Delete user"
-                    className="flex items-center justify-center h-8 w-8 rounded-lg text-red-300 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors duration-200"
-                  >
-                    <FiTrash2 className="text-sm" />
-                  </button>
-                </div>
-              </td>
+
+              <th className="px-5 py-4 font-medium">
+                Email
+              </th>
+
+              <th className="px-5 py-4 font-medium">
+                Role
+              </th>
+
+              <th className="px-5 py-4 font-medium">
+                Status
+              </th>
+
+              <th className="px-5 py-4 font-medium">
+                Joined
+              </th>
+
+              <th className="px-5 py-4 text-right font-medium">
+                Actions
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          {/* TABLE BODY */}
+
+          <tbody>
+            {users.map((user) => (
+              <tr
+                key={user._id}
+                className="border-b border-white/5 transition-colors duration-200 last:border-b-0 hover:bg-white/[0.04]"
+              >
+                {/* USER */}
+
+                <td className="px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <UserAvatar
+                      name={user.name}
+                      avatar={user.avatar}
+                    />
+
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-white">
+                        {user.name ||
+                          "Unnamed User"}
+                      </p>
+
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        ID:{" "}
+                        {user._id
+                          ? user._id.slice(-6)
+                          : "—"}
+                      </p>
+                    </div>
+                  </div>
+                </td>
+
+                {/* EMAIL */}
+
+                <td className="px-5 py-4">
+                  <p className="max-w-[220px] truncate text-sm text-slate-300">
+                    {user.email || "—"}
+                  </p>
+                </td>
+
+                {/* ROLE */}
+
+                <td className="px-5 py-4">
+                  <RoleBadge role={user.role} />
+                </td>
+
+                {/* STATUS */}
+
+                <td className="px-5 py-4">
+                  <StatusBadge
+                    isBlocked={user.isBlocked}
+                  />
+                </td>
+
+                {/* JOINED */}
+
+                <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-400">
+                  {formatDate(user.createdAt)}
+                </td>
+
+                {/* ACTIONS */}
+
+                <td className="px-5 py-4">
+                  <div className="flex items-center justify-end gap-2">
+                    {/* VIEW ACTIVITY */}
+
+                    <ActionButton
+                      onClick={() =>
+                        onViewActivity?.(user)
+                      }
+                      title="View activity"
+                      className="border-blue-500/20 bg-blue-500/10 text-blue-300 hover:border-blue-500/40 hover:bg-blue-500/20"
+                    >
+                      <FiEye className="text-sm" />
+                    </ActionButton>
+
+                    {/* BLOCK / UNBLOCK */}
+
+                    {user.isBlocked ? (
+                      <ActionButton
+                        onClick={() =>
+                          onUnblock?.(user)
+                        }
+                        title="Unblock user"
+                        className="border-emerald-500/20 bg-emerald-500/10 text-emerald-300 hover:border-emerald-500/40 hover:bg-emerald-500/20"
+                      >
+                        <FiCheckCircle className="text-sm" />
+                      </ActionButton>
+                    ) : (
+                      <ActionButton
+                        onClick={() =>
+                          onBlock?.(user)
+                        }
+                        title="Block user"
+                        className="border-amber-500/20 bg-amber-500/10 text-amber-300 hover:border-amber-500/40 hover:bg-amber-500/20"
+                      >
+                        <FiSlash className="text-sm" />
+                      </ActionButton>
+                    )}
+
+                    {/* DELETE */}
+
+                    <ActionButton
+                      onClick={() =>
+                        onDelete?.(user)
+                      }
+                      title="Delete user"
+                      className="border-red-500/20 bg-red-500/10 text-red-300 hover:border-red-500/40 hover:bg-red-500/20"
+                    >
+                      <FiTrash2 className="text-sm" />
+                    </ActionButton>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ======================================================
+          MOBILE CARDS
+      ====================================================== */}
+
+      <div className="space-y-3 md:hidden">
+        {users.map((user) => (
+          <div
+            key={user._id}
+            className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-xl"
+          >
+            {/* USER HEADER */}
+
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <UserAvatar
+                  name={user.name}
+                  avatar={user.avatar}
+                />
+
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-white">
+                    {user.name ||
+                      "Unnamed User"}
+                  </p>
+
+                  <p className="truncate text-xs text-slate-500">
+                    {user.email || "—"}
+                  </p>
+                </div>
+              </div>
+
+              <StatusBadge
+                isBlocked={user.isBlocked}
+              />
+            </div>
+
+            {/* USER DETAILS */}
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              {/* ROLE */}
+
+              <div className="rounded-xl border border-white/5 bg-white/[0.03] p-3">
+                <p className="mb-1 text-[11px] uppercase tracking-wide text-slate-500">
+                  Role
+                </p>
+
+                <RoleBadge role={user.role} />
+              </div>
+
+              {/* JOINED */}
+
+              <div className="rounded-xl border border-white/5 bg-white/[0.03] p-3">
+                <p className="mb-1 text-[11px] uppercase tracking-wide text-slate-500">
+                  Joined
+                </p>
+
+                <p className="text-xs font-medium text-slate-300">
+                  {formatDate(
+                    user.createdAt
+                  )}
+                </p>
+              </div>
+            </div>
+
+            {/* ACTIONS */}
+
+            <div className="mt-4 flex items-center justify-end gap-2 border-t border-white/5 pt-4">
+              {/* VIEW */}
+
+              <ActionButton
+                onClick={() =>
+                  onViewActivity?.(user)
+                }
+                title="View activity"
+                className="border-blue-500/20 bg-blue-500/10 text-blue-300 hover:border-blue-500/40 hover:bg-blue-500/20"
+              >
+                <FiEye />
+              </ActionButton>
+
+              {/* BLOCK / UNBLOCK */}
+
+              {user.isBlocked ? (
+                <ActionButton
+                  onClick={() =>
+                    onUnblock?.(user)
+                  }
+                  title="Unblock user"
+                  className="border-emerald-500/20 bg-emerald-500/10 text-emerald-300 hover:border-emerald-500/40 hover:bg-emerald-500/20"
+                >
+                  <FiCheckCircle />
+                </ActionButton>
+              ) : (
+                <ActionButton
+                  onClick={() =>
+                    onBlock?.(user)
+                  }
+                  title="Block user"
+                  className="border-amber-500/20 bg-amber-500/10 text-amber-300 hover:border-amber-500/40 hover:bg-amber-500/20"
+                >
+                  <FiSlash />
+                </ActionButton>
+              )}
+
+              {/* DELETE */}
+
+              <ActionButton
+                onClick={() =>
+                  onDelete?.(user)
+                }
+                title="Delete user"
+                className="border-red-500/20 bg-red-500/10 text-red-300 hover:border-red-500/40 hover:bg-red-500/20"
+              >
+                <FiTrash2 />
+              </ActionButton>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
 
-export default UserTable;
+export default UsersTable;
