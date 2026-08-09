@@ -8,6 +8,7 @@ import {
   ChevronDown,
   User,
   Settings,
+  Home,
   LogOut,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -64,7 +65,16 @@ function Topbar({ user }) {
 
         </div>
 
+        {/* Home Button */}
 
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          aria-label="Go to Home"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/70 transition-colors duration-300 hover:border-blue-500 hover:text-blue-400"
+        >
+          <Home size={18} />
+        </button>
 
         <button
           type="button"
@@ -184,3 +194,5 @@ function Topbar({ user }) {
 
 
 export default Topbar;
+
+
