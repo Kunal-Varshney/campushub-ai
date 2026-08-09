@@ -86,7 +86,9 @@ function Signup() {
 
     } catch(error) {
 
-      console.log(error);
+        console.log("REGISTER ERROR:", error.response?.data);
+        console.log("REGISTER STATUS:", error.response?.status);
+        console.log("REGISTER REQUEST:", error.config?.data);
 
       alert(
         error.response?.data?.message ||

@@ -1,4 +1,3 @@
-
 import axios from "axios";
 
 const BASE_URL = "http://localhost:5000/api";
@@ -10,7 +9,10 @@ const api = axios.create({
   },
 });
 
-// Token automatically attach karega
+// ============================================================
+// TOKEN AUTOMATICALLY ATTACH
+// ============================================================
+
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -24,7 +26,10 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Common error handler
+// ============================================================
+// COMMON ERROR HANDLER
+// ============================================================
+
 const handleError = (error, fallback) => {
   console.error(
     fallback,
@@ -38,9 +43,9 @@ const handleError = (error, fallback) => {
   };
 };
 
-/* ============================================================
-   ADMIN DASHBOARD
-============================================================ */
+// ============================================================
+// ADMIN DASHBOARD
+// ============================================================
 
 export const getAdminStats = async () => {
   try {
@@ -51,9 +56,9 @@ export const getAdminStats = async () => {
   }
 };
 
-/* ============================================================
-   USERS
-============================================================ */
+// ============================================================
+// USERS
+// ============================================================
 
 export const getUsers = async (params = {}) => {
   try {
@@ -75,7 +80,10 @@ export const getUserActivity = async (id) => {
 
     return data;
   } catch (error) {
-    return handleError(error, "Failed to fetch user activity");
+    return handleError(
+      error,
+      "Failed to fetch user activity"
+    );
   }
 };
 
@@ -134,9 +142,9 @@ export const updateUserPermissions = async (
   }
 };
 
-/* ============================================================
-   NOTES
-============================================================ */
+// ============================================================
+// NOTES
+// ============================================================
 
 export const getNotes = async (params = {}) => {
   try {
@@ -199,13 +207,11 @@ export const deleteNote = async (id) => {
   }
 };
 
-/* ============================================================
-   DOWNLOAD HISTORY
-============================================================ */
+// ============================================================
+// DOWNLOAD HISTORY
+// ============================================================
 
-export const getDownloadHistory = async (
-  params = {}
-) => {
+export const getDownloadHistory = async (params = {}) => {
   try {
     const { data } = await api.get(
       "/admin/download-history",
@@ -223,9 +229,9 @@ export const getDownloadHistory = async (
   }
 };
 
-/* ============================================================
-   ANALYTICS
-============================================================ */
+// ============================================================
+// ANALYTICS
+// ============================================================
 
 export const getAnalytics = async () => {
   try {
@@ -242,9 +248,9 @@ export const getAnalytics = async () => {
   }
 };
 
-/* ============================================================
-   AI ASSISTANT MONITORING
-============================================================ */
+// ============================================================
+// AI ASSISTANT MONITORING
+// ============================================================
 
 export const getAIUsage = async (params = {}) => {
   try {
@@ -264,8 +270,78 @@ export const getAIUsage = async (params = {}) => {
   }
 };
 
-/* ============================================================
-   DEFAULT EXPORT
-============================================================ */
+// ============================================================
+// INTERNSHIP FINDER
+// ============================================================
+
+export const getInternshipRecommendations = async (
+  searchData
+) => {
+  try {
+    const { data } = await api.post(
+      "/internship/recommend",
+      searchData
+    );
+
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to get internship recommendations"
+    );
+  }
+};
+
+export const searchInternships = async (params = {}) => {
+  try {
+    const { data } = await api.get(
+      "/internship/search",
+      {
+        params,
+      }
+    );
+
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to search internships"
+    );
+  }
+};
+
+export const toggleSavedInternship = async (id) => {
+  try {
+    const { data } = await api.post(
+      `/internship/${id}/save`
+    );
+
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to save internship"
+    );
+  }
+};
+
+export const applyInternship = async (id) => {
+  try {
+    const { data } = await api.post(
+      `/internship/${id}/apply`
+    );
+
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to apply for internship"
+    );
+  }
+};
+
+// ============================================================
+// DEFAULT EXPORT
+// ============================================================
 
 export default api;

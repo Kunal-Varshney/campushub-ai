@@ -100,7 +100,7 @@ app.use("/api/resume", resumeRoutes);
 // ========================== 
 
 app.use( 
-  "/api/internships", 
+  "/api/internship", 
   internshipRoutes 
 );
 

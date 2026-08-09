@@ -2,6 +2,13 @@ import { useEffect, useState, useMemo } from "react";
 import { saveLastVisited } from "../../utils/lastVisited";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  getInternships,
+  getInternshipRecommendations,
+  toggleSavedInternship,
+  applyInternship,
+} from "../../services/internshipService";
+
+import {
   Rocket,
   Search,
   MapPin,
@@ -330,7 +337,7 @@ function InternshipCard({ item, index, saved, applied, onSave, onApply }) {
 
       <div className="mt-6 flex items-center gap-3">
         <motion.button
-          onClick={() => onApply(item.id)}
+          onClick={() => onApply(item._id)}
           whileHover={{ scale: applied ? 1 : 1.03 }}
           whileTap={{ scale: applied ? 1 : 0.97 }}
           disabled={applied}
@@ -351,7 +358,7 @@ function InternshipCard({ item, index, saved, applied, onSave, onApply }) {
           )}
         </motion.button>
         <motion.button
-          onClick={() => onSave(item.id)}
+          onClick={() => onSave(item._id)}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition ${
@@ -392,9 +399,28 @@ function FAQItem({ item, isOpen, onClick }) {
 
 export default function InternshipFinder() {
 
-    useEffect(() => {
-        saveLastVisited("/internship-finder");
-    }, []);
+   useEffect(() => {
+    saveLastVisited("/internship-finder");
+
+    const loadInternships = async () => {
+      try {
+        const response = await getInternships();
+
+        console.log("Internships from backend:", response);
+
+        setInternships(response?.internships || []);
+      } catch (error) {
+        console.error(
+          "Failed to load internships:",
+          error.response?.data || error.message
+        );
+
+        setInternships([]);
+      }
+    };
+
+    loadInternships();
+  }, []); 
 
   const [searchForm, setSearchForm] = useState({
     skills: "",
@@ -404,6 +430,7 @@ export default function InternshipFinder() {
     workType: "Remote",
     experience: "Fresher",
   });
+  const [internships, setInternships] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [recommendations, setRecommendations] = useState([]);
@@ -427,36 +454,50 @@ export default function InternshipFinder() {
     setSearchForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFindInternship = () => {
+  const handleFindInternship = async () => {
     setIsSearching(true);
     setHasSearched(false);
-    setTimeout(() => {
-      const skillTerm = searchForm.skills.toLowerCase().trim();
-      const locationTerm = searchForm.location.toLowerCase().trim();
 
-      let results = INTERNSHIP_DB.filter((item) => {
-        const matchesSkill =
-          !skillTerm || item.skills.some((s) => s.toLowerCase().includes(skillTerm)) || item.role.toLowerCase().includes(skillTerm);
-        const matchesLocation =
-          !locationTerm || item.location.toLowerCase().includes(locationTerm) || (locationTerm === "remote" && item.mode === "Remote");
-        const matchesMode = searchForm.workType === "Remote" ? true : item.mode === searchForm.workType;
-        return matchesSkill && matchesLocation;
+    try {
+      const response = await getInternshipRecommendations({
+        skills: searchForm.skills,
+        role: searchForm.role,
+        location: searchForm.location,
+        stipend: searchForm.stipend,
+        workType: searchForm.workType,
+        experience: searchForm.experience,
       });
 
-      if (results.length === 0) {
-        results = [...INTERNSHIP_DB].sort((a, b) => b.matchScore - a.matchScore).slice(0, 6);
-      }
+      console.log("Internship AI Response:", response);
 
-      results = [...results].sort((a, b) => b.matchScore - a.matchScore).slice(0, 6);
+      const results =
+        response?.internships ||
+        response?.recommendations ||
+        response?.data ||
+        [];
 
       setRecommendations(results);
-      setIsSearching(false);
       setHasSearched(true);
-    }, 2000);
+    } catch (error) {
+      console.error(
+        "Internship recommendation error:",
+        error.response?.data || error.message
+      );
+
+      setRecommendations([]);
+      setHasSearched(true);
+
+      alert(
+        error.response?.data?.message ||
+          "Unable to find internships. Please try again."
+      );
+    } finally {
+      setIsSearching(false);
+    }
   };
 
-  const filteredList = useMemo(() => {
-    let list = [...INTERNSHIP_DB];
+    const filteredList = useMemo(() => {
+      let list = [...internships];
 
     if (filters.search.trim()) {
       const term = filters.search.toLowerCase();
@@ -469,23 +510,20 @@ export default function InternshipFinder() {
     }
 
     if (filters.category !== "All") {
-    const categoryMap = {
-        Developer: ["developer", "sde", "software"],
-        Design: ["design", "ui", "ux"],
-        Data: ["data", "analyst"],
-        Engineering: ["engineering", "cloud"],
-    };
-
-    list = list.filter((item) =>
-        categoryMap[filters.category].some((word) =>
-        item.role.toLowerCase().includes(word)
-        )
+    list = list.filter(
+      (item) =>
+        item.category?.toLowerCase() ===
+        filters.category.toLowerCase()
     );
-    }
+  }
 
-    if (filters.category !== "All") {
-      list = list.filter((item) => item.role.toLowerCase().includes(filters.category.toLowerCase()));
-    }
+   if (filters.location !== "All") {
+    list = list.filter(
+      (item) => item.location === filters.location
+    );
+  }
+
+  
 
     if (filters.salary !== "All") {
       if (filters.salary === "Below 25k") list = list.filter((item) => item.stipend < 25000);
@@ -499,20 +537,69 @@ export default function InternshipFinder() {
 
     if (filters.sortBy === "Highest Stipend") list.sort((a, b) => b.stipend - a.stipend);
     if (filters.sortBy === "Best Match") list.sort((a, b) => b.matchScore - a.matchScore);
-    if (filters.sortBy === "Newest") list.sort((a, b) => b.id - a.id);
+    if (filters.sortBy === "Newest") list.sort((a, b) => b._id - a._id);
     if (filters.sortBy === "Most Popular") list.sort((a, b) => a.company.localeCompare(b.company));
 
     return list;
-  }, [filters]);
+  }, [filters]); 
 
-  const locationOptions = ["All", ...new Set(INTERNSHIP_DB.map((i) => i.location))];
+  const locationOptions = [
+    "All",
+    ...new Set(
+      internships
+        .map((i) => i.location)
+        .filter(Boolean)
+    ),
+  ]; 
 
-  const toggleSave = (id) => {
-    setSavedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  const toggleSave = async (id) => {
+    try {
+      const response =
+        await toggleSavedInternship(id);
+
+      if (response.success) {
+        setSavedIds((prev) =>
+          response.saved
+            ? [...prev, id]
+            : prev.filter((x) => x !== id)
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Save internship error:",
+        error
+      );
+
+      alert(
+        error.response?.data?.message ||
+          "Unable to save internship"
+      );
+    }
   };
 
-  const toggleApply = (id) => {
-    setAppliedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+  const toggleApply = async (id) => {
+    try {
+      const response =
+        await applyInternship(id);
+
+      if (response.success) {
+        setAppliedIds((prev) =>
+          prev.includes(id)
+            ? prev
+            : [...prev, id]
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Apply internship error:",
+        error
+      );
+
+      alert(
+        error.response?.data?.message ||
+          "Unable to apply"
+      );
+    }
   };
 
   return (
@@ -732,11 +819,11 @@ export default function InternshipFinder() {
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {recommendations.map((item, i) => (
                   <InternshipCard
-                    key={item.id}
+                    key={item._id}
                     item={item}
                     index={i}
-                    saved={savedIds.includes(item.id)}
-                    applied={appliedIds.includes(item.id)}
+                    saved={savedIds.includes(item._id)}
+                    applied={appliedIds.includes(item._id)}
                     onSave={toggleSave}
                     onApply={toggleApply}
                   />
@@ -846,11 +933,11 @@ export default function InternshipFinder() {
             ) : (
               filteredList.map((item, i) => (
                 <InternshipCard
-                  key={item.id}
+                  key={item._id}
                   item={item}
                   index={i}
-                  saved={savedIds.includes(item.id)}
-                  applied={appliedIds.includes(item.id)}
+                  saved={savedIds.includes(item._id)}
+                  applied={appliedIds.includes(item._id)}
                   onSave={toggleSave}
                   onApply={toggleApply}
                 />
