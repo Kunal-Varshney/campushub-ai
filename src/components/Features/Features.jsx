@@ -134,7 +134,7 @@ function Features() {
                   <div className="mt-8 border-t border-slate-800 pt-6">
                     <button
                       type="button"
-                      onClick={() => navigate(item.route)}
+                      onClick={() => navigate("/signup")}
                       aria-label={`Learn more about ${item.title}`}
                       className="group/cta inline-flex w-fit items-center gap-2 rounded-lg text-sm font-semibold text-blue-400 transition-colors duration-300 hover:text-blue-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
                     >
