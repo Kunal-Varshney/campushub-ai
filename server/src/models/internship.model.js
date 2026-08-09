@@ -22,19 +22,18 @@ const internshipSchema = new mongoose.Schema(
 
     stipend: {
       type: Number,
-      required: true,
+      default: 0,
     },
 
     duration: {
       type: String,
-      required: true,
-      trim: true,
+      default: "3 Months",
     },
 
     mode: {
       type: String,
       enum: ["Remote", "Hybrid", "On-site"],
-      required: true,
+      default: "Remote",
     },
 
     skills: {
@@ -42,21 +41,15 @@ const internshipSchema = new mongoose.Schema(
       default: [],
     },
 
-    matchScore: {
-      type: Number,
-      default: 0,
+    experience: {
+      type: String,
+      enum: ["Fresher", "Intermediate", "Advanced"],
+      default: "Fresher",
     },
 
     category: {
       type: String,
       default: "Developer",
-      trim: true,
-    },
-
-    experience: {
-      type: String,
-      default: "Fresher",
-      trim: true,
     },
 
     description: {
@@ -64,9 +57,14 @@ const internshipSchema = new mongoose.Schema(
       default: "",
     },
 
-    applicationLink: {
+    applyUrl: {
       type: String,
       default: "",
+    },
+
+    matchScore: {
+      type: Number,
+      default: 0,
     },
 
     isActive: {
@@ -79,9 +77,6 @@ const internshipSchema = new mongoose.Schema(
   }
 );
 
-const Internship = mongoose.model(
-  "Internship",
-  internshipSchema
-);
+const Internship = mongoose.model("Internship", internshipSchema);
 
 export default Internship;
