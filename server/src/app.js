@@ -8,6 +8,7 @@ import assistantRoutes from "./routes/assistant.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import resumeRoutes from "./routes/resume.routes.js";
 import roadmapRoutes from "./routes/roadmap.routes.js";
+import internshipRoutes from "./routes/internship.routes.js";
 
 import authMiddleware from "./middleware/auth.middleware.js";
 
@@ -93,6 +94,15 @@ app.use(
 
 app.use("/api/resume", resumeRoutes);
 
+
+// ========================== 
+// Internship Finder Routes 
+// ========================== 
+
+app.use( 
+  "/api/internships", 
+  internshipRoutes 
+);
 
 
 
