@@ -10,6 +10,7 @@ import {
   Target,
   Mic,
   Award,
+  Users,
   Settings,
   LogOut,
   Menu,
@@ -49,6 +50,12 @@ const menuItems = [
     label: "Skill Roadmap", 
     icon: Target, 
     path: "/skill-roadmap" 
+  },
+
+  {
+    label: "Community",
+    icon: Users,
+    path: "/community"
   },
 
   { 
