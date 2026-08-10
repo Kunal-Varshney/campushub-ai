@@ -1,15 +1,70 @@
 import express from "express";
+import passport from "passport";
+
 import {
   registerUser,
   loginUser,
+  forgotPassword,
+  resetPassword,
+  googleLoginSuccess,
 } from "../controllers/auth.controller.js";
 
 const router = express.Router();
 
-// Register User
+// ============================================================
+// REGISTER
+// POST /api/auth/register
+// ============================================================
+
 router.post("/register", registerUser);
 
-// Login User
+// ============================================================
+// LOGIN
+// POST /api/auth/login
+// ============================================================
+
 router.post("/login", loginUser);
+
+// ============================================================
+// FORGOT PASSWORD
+// POST /api/auth/forgot-password
+// ============================================================
+
+router.post("/forgot-password", forgotPassword);
+
+// ============================================================
+// RESET PASSWORD
+// POST /api/auth/reset-password/:token
+// ============================================================
+
+router.post("/reset-password/:token", resetPassword);
+
+// ============================================================
+// GOOGLE LOGIN
+// GET /api/auth/google
+// ============================================================
+
+router.get(
+  "/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    session: false,
+  })
+);
+
+// ============================================================
+// GOOGLE CALLBACK
+// GET /api/auth/google/callback
+// ============================================================
+
+router.get(
+  "/google/callback",
+  passport.authenticate("google", {
+    session: false,
+    failureRedirect:
+      `${process.env.CLIENT_URL}/login?error=google-login-failed`,
+  }),
+  googleLoginSuccess
+);
 
 export default router;

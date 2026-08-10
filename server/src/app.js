@@ -1,6 +1,10 @@
 import express from "express";
 import cors from "cors";
 
+// ==========================
+// Routes
+// ==========================
+
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import notesRoutes from "./routes/notes.routes.js";
@@ -9,55 +13,67 @@ import adminRoutes from "./routes/admin.routes.js";
 import resumeRoutes from "./routes/resume.routes.js";
 import roadmapRoutes from "./routes/roadmap.routes.js";
 import internshipRoutes from "./routes/internship.routes.js";
+import communityRoutes from "./routes/community.routes.js";
+
+// ==========================
+// Middleware
+// ==========================
 
 import authMiddleware from "./middleware/auth.middleware.js";
 
 const app = express();
 
+// ============================================================
+// GLOBAL MIDDLEWARE
+// ============================================================
 
-// ==========================
-// Global Middleware
-// ==========================
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 
-app.use(cors());
 app.use(express.json());
 
-
-// ==========================
-// Health Check
-// ==========================
+// ============================================================
+// HEALTH CHECK
+// GET /
+// ============================================================
 
 app.get("/", (req, res) => {
-  res.json({
+  res.status(200).json({
+    success: true,
     message: "CampusHub AI Backend Running 🚀",
   });
 });
 
-
-// ==========================
-// Auth Routes
-// ==========================
+// ============================================================
+// AUTH ROUTES
+// /api/auth
+// ============================================================
 
 app.use("/api/auth", authRoutes);
 
-
-// ==========================
-// User Routes
-// ==========================
+// ============================================================
+// USER ROUTES
+// /api/user
+// ============================================================
 
 app.use("/api/user", userRoutes);
 
-
-// ==========================
-// Notes Routes
-// ==========================
+// ============================================================
+// NOTES ROUTES
+// /api/notes
+// ============================================================
 
 app.use("/api/notes", notesRoutes);
 
-
-// ==========================
-// Skill Roadmap Routes
-// ==========================
+// ============================================================
+// SKILL ROADMAP ROUTES
+// /api/roadmap
+// Authentication required
+// ============================================================
 
 app.use(
   "/api/roadmap",
@@ -65,21 +81,18 @@ app.use(
   roadmapRoutes
 );
 
-
-// ==========================
-// AI Assistant Routes
-// ==========================
+// ============================================================
+// AI ASSISTANT ROUTES
+// /api/assistant
+// ============================================================
 
 app.use("/api/assistant", assistantRoutes);
 
-
-// ==========================
-// Admin Routes
-// IMPORTANT:
-// authMiddleware runs first,
-// so req.user is available
-// inside admin.middleware.js
-// ==========================
+// ============================================================
+// ADMIN ROUTES
+// /api/admin
+// Authentication required
+// ============================================================
 
 app.use(
   "/api/admin",
@@ -87,27 +100,72 @@ app.use(
   adminRoutes
 );
 
-
-// ==========================
-// Resume Builder Routes
-// ==========================
+// ============================================================
+// RESUME BUILDER ROUTES
+// /api/resume
+// ============================================================
 
 app.use("/api/resume", resumeRoutes);
 
+// ============================================================
+// INTERNSHIP FINDER ROUTES
+// /api/internship
+// ============================================================
 
-// ========================== 
-// Internship Finder Routes 
-// ========================== 
-
-app.use( 
-  "/api/internship", 
-  internshipRoutes 
+app.use(
+  "/api/internship",
+  internshipRoutes
 );
 
+// ============================================================
+// COMMUNITY ROUTES
+// /api/community
+// ============================================================
+//
+// Community routes handle:
+// - Create posts
+// - Get posts
+// - Like / unlike
+// - Comments
+// - Bookmarks
+// - Polls
+// - Other community actions
+//
+// Authentication is handled inside community.routes.js
+// for protected actions.
+//
 
+app.use(
+  "/api/community",
+  communityRoutes
+);
 
-// ==========================
-// Export App
-// ==========================
+// ============================================================
+// 404 ROUTE
+// ============================================================
+
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Route not found: ${req.method} ${req.originalUrl}`,
+  });
+});
+
+// ============================================================
+// GLOBAL ERROR HANDLER
+// ============================================================
+
+app.use((err, req, res, next) => {
+  console.error("GLOBAL ERROR:", err);
+
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+  });
+});
+
+// ============================================================
+// EXPORT APP
+// ============================================================
 
 export default app;

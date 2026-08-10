@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  Mail,
+  Lock,
+  Eye,
+  EyeOff,
   ArrowRight,
   Sparkles,
   ShieldCheck,
@@ -10,8 +12,19 @@ import {
 import { motion } from "framer-motion";
 import API from "../../services/api";
 
-function ForgotPassword() {
-  const [email, setEmail] = useState("");
+function ResetPassword() {
+  const { token } = useParams();
+  const navigate = useNavigate();
+
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] =
+    useState("");
+
+  const [showPassword, setShowPassword] =
+    useState(false);
+
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState(false);
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
@@ -20,35 +33,57 @@ function ForgotPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    setLoading(true);
     setSuccess("");
     setError("");
 
+    if (password.length < 6) {
+      setError(
+        "Password must be at least 6 characters."
+      );
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setLoading(true);
+
     try {
       const response = await API.post(
-        "/auth/forgot-password",
+        `/auth/reset-password/${token}`,
         {
-          email: email.trim(),
+          password,
         }
       );
 
-      console.log("FORGOT PASSWORD:", response.data);
+      console.log(
+        "RESET PASSWORD:",
+        response.data
+      );
 
       setSuccess(
         response.data.message ||
-          "Password reset link sent successfully."
+          "Password reset successful."
       );
 
-      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+
+      // Login page par bhej do
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
     } catch (error) {
       console.error(
-        "FORGOT PASSWORD ERROR:",
+        "RESET PASSWORD ERROR:",
         error
       );
 
       setError(
         error.response?.data?.message ||
-          "Unable to send password reset link."
+          "Unable to reset password."
       );
     } finally {
       setLoading(false);
@@ -144,7 +179,7 @@ function ForgotPassword() {
             font-bold
           "
         >
-          Forgot Password?
+          Create New Password
         </h1>
 
         <p
@@ -154,8 +189,8 @@ function ForgotPassword() {
             text-gray-400
           "
         >
-          Don't worry! Enter your email and
-          we'll help you recover your account.
+          Create a strong new password for
+          your CampusHub AI account.
         </p>
 
         {/* Security Badge */}
@@ -178,10 +213,10 @@ function ForgotPassword() {
         >
           <ShieldCheck size={18} />
 
-          Secure Password Recovery
+          Secure Password Reset
         </div>
 
-        {/* Success Message */}
+        {/* Success */}
 
         {success && (
           <div
@@ -208,7 +243,7 @@ function ForgotPassword() {
           </div>
         )}
 
-        {/* Error Message */}
+        {/* Error */}
 
         {error && (
           <div
@@ -232,11 +267,11 @@ function ForgotPassword() {
           className="mt-8 space-y-5"
         >
 
-          {/* Email */}
+          {/* New Password */}
 
           <div className="relative">
 
-            <Mail
+            <Lock
               size={18}
               className="
                 absolute
@@ -248,13 +283,18 @@ function ForgotPassword() {
             />
 
             <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) =>
-                setEmail(e.target.value)
+              type={
+                showPassword
+                  ? "text"
+                  : "password"
               }
-              placeholder="Enter your email"
+              required
+              minLength={6}
+              value={password}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
+              placeholder="New password"
               disabled={loading}
               className="
                 w-full
@@ -264,17 +304,113 @@ function ForgotPassword() {
                 bg-slate-950
                 py-3
                 pl-12
-                pr-4
+                pr-12
                 text-white
                 outline-none
                 transition-all
                 focus:border-blue-500
                 focus:shadow-lg
                 focus:shadow-blue-500/20
-                disabled:cursor-not-allowed
                 disabled:opacity-60
               "
             />
+
+            <button
+              type="button"
+              onClick={() =>
+                setShowPassword(
+                  !showPassword
+                )
+              }
+              className="
+                absolute
+                right-4
+                top-1/2
+                -translate-y-1/2
+                text-gray-400
+                hover:text-blue-400
+              "
+            >
+              {showPassword ? (
+                <EyeOff size={18} />
+              ) : (
+                <Eye size={18} />
+              )}
+            </button>
+          </div>
+
+          {/* Confirm Password */}
+
+          <div className="relative">
+
+            <Lock
+              size={18}
+              className="
+                absolute
+                left-4
+                top-1/2
+                -translate-y-1/2
+                text-gray-500
+              "
+            />
+
+            <input
+              type={
+                showConfirmPassword
+                  ? "text"
+                  : "password"
+              }
+              required
+              minLength={6}
+              value={confirmPassword}
+              onChange={(e) =>
+                setConfirmPassword(
+                  e.target.value
+                )
+              }
+              placeholder="Confirm new password"
+              disabled={loading}
+              className="
+                w-full
+                rounded-xl
+                border
+                border-slate-700
+                bg-slate-950
+                py-3
+                pl-12
+                pr-12
+                text-white
+                outline-none
+                transition-all
+                focus:border-blue-500
+                focus:shadow-lg
+                focus:shadow-blue-500/20
+                disabled:opacity-60
+              "
+            />
+
+            <button
+              type="button"
+              onClick={() =>
+                setShowConfirmPassword(
+                  !showConfirmPassword
+                )
+              }
+              className="
+                absolute
+                right-4
+                top-1/2
+                -translate-y-1/2
+                text-gray-400
+                hover:text-blue-400
+              "
+            >
+              {showConfirmPassword ? (
+                <EyeOff size={18} />
+              ) : (
+                <Eye size={18} />
+              )}
+            </button>
           </div>
 
           {/* Submit */}
@@ -302,14 +438,13 @@ function ForgotPassword() {
               active:scale-95
               disabled:cursor-not-allowed
               disabled:opacity-60
-              disabled:hover:translate-y-0
             "
           >
             {loading ? (
-              "Sending..."
+              "Updating Password..."
             ) : (
               <>
-                Send Reset Link
+                Update Password
 
                 <ArrowRight
                   size={18}
@@ -321,7 +456,6 @@ function ForgotPassword() {
               </>
             )}
           </button>
-
         </form>
 
         <p
@@ -351,4 +485,4 @@ function ForgotPassword() {
   );
 }
 
-export default ForgotPassword;
+export default ResetPassword;

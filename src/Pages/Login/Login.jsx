@@ -37,52 +37,57 @@ function Login() {
   };
 
   const handleSubmit = async (e) => {
-      e.preventDefault();
+    e.preventDefault();
 
-      console.log("LOGIN CLICKED", formData)
+    const email = formData.email.trim().toLowerCase();
+    const password = formData.password;
 
-      try {
-        const response = await API.post(
-          "/auth/login",
-          {
-            email: formData.email,
-            password: formData.password,
-          }
-        );
+    if (!email || !password) {
+      alert("Please enter email and password");
+      return;
+    }
 
-        console.log("SUCCESS:", response.data);
+    console.log("LOGIN ATTEMPT:", {
+      email,
+      passwordLength: password.length,
+    });
 
-        // save token
-        localStorage.setItem(
-          "token",
-          response.data.token
-        );
+    try {
+      const response = await API.post("/auth/login", {
+        email,
+        password,
+      });
 
-        // save user
-        localStorage.setItem(
-          "user",
-          JSON.stringify(response.data.user)
-        );
+      console.log("LOGIN SUCCESS:", response.data);
 
-        // Role based redirect
-        if (response.data.user.role === "admin") {
-          navigate("/admin/dashboard");
-        } else {
-          navigate("/dashboard");
-        }
+      const { token, user } = response.data;
 
-      } catch (error) {
-          console.log("FULL ERROR:", error);
-          console.log("STATUS:", error.response?.status);
-          console.log("DATA:", error.response?.data);
-
-
-        alert(
-          error.response?.data?.message ||
-          "Login Failed"
-        );
+      if (!token || !user) {
+        throw new Error("Invalid login response from server");
       }
-    };
+
+      // Save authentication data
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      // Role based redirect
+      if (user.role === "admin") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      console.error("LOGIN ERROR:", error);
+      console.error("STATUS:", error.response?.status);
+      console.error("SERVER RESPONSE:", error.response?.data);
+
+      const message =
+        error.response?.data?.message ||
+        "Login failed. Please check your email and password.";
+
+      alert(message);
+    }
+  };
 
   const features = [
     {
@@ -331,7 +336,6 @@ function Login() {
               {/* Login Button */}
               <button
                 type="submit"
-                 onClick={() => console.log("BUTTON CLICKED")}
                 className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 py-3.5 font-semibold transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/30 active:scale-95"
               >
                 Login to CampusHub

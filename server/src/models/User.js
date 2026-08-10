@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema(
 
     password: {
       type: String,
-      required: true,
+      required: false,
       select: false,
     },
 
@@ -70,16 +70,69 @@ const userSchema = new mongoose.Schema(
         default: false,
       },
     },
+
+    // ==========================
+    // GOOGLE AUTH
+    // ==========================
+
+    googleId: {
+      type: String,
+      default: null,
+      sparse: true,
+    },
+
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
+
+    // ==========================
+    // PASSWORD RESET
+    // ==========================
+
+    resetPasswordToken: {
+      type: String,
+      default: null,
+    },
+
+    resetPasswordExpire: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-// Compare entered password with hashed password
+// ============================================================
+// HASH PASSWORD BEFORE SAVE
+// ============================================================
+
+  userSchema.pre("save", async function () {
+  if (!this.isModified("password") || !this.password) {
+    return;
+  }
+
+  this.password = await bcrypt.hash(this.password, 10);
+});
+
+// ============================================================
+// COMPARE PASSWORD
+// ============================================================
+
 userSchema.methods.comparePassword = async function (enteredPassword) {
+  if (!this.password) {
+    return false;
+  }
+
   return await bcrypt.compare(enteredPassword, this.password);
 };
+
+// ============================================================
+// CREATE MODEL
+// ============================================================
 
 const User = mongoose.model("User", userSchema);
 
