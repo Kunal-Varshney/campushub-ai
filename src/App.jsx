@@ -27,6 +27,7 @@ import InternshipFinder from "./Pages/Features/InternshipFinder";
 import SkillRoadmap from "./Pages/Features/SkillRoadmap";
 import Certificates from "./Pages/Features/Certificates";
 import Community from "./Pages/Features/Community";
+import VerifyCertificate from "./Pages/Features/VerifyCertificate";
 
 // Layout
 import MainLayout from "./layouts/MainLayout";

@@ -20,6 +20,7 @@ import internshipRoutes from "./routes/internship.routes.js";
 import communityRoutes from "./routes/community.routes.js";
 import careerRoutes from "./routes/career.routes.js";
 import aboutRoutes from "./routes/about.routes.js";
+import certificateRoutes from "./routes/certificate.routes.js";
 
 // ============================================================
 // MIDDLEWARE
@@ -164,6 +165,18 @@ app.use(
 
 
 app.use("/api/about", aboutRoutes);
+
+// ============================================================
+// CERTIFICATE ROUTES
+// /api/certificates
+// ============================================================
+
+app.use(
+  "/api/certificates",
+  certificateRoutes
+);
+
+
 
 // ============================================================
 // 404 ROUTE
