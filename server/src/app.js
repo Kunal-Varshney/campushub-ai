@@ -19,6 +19,7 @@ import roadmapRoutes from "./routes/roadmap.routes.js";
 import internshipRoutes from "./routes/internship.routes.js";
 import communityRoutes from "./routes/community.routes.js";
 import careerRoutes from "./routes/career.routes.js";
+import aboutRoutes from "./routes/about.routes.js";
 
 // ============================================================
 // MIDDLEWARE
@@ -160,6 +161,9 @@ app.use(
   "/api/careers",
   careerRoutes
 );
+
+
+app.use("/api/about", aboutRoutes);
 
 // ============================================================
 // 404 ROUTE

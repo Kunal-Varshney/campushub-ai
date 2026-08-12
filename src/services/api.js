@@ -342,7 +342,9 @@ export const applyInternship = async (id) => {
 // ============================================================
 
 // Submit career application
-export const submitCareerApplication = async (applicationData) => {
+export const submitCareerApplication = async (
+  applicationData
+) => {
   try {
     const { data } = await api.post(
       "/careers/apply",
@@ -361,7 +363,9 @@ export const submitCareerApplication = async (applicationData) => {
 // Get all career applications
 export const getCareerApplications = async () => {
   try {
-    const { data } = await api.get("/careers/applications");
+    const { data } = await api.get(
+      "/careers/applications"
+    );
 
     return data;
   } catch (error) {
@@ -390,6 +394,23 @@ export const updateCareerApplicationStatus = async (
     return handleError(
       error,
       "Failed to update career application status"
+    );
+  }
+};
+
+// ============================================================
+// ABOUT PAGE
+// ============================================================
+
+export const getAboutData = async () => {
+  try {
+    const { data } = await api.get("/about");
+
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to fetch About page data"
     );
   }
 };
