@@ -205,8 +205,12 @@ export default function Certificates() {
     setListError('');
     try {
       const res = await api.get('/certificates');
+      console.log('CERTIFICATE API RESPONSE:', res.data);
+      console.log('CERTIFICATE DATA:', res.data?.data);
+
       setCertificates(res.data.data || []);
     } catch (err) {
+       console.error('CERTIFICATE API ERROR:', err);
       setListError(err.response?.data?.message || 'Could not load your certificates. Please try again.');
     } finally {
       setListLoading(false);
