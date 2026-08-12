@@ -65,12 +65,21 @@ export const getUpcomingCertificates = async (req, res) => {
   try {
     const today = new Date();
 
-    // Start of today
+    // Start of current day
     today.setHours(0, 0, 0, 0);
 
     const certificates = await Certificate.find({
       user: req.user._id,
-      issueDate: { $gt: today },
+
+      // Future issue dates only
+      issueDate: {
+        $gt: today,
+      },
+
+      // Don't show revoked certificates
+      status: {
+        $ne: "revoked",
+      },
     })
       .sort({ issueDate: 1 })
       .lean();
@@ -118,7 +127,10 @@ export const getCertificateById = async (req, res) => {
       data: certificate,
     });
   } catch (error) {
-    console.error("GET CERTIFICATE ERROR:", error);
+    console.error(
+      "GET CERTIFICATE ERROR:",
+      error
+    );
 
     if (error.name === "CastError") {
       return res.status(400).json({
@@ -155,11 +167,15 @@ export const createCertificate = async (req, res) => {
       skills,
     } = req.body;
 
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
     // Required fields
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
 
-    if (!title?.trim() || !issuer?.trim() || !issueDate) {
+    if (
+      !title?.trim() ||
+      !issuer?.trim() ||
+      !issueDate
+    ) {
       return res.status(400).json({
         success: false,
         message:
@@ -167,9 +183,9 @@ export const createCertificate = async (req, res) => {
       });
     }
 
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
     // Credential ID
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
 
     const finalCredentialId =
       credentialId?.trim() ||
@@ -188,9 +204,9 @@ export const createCertificate = async (req, res) => {
       });
     }
 
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
     // Parse skills
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
 
     let parsedSkills = [];
 
@@ -225,9 +241,9 @@ export const createCertificate = async (req, res) => {
 
     parsedSkills = [...new Set(parsedSkills)];
 
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
     // Upload certificate file
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
 
     let certificateFile = {
       url: null,
@@ -249,14 +265,15 @@ export const createCertificate = async (req, res) => {
 
         return res.status(500).json({
           success: false,
-          message: "Certificate file upload failed",
+          message:
+            "Certificate file upload failed",
         });
       }
     }
 
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
     // Create certificate
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
 
     const certificate = await Certificate.create({
       user: req.user._id,
@@ -276,7 +293,8 @@ export const createCertificate = async (req, res) => {
 
       expiryDate: expiryDate || null,
 
-      description: description?.trim() || "",
+      description:
+        description?.trim() || "",
 
       skills: parsedSkills,
 
@@ -314,7 +332,8 @@ export const createCertificate = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: "Failed to create certificate",
+      message:
+        "Failed to create certificate",
     });
   }
 };
@@ -327,10 +346,11 @@ export const createCertificate = async (req, res) => {
 
 export const updateCertificate = async (req, res) => {
   try {
-    const certificate = await Certificate.findOne({
-      _id: req.params.id,
-      user: req.user._id,
-    });
+    const certificate =
+      await Certificate.findOne({
+        _id: req.params.id,
+        user: req.user._id,
+      });
 
     if (!certificate) {
       return res.status(404).json({
@@ -339,9 +359,9 @@ export const updateCertificate = async (req, res) => {
       });
     }
 
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
     // Editable fields
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
 
     const editableFields = [
       "title",
@@ -363,9 +383,9 @@ export const updateCertificate = async (req, res) => {
       }
     });
 
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
     // Parse skills
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
 
     if (req.body.skills !== undefined) {
       let updatedSkills = [];
@@ -401,9 +421,9 @@ export const updateCertificate = async (req, res) => {
       ];
     }
 
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
     // Replace uploaded certificate file
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
 
     if (req.file) {
       try {
@@ -477,10 +497,11 @@ export const updateCertificate = async (req, res) => {
 
 export const deleteCertificate = async (req, res) => {
   try {
-    const certificate = await Certificate.findOne({
-      _id: req.params.id,
-      user: req.user._id,
-    });
+    const certificate =
+      await Certificate.findOne({
+        _id: req.params.id,
+        user: req.user._id,
+      });
 
     if (!certificate) {
       return res.status(404).json({
@@ -557,9 +578,9 @@ export const downloadCertificate = async (
       });
     }
 
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
     // Real uploaded certificate exists
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
 
     if (certificate.certificateFile?.url) {
       const downloadUrl =
@@ -571,9 +592,9 @@ export const downloadCertificate = async (
       return res.redirect(downloadUrl);
     }
 
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
     // No uploaded file → generate PDF
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
 
     return streamGeneratedCertificatePdf(
       res,
@@ -637,9 +658,9 @@ export const verifyCertificate = async (
       });
     }
 
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
     // Revoked certificate
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
 
     if (certificate.status === "revoked") {
       return res.status(200).json({
@@ -650,9 +671,9 @@ export const verifyCertificate = async (
       });
     }
 
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
     // Expiry check
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
 
     const isExpired = Boolean(
       certificate.expiryDate &&
@@ -683,9 +704,9 @@ export const verifyCertificate = async (
       });
     }
 
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
     // Public response
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
 
     return res.status(200).json({
       success: true,
