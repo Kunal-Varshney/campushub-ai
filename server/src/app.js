@@ -1,9 +1,13 @@
+// ============================================================
+// CAMPUSHUB AI — EXPRESS APP
+// ============================================================
+
 import express from "express";
 import cors from "cors";
 
-// ==========================
-// Routes
-// ==========================
+// ============================================================
+// ROUTES
+// ============================================================
 
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
@@ -14,10 +18,11 @@ import resumeRoutes from "./routes/resume.routes.js";
 import roadmapRoutes from "./routes/roadmap.routes.js";
 import internshipRoutes from "./routes/internship.routes.js";
 import communityRoutes from "./routes/community.routes.js";
+import careerRoutes from "./routes/career.routes.js";
 
-// ==========================
-// Middleware
-// ==========================
+// ============================================================
+// MIDDLEWARE
+// ============================================================
 
 import authMiddleware from "./middleware/auth.middleware.js";
 
@@ -138,6 +143,22 @@ app.use(
 app.use(
   "/api/community",
   communityRoutes
+);
+
+// ============================================================
+// CAREER ROUTES
+// /api/careers
+// ============================================================
+//
+// Handles:
+// - Career applications
+// - Job opportunities
+// - Application management
+//
+
+app.use(
+  "/api/careers",
+  careerRoutes
 );
 
 // ============================================================

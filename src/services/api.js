@@ -80,10 +80,7 @@ export const getUserActivity = async (id) => {
 
     return data;
   } catch (error) {
-    return handleError(
-      error,
-      "Failed to fetch user activity"
-    );
+    return handleError(error, "Failed to fetch user activity");
   }
 };
 
@@ -336,6 +333,63 @@ export const applyInternship = async (id) => {
     return handleError(
       error,
       "Failed to apply for internship"
+    );
+  }
+};
+
+// ============================================================
+// CAREER APPLICATIONS
+// ============================================================
+
+// Submit career application
+export const submitCareerApplication = async (applicationData) => {
+  try {
+    const { data } = await api.post(
+      "/careers/apply",
+      applicationData
+    );
+
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to submit career application"
+    );
+  }
+};
+
+// Get all career applications
+export const getCareerApplications = async () => {
+  try {
+    const { data } = await api.get("/careers/applications");
+
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to fetch career applications"
+    );
+  }
+};
+
+// Update career application status
+export const updateCareerApplicationStatus = async (
+  id,
+  status
+) => {
+  try {
+    const { data } = await api.patch(
+      `/careers/applications/${id}/status`,
+      {
+        status,
+      }
+    );
+
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to update career application status"
     );
   }
 };
