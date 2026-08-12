@@ -75,6 +75,11 @@ function App() {
 
         <Route path="/certificates" element={<Certificates />} />
 
+        <Route
+          path="/certificates/verify/:credentialId"
+          element={<VerifyCertificate />}
+        />
+
         <Route path="/community" element={<Community />} />
 
       </Route>
