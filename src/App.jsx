@@ -11,6 +11,7 @@ import Terms from "./Pages/Terms/Terms";
 import Signup from "./Pages/Signup/Signup";
 import Login from "./Pages/Login/Login";
 import Forgot from "./Pages/Forgot/ForgotPassword";
+import ResetPassword from "./Pages/ResetPassword/Resetpassword";
 
 // Dashboard
 import StudentDashboard from "./Pages/Dashboard/StudentDashboard";
@@ -92,6 +93,8 @@ function App() {
       <Route path="/login" element={<Login />} />
 
       <Route path="/forgot-password" element={<Forgot />} />
+
+      <Route path="/reset-password/:token" element={<ResetPassword />}/>
 
 
       {/* ================= STUDENT DASHBOARD ================= */}

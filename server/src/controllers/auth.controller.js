@@ -1,5 +1,4 @@
 import crypto from "crypto";
-import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
 
 import User from "../models/User.js";
@@ -396,7 +395,7 @@ export const resetPassword = async (req, res) => {
     }
 
     // Hash new password
-    user.password = await bcrypt.hash(password, 10);
+    user.password = password;
 
     // Change authentication provider to local
     user.authProvider = "local";
