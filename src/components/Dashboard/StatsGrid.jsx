@@ -1,190 +1,190 @@
-import {
-  BookOpen,
-  Code2,
-  Trophy,
-  Flame,
-} from "lucide-react";
+// import {
+//   BookOpen,
+//   Code2,
+//   Trophy,
+//   Flame,
+// } from "lucide-react";
 
-import { motion } from "framer-motion";
+// import { motion } from "framer-motion";
 
 
-const stats = [
+// const stats = [
 
-  {
-    icon: BookOpen,
-    title: "Courses Started",
-    value: "0",
-    description: "Start learning today",
-  },
+//   {
+//     icon: BookOpen,
+//     title: "Courses Started",
+//     value: "0",
+//     description: "Start learning today",
+//   },
 
-  {
-    icon: Code2,
-    title: "Problems Solved",
-    value: "0",
-    description: "Practice coding daily",
-  },
+//   {
+//     icon: Code2,
+//     title: "Problems Solved",
+//     value: "0",
+//     description: "Practice coding daily",
+//   },
 
-  {
-    icon: Trophy,
-    title: "Achievements",
-    value: "0",
-    description: "Complete goals to unlock",
-  },
+//   {
+//     icon: Trophy,
+//     title: "Achievements",
+//     value: "0",
+//     description: "Complete goals to unlock",
+//   },
 
-  {
-    icon: Flame,
-    title: "Learning Streak",
-    value: "0 Days",
-    description: "Build your consistency",
-  },
+//   {
+//     icon: Flame,
+//     title: "Learning Streak",
+//     value: "0 Days",
+//     description: "Build your consistency",
+//   },
 
-];
+// ];
 
 
-function StatsGrid(){
+// function StatsGrid(){
 
 
-return (
+// return (
 
-<div>
+// <div>
 
 
-<h3 className="mb-4 text-lg font-semibold">
-Learning Overview
-</h3>
+// <h3 className="mb-4 text-lg font-semibold">
+// Learning Overview
+// </h3>
 
 
 
-<div className="
-grid
-grid-cols-2
-gap-4
-lg:grid-cols-4
-">
+// <div className="
+// grid
+// grid-cols-2
+// gap-4
+// lg:grid-cols-4
+// ">
 
 
-{
-stats.map((item,index)=>{
+// {
+// stats.map((item,index)=>{
 
 
-const Icon=item.icon;
+// const Icon=item.icon;
 
 
-return (
+// return (
 
 
-<motion.div
+// <motion.div
 
-key={item.title}
+// key={item.title}
 
 
-initial={{
-opacity:0,
-y:15
-}}
+// initial={{
+// opacity:0,
+// y:15
+// }}
 
 
-animate={{
-opacity:1,
-y:0
-}}
+// animate={{
+// opacity:1,
+// y:0
+// }}
 
 
-transition={{
-duration:0.4,
-delay:index*0.08
-}}
+// transition={{
+// duration:0.4,
+// delay:index*0.08
+// }}
 
 
-className="
-rounded-2xl
-border
-border-slate-800
-bg-slate-900/70
-p-5
-backdrop-blur-xl
-hover:border-blue-500/40
-transition
-"
+// className="
+// rounded-2xl
+// border
+// border-slate-800
+// bg-slate-900/70
+// p-5
+// backdrop-blur-xl
+// hover:border-blue-500/40
+// transition
+// "
 
 
->
+// >
 
 
-<div className="
-mb-4
-flex
-h-10
-w-10
-items-center
-justify-center
-rounded-lg
-bg-gradient-to-r
-from-blue-600
-to-cyan-500
-">
+// <div className="
+// mb-4
+// flex
+// h-10
+// w-10
+// items-center
+// justify-center
+// rounded-lg
+// bg-gradient-to-r
+// from-blue-600
+// to-cyan-500
+// ">
 
-<Icon size={20}/>
+// <Icon size={20}/>
 
-</div>
+// </div>
 
 
 
-<h4 className="
-text-2xl
-font-bold
-">
+// <h4 className="
+// text-2xl
+// font-bold
+// ">
 
-{item.value}
+// {item.value}
 
-</h4>
+// </h4>
 
 
 
-<p className="
-mt-1
-text-sm
-font-semibold
-">
+// <p className="
+// mt-1
+// text-sm
+// font-semibold
+// ">
 
-{item.title}
+// {item.title}
 
-</p>
+// </p>
 
 
 
-<p className="
-mt-1
-text-xs
-text-gray-400
-">
+// <p className="
+// mt-1
+// text-xs
+// text-gray-400
+// ">
 
-{item.description}
+// {item.description}
 
-</p>
+// </p>
 
 
 
-</motion.div>
+// </motion.div>
 
 
-)
+// )
 
 
-})
+// })
 
-}
+// }
 
 
-</div>
+// </div>
 
 
-</div>
+// </div>
 
-);
+// );
 
 
-}
+// }
 
 
-export default StatsGrid;
+// export default StatsGrid;

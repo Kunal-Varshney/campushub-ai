@@ -1,187 +1,116 @@
-import { Clock, MessageSquare, BookOpen, FileText } from "lucide-react";
+import {
+  Bot,
+  BookOpen,
+  FileText,
+  Clock,
+  Briefcase,
+  CheckCircle2,
+  Sparkles,
+} from "lucide-react";
 import { motion } from "framer-motion";
 
-
-const activities = null;
-
-
-function RecentActivity() {
-
-
-  return (
-
-    <div>
-
-
-      <h3 className="mb-4 text-lg font-semibold">
-        Recent Activity
-      </h3>
-
-
-
-      <motion.div
-
-        initial={{
-          opacity:0,
-          y:15
-        }}
-
-        animate={{
-          opacity:1,
-          y:0
-        }}
-
-        className="
-        rounded-2xl
-        border
-        border-slate-800
-        bg-slate-900/70
-        p-6
-        backdrop-blur-xl
-        "
-
-      >
-
-
-      {
-        activities ? (
-
-
-          <div className="space-y-4">
-
-
-            {activities.map((item,index)=>(
-
-              <div
-
-              key={index}
-
-              className="
-              flex
-              items-center
-              gap-4
-              rounded-xl
-              border
-              border-slate-800
-              bg-slate-950/50
-              p-4
-              "
-
-              >
-
-
-              <div className="
-              flex
-              h-10
-              w-10
-              items-center
-              justify-center
-              rounded-lg
-              bg-blue-600/20
-              text-blue-400
-              ">
-
-                {
-                  item.type==="ai"
-                  ?
-                  <MessageSquare size={18}/>
-                  :
-                  item.type==="notes"
-                  ?
-                  <FileText size={18}/>
-                  :
-                  <BookOpen size={18}/>
-                }
-
-              </div>
-
-
-
-              <div>
-
-                <p className="text-sm font-semibold">
-                  {item.title}
-                </p>
-
-                <p className="text-xs text-gray-400">
-                  {item.time}
-                </p>
-
-              </div>
-
-
-
-              </div>
-
-
-            ))}
-
-
-          </div>
-
-
-
-        ) : (
-
-
-          <div className="py-6 text-center">
-
-
-            <div className="
-            mx-auto
-            mb-4
-            flex
-            h-14
-            w-14
-            items-center
-            justify-center
-            rounded-full
-            bg-blue-600/20
-            text-blue-400
-            ">
-
-              <Clock size={28}/>
-
-            </div>
-
-
-
-            <h4 className="text-lg font-semibold">
-
-              No activity yet
-
-            </h4>
-
-
-
-            <p className="
-            mt-2
-            text-sm
-            text-gray-400
-            ">
-
-              Start using AI Assistant, Notes or Courses.
-               Your progress will appear here.
-
-            </p>
-
-
-          </div>
-
-
-        )
-
-      }
-
-
-      </motion.div>
-
-
-    </div>
-
-  );
-
+function getActivityIcon(type) {
+  switch (type) {
+    case "ai":
+      return Bot;
+    case "notes":
+      return FileText;
+    case "internship":
+      return Briefcase;
+    case "course":
+    case "learning":
+      return BookOpen;
+    case "completed":
+      return CheckCircle2;
+    default:
+      return Clock;
+  }
 }
 
+function RecentActivity({ activities }) {
+  const hasActivities =
+    Array.isArray(activities) && activities.length > 0;
 
+  return (
+    <section>
+      <div className="mb-4 flex items-end justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-wider text-gray-500">
+            Activity
+          </p>
+
+          <h3 className="mt-1 text-xl font-bold">
+            Your recent moves
+          </h3>
+        </div>
+
+        {hasActivities && (
+          <span className="text-xs text-gray-500">
+            {activities.length} recent
+          </span>
+        )}
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5"
+      >
+        {hasActivities ? (
+          <div className="space-y-2">
+            {activities.slice(0, 6).map((item, index) => {
+              const Icon = getActivityIcon(item?.type);
+
+              return (
+                <motion.div
+                  key={item?._id || item?.id || index}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{
+                    duration: 0.3,
+                    delay: index * 0.05,
+                  }}
+                  className="group flex items-center gap-4 rounded-xl border border-transparent bg-slate-950/40 p-3 transition hover:border-slate-700 hover:bg-slate-950/70"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-cyan-400">
+                    <Icon size={17} />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-gray-200">
+                      {item?.title || item?.action || "Activity"}
+                    </p>
+
+                    <p className="mt-1 text-xs text-gray-500">
+                      {item?.description || "CampusHub activity"}
+                    </p>
+                  </div>
+
+                  <span className="shrink-0 text-[11px] text-gray-600">
+                    {item?.time || item?.createdAt || "Recently"}
+                  </span>
+                </motion.div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center py-8 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-400">
+              <Sparkles size={26} />
+            </div>
+
+            <h4 className="mt-4 text-lg font-semibold">
+              Your journey starts here
+            </h4>
+
+            <p className="mt-2 max-w-md text-sm leading-6 text-gray-400">
+              Use AI Assistant, start learning, create notes or explore
+              internships. Your important actions will appear here.
+            </p>
+          </div>
+        )}
+      </motion.div>
+    </section>
+  );
+}
 export default RecentActivity;
