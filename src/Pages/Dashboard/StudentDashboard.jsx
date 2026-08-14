@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import Sidebar from "../../components/Dashboard/Sidebar";
 import Topbar from "../../components/Dashboard/Topbar";
 import DashboardCards from "../../components/Dashboard/DashboardCards";
-import StatsGrid from "../../components/Dashboard/StatsGrid";
 import AIAssistant from "../../components/Dashboard/AIAssistant";
 
 import API from "../../services/api";
@@ -67,7 +66,7 @@ function StudentDashboard() {
   );
 
   // ==========================================================
-  // FETCH DASHBOARD
+  // FETCH DASHBOARD DATA
   // ==========================================================
 
   useEffect(() => {
@@ -128,11 +127,13 @@ function StudentDashboard() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
         <div className="text-center">
+
           <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-400" />
 
           <p className="mt-4 text-sm text-gray-400">
             Preparing your workspace...
           </p>
+
         </div>
       </div>
     );
@@ -177,21 +178,13 @@ function StudentDashboard() {
   const user =
     safeDashboardData.user;
 
-  const stats =
-    safeDashboardData.stats;
-
-  const learning =
-    safeDashboardData.learning;
-
-  const overview =
-    safeDashboardData.overview;
-
   // ==========================================================
   // UI
   // ==========================================================
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
+
       <div className="flex">
 
         {/* ====================================================
@@ -263,30 +256,22 @@ function StudentDashboard() {
                     </span>
                   </p>
                 )}
+
               </div>
             </section>
 
             {/* =================================================
-                PROGRESS SNAPSHOT
+                DASHBOARD CONTENT
+
+                StatsGrid is rendered inside DashboardCards
+                so it appears only once.
             ================================================= */}
 
-            <StatsGrid
-              stats={stats}
-              learning={learning}
-              overview={overview}
+            <DashboardCards
+              dashboardData={
+                safeDashboardData
+              }
             />
-
-            {/* =================================================
-                DASHBOARD CARDS
-            ================================================= */}
-
-            <div className="mt-8">
-              <DashboardCards
-                dashboardData={
-                  safeDashboardData
-                }
-              />
-            </div>
 
             {/* =================================================
                 AI COMMAND CENTER

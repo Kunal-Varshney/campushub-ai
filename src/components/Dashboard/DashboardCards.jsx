@@ -1,5 +1,3 @@
-// src/components/Dashboard/DashboardCards.jsx
-
 import StatsGrid from "./StatsGrid";
 import ContinueLearning from "./ContinueLearning";
 import RecentActivity from "./RecentActivity";
@@ -9,51 +7,42 @@ import ProfileCard from "./ProfileCard";
 // DASHBOARD CARDS
 // ============================================================
 
-function DashboardCards({
-  dashboardData,
-}) {
+function DashboardCards({ dashboardData }) {
   const learning =
-    dashboardData?.learning ||
-    null;
+    dashboardData?.learning || null;
 
   const activities =
-    dashboardData?.activities ||
-    [];
+    dashboardData?.activities || [];
 
   const user =
-    dashboardData?.user ||
-    null;
+    dashboardData?.user || null;
 
   const stats =
-    dashboardData?.stats ||
-    {};
+    dashboardData?.stats || [];
+
+  const overview =
+    dashboardData?.overview || {};
 
   return (
     <div className="space-y-8">
 
       {/* =====================================================
           PROGRESS SNAPSHOT
-
-          Learning Progress
-          Skills
-          Learning Streak
-          Achievements
-      ====================================================== */}
+      ===================================================== */}
 
       <StatsGrid
         stats={stats}
+        learning={learning}
+        overview={overview}
       />
-
 
       {/* =====================================================
           CONTINUE LEARNING + PROFILE
-      ====================================================== */}
+      ===================================================== */}
 
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
-        {/* ---------------------------------------------------
-            CONTINUE LEARNING
-        ---------------------------------------------------- */}
+        {/* CONTINUE LEARNING */}
 
         <div className="lg:col-span-2">
           <ContinueLearning
@@ -61,10 +50,7 @@ function DashboardCards({
           />
         </div>
 
-
-        {/* ---------------------------------------------------
-            PROFILE
-        ---------------------------------------------------- */}
+        {/* PROFILE */}
 
         <ProfileCard
           user={user}
@@ -72,18 +58,13 @@ function DashboardCards({
 
       </section>
 
-
       {/* =====================================================
           RECENT ACTIVITY
-      ====================================================== */}
+      ===================================================== */}
 
-      <section>
-        <RecentActivity
-          activities={
-            activities
-          }
-        />
-      </section>
+      <RecentActivity
+        activities={activities}
+      />
 
     </div>
   );
