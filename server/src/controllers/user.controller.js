@@ -12,6 +12,79 @@ import Certificate from "../models/Certificate.js";
 import Notification from "../models/Notification.js";
 
 // ============================================================
+// HELPER — GET INDIA DATE KEY
+// ============================================================
+
+function getIndiaDateKey(date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+  }).format(new Date(date));
+}
+
+// ============================================================
+// HELPER — CALCULATE CURRENT ACTIVITY STREAK
+// ============================================================
+
+function calculateStreak(dates = []) {
+  if (!Array.isArray(dates) || dates.length === 0) {
+    return 0;
+  }
+
+  const uniqueDates = [
+    ...new Set(
+      dates
+        .filter(Boolean)
+        .map((date) => getIndiaDateKey(date))
+    ),
+  ].sort((a, b) => new Date(b) - new Date(a));
+
+  if (uniqueDates.length === 0) {
+    return 0;
+  }
+
+  const today = getIndiaDateKey(new Date());
+
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(
+    yesterdayDate.getDate() - 1
+  );
+
+  const yesterday =
+    getIndiaDateKey(yesterdayDate);
+
+  let currentDate;
+
+  // If user was active today, start from today.
+  // Otherwise allow yesterday to continue the streak.
+  if (uniqueDates.includes(today)) {
+    currentDate = new Date();
+  } else if (uniqueDates.includes(yesterday)) {
+    currentDate = yesterdayDate;
+  } else {
+    return 0;
+  }
+
+  let streak = 0;
+
+  for (let i = 0; i < uniqueDates.length; i++) {
+    const expectedDate =
+      getIndiaDateKey(currentDate);
+
+    if (uniqueDates.includes(expectedDate)) {
+      streak++;
+
+      currentDate.setDate(
+        currentDate.getDate() - 1
+      );
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}
+
+// ============================================================
 // GET USER PROFILE
 // GET /api/user/profile
 // ============================================================
@@ -120,7 +193,7 @@ export const getDashboard = async (req, res) => {
     }
 
     // ========================================================
-    // FETCH DASHBOARD COUNTS + RECENT DATA
+    // FETCH DASHBOARD DATA
     // ========================================================
 
     const [
@@ -134,6 +207,8 @@ export const getDashboard = async (req, res) => {
       recentAI,
       recentNotifications,
       latestRoadmap,
+      allAIActivity,
+      allNotificationActivity,
     ] = await Promise.all([
       // ------------------------------------------------------
       // AI QUESTIONS
@@ -168,7 +243,7 @@ export const getDashboard = async (req, res) => {
       }),
 
       // ------------------------------------------------------
-      // INTERNSHIPS
+      // INTERNSHIP APPLICATIONS
       // ------------------------------------------------------
 
       InternshipApplication.countDocuments({
@@ -193,7 +268,7 @@ export const getDashboard = async (req, res) => {
       }),
 
       // ------------------------------------------------------
-      // RECENT AI ACTIVITY
+      // RECENT AI
       // ------------------------------------------------------
 
       AIUsage.find({
@@ -203,7 +278,9 @@ export const getDashboard = async (req, res) => {
           createdAt: -1,
         })
         .limit(5)
-        .select("question category createdAt")
+        .select(
+          "question category createdAt"
+        )
         .lean(),
 
       // ------------------------------------------------------
@@ -232,6 +309,26 @@ export const getDashboard = async (req, res) => {
         .sort({
           updatedAt: -1,
         })
+        .lean(),
+
+      // ------------------------------------------------------
+      // ALL AI ACTIVITY FOR STREAK
+      // ------------------------------------------------------
+
+      AIUsage.find({
+        userId,
+      })
+        .select("createdAt")
+        .lean(),
+
+      // ------------------------------------------------------
+      // ALL NOTIFICATION ACTIVITY FOR STREAK
+      // ------------------------------------------------------
+
+      Notification.find({
+        user: userId,
+      })
+        .select("createdAt")
         .lean(),
     ]);
 
@@ -275,9 +372,7 @@ export const getDashboard = async (req, res) => {
     // ========================================================
 
     let roadmapProgress = 0;
-
     let totalRoadmapSteps = 0;
-
     let completedRoadmapSteps = 0;
 
     if (
@@ -318,6 +413,60 @@ export const getDashboard = async (req, res) => {
     }
 
     // ========================================================
+    // LEARNING STREAK
+    // ========================================================
+
+    const activityDates = [
+      ...allAIActivity.map(
+        (item) => item.createdAt
+      ),
+
+      ...allNotificationActivity.map(
+        (item) => item.createdAt
+      ),
+
+      // Roadmap update also counts as activity.
+      ...(latestRoadmap?.updatedAt
+        ? [latestRoadmap.updatedAt]
+        : []),
+    ];
+
+    const learningStreak =
+      calculateStreak(
+        activityDates
+      );
+
+    // ========================================================
+    // ACHIEVEMENTS
+    // ========================================================
+
+    // Each completed roadmap step represents
+    // a completed learning milestone.
+
+    const achievements =
+      completedRoadmapSteps;
+
+    // ========================================================
+    // SKILLS
+    // ========================================================
+
+    const skillsCompleted =
+      completedRoadmapSteps;
+
+    const totalSkills =
+      totalRoadmapSteps;
+
+    // ========================================================
+    // GOALS
+    // ========================================================
+
+    const goalsCompleted =
+      completedRoadmapSteps;
+
+    const totalGoals =
+      totalRoadmapSteps;
+
+    // ========================================================
     // LEARNING DATA
     // ========================================================
 
@@ -325,7 +474,8 @@ export const getDashboard = async (req, res) => {
 
     if (latestRoadmap) {
       learning = {
-        title: `${latestRoadmap.career} Roadmap`,
+        title:
+          `${latestRoadmap.career} Roadmap`,
 
         name:
           latestRoadmap.career,
@@ -391,6 +541,9 @@ export const getDashboard = async (req, res) => {
 
         time:
           item.createdAt,
+
+        link:
+          "/ai-assistant",
       });
     });
 
@@ -458,7 +611,8 @@ export const getDashboard = async (req, res) => {
         // ====================================================
 
         user: {
-          _id: user._id,
+          _id:
+            user._id,
 
           name:
             user.name,
@@ -485,67 +639,45 @@ export const getDashboard = async (req, res) => {
         // DASHBOARD STATS
         // ====================================================
 
-        stats: [
-          {
-            title:
-              "AI Questions",
+        stats: {
+          // Learning
+          learningProgress:
+            roadmapProgress,
 
-            value:
-              String(
-                aiUsageCount
-              ),
+          // Skills
+          skillsCompleted,
+          totalSkills,
 
-            description:
-              aiUsageCount > 0
-                ? "Questions asked to CampusHub AI"
-                : "Ask CampusHub AI to get started",
-          },
+          // Streak
+          streak:
+            learningStreak,
 
-          {
-            title:
-              "Notes",
+          // Achievements
+          achievements,
 
-            value:
-              String(
-                notesCount
-              ),
+          // Goals
+          goalsCompleted,
+          totalGoals,
 
-            description:
-              notesCount > 0
-                ? "Notes added to your account"
-                : "Start building your notes",
-          },
+          // Existing platform stats
+          aiQuestions:
+            aiUsageCount,
 
-          {
-            title:
-              "Internships",
+          notes:
+            notesCount,
 
-            value:
-              String(
-                internshipCount
-              ),
+          internships:
+            internshipCount,
 
-            description:
-              internshipCount > 0
-                ? "Internship applications"
-                : "Explore internship opportunities",
-          },
+          certificates:
+            certificateCount,
 
-          {
-            title:
-              "Certificates",
+          roadmaps:
+            roadmapCount,
 
-            value:
-              String(
-                certificateCount
-              ),
-
-            description:
-              certificateCount > 0
-                ? "Certificates earned"
-                : "Complete learning goals",
-          },
-        ],
+          resumes:
+            resumeCount,
+        },
 
         // ====================================================
         // LEARNING
@@ -554,7 +686,7 @@ export const getDashboard = async (req, res) => {
         learning,
 
         // ====================================================
-        // EXTRA OVERVIEW
+        // OVERVIEW
         // ====================================================
 
         overview: {
@@ -575,6 +707,18 @@ export const getDashboard = async (req, res) => {
 
           certificates:
             certificateCount,
+
+          learningProgress:
+            roadmapProgress,
+
+          skillsCompleted,
+
+          totalSkills,
+
+          streak:
+            learningStreak,
+
+          achievements,
         },
 
         // ====================================================

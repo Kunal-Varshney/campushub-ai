@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import Sidebar from "../../components/Dashboard/Sidebar";
 import Topbar from "../../components/Dashboard/Topbar";
 import DashboardCards from "../../components/Dashboard/DashboardCards";
+import StatsGrid from "../../components/Dashboard/StatsGrid";
 import AIAssistant from "../../components/Dashboard/AIAssistant";
 
 import API from "../../services/api";
@@ -60,7 +61,10 @@ function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const timeContext = useMemo(() => getTimeContext(), []);
+  const timeContext = useMemo(
+    () => getTimeContext(),
+    []
+  );
 
   // ==========================================================
   // FETCH DASHBOARD
@@ -74,12 +78,16 @@ function StudentDashboard() {
         setLoading(true);
         setError("");
 
-        const response = await API.get("/user/dashboard");
+        const response = await API.get(
+          "/user/dashboard"
+        );
 
         if (!mounted) return;
 
         if (response?.data?.success) {
-          setDashboardData(response.data.dashboard);
+          setDashboardData(
+            response.data.dashboard
+          );
         } else {
           setError(
             response?.data?.message ||
@@ -120,20 +128,18 @@ function StudentDashboard() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
         <div className="text-center">
-
           <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-400" />
 
           <p className="mt-4 text-sm text-gray-400">
             Preparing your workspace...
           </p>
-
         </div>
       </div>
     );
   }
 
   // ==========================================================
-  // FALLBACK DATA
+  // SAFE DASHBOARD DATA
   // ==========================================================
 
   const safeDashboardData = {
@@ -143,25 +149,42 @@ function StudentDashboard() {
       college: "",
       branch: "",
       year: "",
+      avatar: "",
       profileStrength: 0,
+
       ...(dashboardData?.user || {}),
     },
 
-    stats: dashboardData?.stats || [],
+    stats:
+      dashboardData?.stats || [],
 
-    learning: dashboardData?.learning || null,
+    learning:
+      dashboardData?.learning || null,
 
-    overview: dashboardData?.overview || {},
+    overview:
+      dashboardData?.overview || {},
 
-    activities: dashboardData?.activities || [],
+    activities:
+      dashboardData?.activities || [],
 
-    notifications: dashboardData?.notifications || {
-      unreadCount: 0,
-      latest: [],
-    },
+    notifications:
+      dashboardData?.notifications || {
+        unreadCount: 0,
+        latest: [],
+      },
   };
 
-  const user = safeDashboardData.user;
+  const user =
+    safeDashboardData.user;
+
+  const stats =
+    safeDashboardData.stats;
+
+  const learning =
+    safeDashboardData.learning;
+
+  const overview =
+    safeDashboardData.overview;
 
   // ==========================================================
   // UI
@@ -169,7 +192,6 @@ function StudentDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
-
       <div className="flex">
 
         {/* ====================================================
@@ -194,26 +216,36 @@ function StudentDashboard() {
 
             <section className="relative mb-8 overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950/30 p-6 sm:p-8">
 
+              {/* Background Glow */}
+
               <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
 
               <div className="pointer-events-none absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-blue-600/10 blur-3xl" />
 
               <div className="relative max-w-3xl">
 
+                {/* Time Badge */}
+
                 <div className="mb-3 inline-flex items-center rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-300">
                   {timeContext.label} mode
                 </div>
 
+                {/* Hero Title */}
+
                 <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
                   {timeContext.title}
-                  <span className="text-cyan-400">.</span>
+                  <span className="text-cyan-400">
+                    .
+                  </span>
                 </h1>
+
+                {/* Hero Message */}
 
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-400 sm:text-base">
                   {timeContext.message}
                 </p>
 
-                {/* Backend connection error */}
+                {/* Backend Error */}
 
                 {error && (
                   <div className="mt-5 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-300">
@@ -221,7 +253,7 @@ function StudentDashboard() {
                   </div>
                 )}
 
-                {/* User information */}
+                {/* User Information */}
 
                 {!error && user?.name && (
                   <p className="mt-5 text-sm text-gray-500">
@@ -231,34 +263,42 @@ function StudentDashboard() {
                     </span>
                   </p>
                 )}
-
               </div>
             </section>
 
             {/* =================================================
-                DASHBOARD CONTENT
+                PROGRESS SNAPSHOT
             ================================================= */}
 
-            <DashboardCards
-              dashboardData={safeDashboardData}
+            <StatsGrid
+              stats={stats}
+              learning={learning}
+              overview={overview}
             />
+
+            {/* =================================================
+                DASHBOARD CARDS
+            ================================================= */}
+
+            <div className="mt-8">
+              <DashboardCards
+                dashboardData={
+                  safeDashboardData
+                }
+              />
+            </div>
 
             {/* =================================================
                 AI COMMAND CENTER
             ================================================= */}
 
             <div className="mt-8">
-
               <AIAssistant />
-
             </div>
 
           </main>
-
         </div>
-
       </div>
-
     </div>
   );
 }
