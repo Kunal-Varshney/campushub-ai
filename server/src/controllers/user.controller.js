@@ -1,52 +1,75 @@
 import User from "../models/User.js";
+import Notification from "../models/Notification.js";
+import AIUsage from "../models/AIUsage.js";
+import Note from "../models/note.js";
+import Roadmap from "../models/Roadmap.js";
+import Resume from "../models/Resume.js";
+import InternshipApplication from "../models/internshipApplication.model.js";
 
 
+// ============================================================
+// HELPER — PROFILE STRENGTH
+// ============================================================
+
+const calculateProfileStrength = (user) => {
+  const fields = [
+    user.name,
+    user.email,
+    user.college,
+    user.branch,
+    user.year,
+  ];
+
+  const completed = fields.filter(
+    (field) => field && String(field).trim() !== ""
+  ).length;
+
+  return Math.round((completed / fields.length) * 100);
+};
+
+
+// ============================================================
 // GET USER PROFILE
-export const getProfile = async (req, res) => {
+// GET /api/user/profile
+// ============================================================
 
+export const getProfile = async (req, res) => {
   try {
 
     const user = await User.findById(req.user.id)
       .select("-password");
 
-
     if (!user) {
-
       return res.status(404).json({
         success: false,
         message: "User not found",
       });
-
     }
 
-
     res.status(200).json({
-
       success: true,
       user,
-
     });
-
 
   } catch (error) {
 
-    res.status(500).json({
+    console.error("Get Profile Error:", error);
 
+    res.status(500).json({
       success: false,
       message: error.message,
-
     });
 
   }
-
 };
 
 
-
-
+// ============================================================
 // UPDATE USER PROFILE
-export const updateProfile = async (req, res) => {
+// PUT /api/user/profile
+// ============================================================
 
+export const updateProfile = async (req, res) => {
   try {
 
     const {
@@ -57,54 +80,75 @@ export const updateProfile = async (req, res) => {
     } = req.body;
 
 
-
     const user = await User.findByIdAndUpdate(
-
       req.user.id,
-
       {
         name,
         college,
         branch,
         year,
       },
-
       {
         new: true,
         runValidators: true,
       }
-
     ).select("-password");
 
 
-
     if (!user) {
-
       return res.status(404).json({
-
         success: false,
         message: "User not found",
-
       });
-
     }
 
+
+    // --------------------------------------------------------
+    // PROFILE UPDATE NOTIFICATION
+    // --------------------------------------------------------
+
+    try {
+
+      await Notification.create({
+        user: user._id,
+
+        title: "Profile Updated",
+
+        message:
+          "Your CampusHub AI profile was updated successfully.",
+
+        type: "profile",
+
+        link: "/profile",
+      });
+
+    } catch (notificationError) {
+
+      console.error(
+        "Profile Notification Error:",
+        notificationError.message
+      );
+
+    }
 
 
     res.status(200).json({
 
       success: true,
 
-      message: "Profile Updated Successfully 🚀",
+      message:
+        "Profile Updated Successfully 🚀",
 
       user,
 
     });
 
-
-
   } catch (error) {
 
+    console.error(
+      "Update Profile Error:",
+      error
+    );
 
     res.status(500).json({
 
@@ -114,23 +158,24 @@ export const updateProfile = async (req, res) => {
 
     });
 
-
   }
-
 };
 
 
-
-
+// ============================================================
 // GET DASHBOARD DATA
-export const getDashboard = async (req, res) => {
+// GET /api/user/dashboard
+// ============================================================
 
+export const getDashboard = async (req, res) => {
   try {
 
+    // ========================================================
+    // USER
+    // ========================================================
 
     const user = await User.findById(req.user.id)
       .select("-password");
-
 
 
     if (!user) {
@@ -138,6 +183,7 @@ export const getDashboard = async (req, res) => {
       return res.status(404).json({
 
         success: false,
+
         message: "User not found",
 
       });
@@ -145,14 +191,136 @@ export const getDashboard = async (req, res) => {
     }
 
 
+    // ========================================================
+    // DATABASE COUNTS
+    // ========================================================
+
+    const [
+      notesCount,
+      aiUsageCount,
+      roadmapCount,
+      resumeCount,
+      internshipApplicationsCount,
+      unreadNotifications,
+    ] = await Promise.all([
+
+
+      // ------------------------------------------------------
+      // NOTES
+      // ------------------------------------------------------
+
+      Note.countDocuments({
+        uploadedBy: req.user.id,
+      }),
+
+
+      // ------------------------------------------------------
+      // AI USAGE
+      // ------------------------------------------------------
+
+      AIUsage.countDocuments({
+        userId: req.user.id,
+      }),
+
+
+      // ------------------------------------------------------
+      // ROADMAPS
+      // ------------------------------------------------------
+
+      Roadmap.countDocuments({
+        user: req.user.id,
+      }),
+
+
+      // ------------------------------------------------------
+      // RESUMES
+      // ------------------------------------------------------
+
+      Resume.countDocuments({
+        user: req.user.id,
+      }),
+
+
+      // ------------------------------------------------------
+      // INTERNSHIP APPLICATIONS
+      // ------------------------------------------------------
+
+      InternshipApplication.countDocuments({
+        user: req.user.id,
+      }),
+
+
+      // ------------------------------------------------------
+      // UNREAD NOTIFICATIONS
+      // ------------------------------------------------------
+
+      Notification.countDocuments({
+        user: req.user.id,
+        isRead: false,
+      }),
+
+    ]);
+
+
+    // ========================================================
+    // PROFILE STRENGTH
+    // ========================================================
+
+    const profileStrength =
+      calculateProfileStrength(user);
+
+
+    // ========================================================
+    // RECENT NOTIFICATIONS / ACTIVITY
+    // ========================================================
+
+    const recentNotifications =
+      await Notification.find({
+        user: req.user.id,
+      })
+        .sort({
+          createdAt: -1,
+        })
+        .limit(5)
+        .lean();
+
+
+    const activities =
+      recentNotifications.map(
+        (notification) => ({
+
+          id: notification._id,
+
+          title: notification.title,
+
+          message: notification.message,
+
+          time: notification.createdAt,
+
+          type: notification.type,
+
+          link: notification.link,
+
+          isRead: notification.isRead,
+
+        })
+      );
+
+
+    // ========================================================
+    // DASHBOARD RESPONSE
+    // ========================================================
 
     res.status(200).json({
 
       success: true,
 
-
       dashboard: {
 
+
+        // ====================================================
+        // USER
+        // ====================================================
 
         user: {
 
@@ -160,72 +328,131 @@ export const getDashboard = async (req, res) => {
 
           email: user.email,
 
-          profileStrength: 20,
+          college: user.college,
+
+          branch: user.branch,
+
+          year: user.year,
+
+          avatar: user.avatar,
+
+          profileStrength,
 
         },
 
 
-        stats: [
+        // ====================================================
+        // DASHBOARD STATS
+        // ====================================================
 
-          {
-            title: "Courses Started",
-            value: "0",
-            description: "Start learning today",
-          },
+        stats: {
 
+          notes: notesCount,
 
-          {
-            title: "Problems Solved",
-            value: "0",
-            description: "Practice coding daily",
-          },
+          aiSessions: aiUsageCount,
 
+          roadmaps: roadmapCount,
 
-          {
-            title: "Achievements",
-            value: "0",
-            description: "Complete goals to unlock",
-          },
+          resumes: resumeCount,
+
+          internshipApplications:
+            internshipApplicationsCount,
+
+        },
 
 
-          {
-            title: "Learning Streak",
-            value: "0 Days",
-            description: "Build consistency",
-          },
+        // ====================================================
+        // CONTINUE LEARNING
+        // ====================================================
+
+        learning: {
+
+          hasStarted:
+            roadmapCount > 0 || notesCount > 0,
+
+          roadmaps:
+            roadmapCount,
+
+          notes:
+            notesCount,
+
+          message:
+            roadmapCount === 0 &&
+            notesCount === 0
+
+              ? "Start your learning journey today."
+
+              : "Keep building your skills.",
+
+        },
 
 
-        ],
+        // ====================================================
+        // RECENT ACTIVITY
+        // ====================================================
+
+        activities,
 
 
+        // ====================================================
+        // NOTIFICATIONS
+        // ====================================================
 
-        learning: null,
+        notifications: {
+
+          unreadCount:
+            unreadNotifications,
+
+        },
 
 
+        // ====================================================
+        // FEATURE STATUS
+        // ====================================================
 
-        activities: [],
+        features: {
 
+          smartNotes:
+            notesCount > 0,
 
+          aiAssistant:
+            aiUsageCount > 0,
 
-      }
+          skillRoadmap:
+            roadmapCount > 0,
 
+          resumeBuilder:
+            resumeCount > 0,
+
+          internships:
+            internshipApplicationsCount > 0,
+
+          learningStreak:
+            false,
+
+          achievements:
+            false,
+
+        },
+
+      },
 
     });
 
+  } catch (error) {
 
-
-  } catch(error) {
-
+    console.error(
+      "Dashboard Error:",
+      error
+    );
 
     res.status(500).json({
 
-      success:false,
+      success: false,
 
-      message:error.message,
+      message: error.message,
 
     });
 
-
   }
-
 };

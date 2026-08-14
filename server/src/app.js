@@ -21,6 +21,7 @@ import communityRoutes from "./routes/community.routes.js";
 import careerRoutes from "./routes/career.routes.js";
 import aboutRoutes from "./routes/about.routes.js";
 import certificateRoutes from "./routes/certificate.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 
 // ============================================================
 // MIDDLEWARE
@@ -176,6 +177,15 @@ app.use(
   certificateRoutes
 );
 
+// ============================================================
+// NOTIFICATION ROUTES
+// /api/notifications
+// ============================================================
+
+app.use(
+  "/api/notifications",
+  notificationRoutes
+);
 
 
 // ============================================================
