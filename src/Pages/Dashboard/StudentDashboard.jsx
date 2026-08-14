@@ -9,6 +9,10 @@ import AIAssistant from "../../components/Dashboard/AIAssistant";
 
 import API from "../../services/api";
 
+// ============================================================
+// TIME CONTEXT
+// ============================================================
+
 function getTimeContext() {
   const hour = new Date().getHours();
 
@@ -16,7 +20,8 @@ function getTimeContext() {
     return {
       label: "Morning",
       title: "Build your momentum",
-      message: "Start with one useful task and let CampusHub AI guide you.",
+      message:
+        "Start with one useful task and let CampusHub AI guide you.",
     };
   }
 
@@ -24,7 +29,8 @@ function getTimeContext() {
     return {
       label: "Afternoon",
       title: "Keep the momentum going",
-      message: "Use your time wisely and move one step closer to your goals.",
+      message:
+        "Use your time wisely and move one step closer to your goals.",
     };
   }
 
@@ -32,73 +38,159 @@ function getTimeContext() {
     return {
       label: "Evening",
       title: "Make your evening count",
-      message: "A focused learning session today can change your tomorrow.",
+      message:
+        "A focused learning session today can change your tomorrow.",
     };
   }
 
   return {
     label: "Night",
     title: "Small progress still matters",
-    message: "Review, plan your next move and get ready for tomorrow.",
+    message:
+      "Review, plan your next move and get ready for tomorrow.",
   };
 }
+
+// ============================================================
+// STUDENT DASHBOARD
+// ============================================================
 
 function StudentDashboard() {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
 
   const timeContext = useMemo(() => getTimeContext(), []);
 
+  // ==========================================================
+  // FETCH DASHBOARD
+  // ==========================================================
+
   useEffect(() => {
+    let mounted = true;
+
     const fetchDashboard = async () => {
       try {
+        setLoading(true);
+        setError("");
+
         const response = await API.get("/user/dashboard");
 
-        const data = response?.data?.dashboard;
+        if (!mounted) return;
 
-        setDashboardData(data || null);
-      } catch (error) {
-        console.error("Dashboard Error:", error);
-        setError(true);
+        if (response?.data?.success) {
+          setDashboardData(response.data.dashboard);
+        } else {
+          setError(
+            response?.data?.message ||
+              "Unable to load dashboard data."
+          );
+        }
+      } catch (err) {
+        console.error(
+          "Student Dashboard Error:",
+          err
+        );
+
+        if (!mounted) return;
+
+        setError(
+          err?.response?.data?.message ||
+            "Unable to connect to dashboard server."
+        );
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchDashboard();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
+
+  // ==========================================================
+  // LOADING STATE
+  // ==========================================================
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
         <div className="text-center">
+
           <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-400" />
 
           <p className="mt-4 text-sm text-gray-400">
             Preparing your workspace...
           </p>
+
         </div>
       </div>
     );
   }
 
-  const user = dashboardData?.user;
+  // ==========================================================
+  // FALLBACK DATA
+  // ==========================================================
+
+  const safeDashboardData = {
+    user: {
+      name: "Student",
+      email: "",
+      college: "",
+      branch: "",
+      year: "",
+      profileStrength: 0,
+      ...(dashboardData?.user || {}),
+    },
+
+    stats: dashboardData?.stats || [],
+
+    learning: dashboardData?.learning || null,
+
+    overview: dashboardData?.overview || {},
+
+    activities: dashboardData?.activities || [],
+
+    notifications: dashboardData?.notifications || {
+      unreadCount: 0,
+      latest: [],
+    },
+  };
+
+  const user = safeDashboardData.user;
+
+  // ==========================================================
+  // UI
+  // ==========================================================
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
 
       <div className="flex">
 
+        {/* ====================================================
+            SIDEBAR
+        ==================================================== */}
+
         <Sidebar />
 
         <div className="min-w-0 flex-1">
+
+          {/* ==================================================
+              TOPBAR
+          ================================================== */}
 
           <Topbar user={user} />
 
           <main className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
 
-            {/* Personalized Hero */}
+            {/* =================================================
+                PERSONALIZED HERO
+            ================================================= */}
 
             <section className="relative mb-8 overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950/30 p-6 sm:p-8">
 
@@ -121,28 +213,44 @@ function StudentDashboard() {
                   {timeContext.message}
                 </p>
 
+                {/* Backend connection error */}
+
                 {error && (
                   <div className="mt-5 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-300">
-                    Some dashboard data could not be loaded. You can still
-                    explore CampusHub normally.
+                    {error}
                   </div>
+                )}
+
+                {/* User information */}
+
+                {!error && user?.name && (
+                  <p className="mt-5 text-sm text-gray-500">
+                    Welcome back,{" "}
+                    <span className="font-medium text-gray-300">
+                      {user.name}
+                    </span>
+                  </p>
                 )}
 
               </div>
             </section>
 
-
-            {/* Dashboard Content */}
+            {/* =================================================
+                DASHBOARD CONTENT
+            ================================================= */}
 
             <DashboardCards
-              dashboardData={dashboardData}
+              dashboardData={safeDashboardData}
             />
 
-
-            {/* AI Command Center */}
+            {/* =================================================
+                AI COMMAND CENTER
+            ================================================= */}
 
             <div className="mt-8">
+
               <AIAssistant />
+
             </div>
 
           </main>

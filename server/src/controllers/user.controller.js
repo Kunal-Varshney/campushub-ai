@@ -1,32 +1,15 @@
+// ============================================================
+// CAMPUSHUB AI — USER CONTROLLER
+// ============================================================
+
 import User from "../models/User.js";
-import Notification from "../models/Notification.js";
 import AIUsage from "../models/AIUsage.js";
 import Note from "../models/note.js";
 import Roadmap from "../models/Roadmap.js";
 import Resume from "../models/Resume.js";
 import InternshipApplication from "../models/internshipApplication.model.js";
-
-
-// ============================================================
-// HELPER — PROFILE STRENGTH
-// ============================================================
-
-const calculateProfileStrength = (user) => {
-  const fields = [
-    user.name,
-    user.email,
-    user.college,
-    user.branch,
-    user.year,
-  ];
-
-  const completed = fields.filter(
-    (field) => field && String(field).trim() !== ""
-  ).length;
-
-  return Math.round((completed / fields.length) * 100);
-};
-
+import Certificate from "../models/Certificate.js";
+import Notification from "../models/Notification.js";
 
 // ============================================================
 // GET USER PROFILE
@@ -35,9 +18,9 @@ const calculateProfileStrength = (user) => {
 
 export const getProfile = async (req, res) => {
   try {
-
     const user = await User.findById(req.user.id)
-      .select("-password");
+      .select("-password")
+      .lean();
 
     if (!user) {
       return res.status(404).json({
@@ -46,23 +29,19 @@ export const getProfile = async (req, res) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       user,
     });
-
   } catch (error) {
-
     console.error("Get Profile Error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
-
 
 // ============================================================
 // UPDATE USER PROFILE
@@ -71,14 +50,12 @@ export const getProfile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-
     const {
       name,
       college,
       branch,
       year,
     } = req.body;
-
 
     const user = await User.findByIdAndUpdate(
       req.user.id,
@@ -92,8 +69,9 @@ export const updateProfile = async (req, res) => {
         new: true,
         runValidators: true,
       }
-    ).select("-password");
-
+    )
+      .select("-password")
+      .lean();
 
     if (!user) {
       return res.status(404).json({
@@ -102,65 +80,20 @@ export const updateProfile = async (req, res) => {
       });
     }
 
-
-    // --------------------------------------------------------
-    // PROFILE UPDATE NOTIFICATION
-    // --------------------------------------------------------
-
-    try {
-
-      await Notification.create({
-        user: user._id,
-
-        title: "Profile Updated",
-
-        message:
-          "Your CampusHub AI profile was updated successfully.",
-
-        type: "profile",
-
-        link: "/profile",
-      });
-
-    } catch (notificationError) {
-
-      console.error(
-        "Profile Notification Error:",
-        notificationError.message
-      );
-
-    }
-
-
-    res.status(200).json({
-
+    return res.status(200).json({
       success: true,
-
-      message:
-        "Profile Updated Successfully 🚀",
-
+      message: "Profile Updated Successfully 🚀",
       user,
-
     });
-
   } catch (error) {
+    console.error("Update Profile Error:", error);
 
-    console.error(
-      "Update Profile Error:",
-      error
-    );
-
-    res.status(500).json({
-
+    return res.status(500).json({
       success: false,
-
       message: error.message,
-
     });
-
   }
 };
-
 
 // ============================================================
 // GET DASHBOARD DATA
@@ -169,290 +102,515 @@ export const updateProfile = async (req, res) => {
 
 export const getDashboard = async (req, res) => {
   try {
+    const userId = req.user.id;
 
     // ========================================================
-    // USER
+    // GET USER
     // ========================================================
 
-    const user = await User.findById(req.user.id)
-      .select("-password");
-
+    const user = await User.findById(userId)
+      .select("-password")
+      .lean();
 
     if (!user) {
-
       return res.status(404).json({
-
         success: false,
-
         message: "User not found",
-
       });
-
     }
 
-
     // ========================================================
-    // DATABASE COUNTS
+    // FETCH DASHBOARD COUNTS + RECENT DATA
     // ========================================================
 
     const [
-      notesCount,
       aiUsageCount,
+      notesCount,
       roadmapCount,
       resumeCount,
-      internshipApplicationsCount,
+      internshipCount,
+      certificateCount,
       unreadNotifications,
+      recentAI,
+      recentNotifications,
+      latestRoadmap,
     ] = await Promise.all([
+      // ------------------------------------------------------
+      // AI QUESTIONS
+      // ------------------------------------------------------
 
+      AIUsage.countDocuments({
+        userId,
+      }),
 
       // ------------------------------------------------------
       // NOTES
       // ------------------------------------------------------
 
       Note.countDocuments({
-        uploadedBy: req.user.id,
+        uploadedBy: userId,
       }),
-
-
-      // ------------------------------------------------------
-      // AI USAGE
-      // ------------------------------------------------------
-
-      AIUsage.countDocuments({
-        userId: req.user.id,
-      }),
-
 
       // ------------------------------------------------------
       // ROADMAPS
       // ------------------------------------------------------
 
       Roadmap.countDocuments({
-        user: req.user.id,
+        user: userId,
       }),
-
 
       // ------------------------------------------------------
       // RESUMES
       // ------------------------------------------------------
 
       Resume.countDocuments({
-        user: req.user.id,
+        user: userId,
       }),
 
-
       // ------------------------------------------------------
-      // INTERNSHIP APPLICATIONS
+      // INTERNSHIPS
       // ------------------------------------------------------
 
       InternshipApplication.countDocuments({
-        user: req.user.id,
+        user: userId,
       }),
 
+      // ------------------------------------------------------
+      // CERTIFICATES
+      // ------------------------------------------------------
+
+      Certificate.countDocuments({
+        user: userId,
+      }),
 
       // ------------------------------------------------------
       // UNREAD NOTIFICATIONS
       // ------------------------------------------------------
 
       Notification.countDocuments({
-        user: req.user.id,
+        user: userId,
         isRead: false,
       }),
 
-    ]);
+      // ------------------------------------------------------
+      // RECENT AI ACTIVITY
+      // ------------------------------------------------------
 
-
-    // ========================================================
-    // PROFILE STRENGTH
-    // ========================================================
-
-    const profileStrength =
-      calculateProfileStrength(user);
-
-
-    // ========================================================
-    // RECENT NOTIFICATIONS / ACTIVITY
-    // ========================================================
-
-    const recentNotifications =
-      await Notification.find({
-        user: req.user.id,
+      AIUsage.find({
+        userId,
       })
         .sort({
           createdAt: -1,
         })
         .limit(5)
-        .lean();
+        .select("question category createdAt")
+        .lean(),
 
+      // ------------------------------------------------------
+      // RECENT NOTIFICATIONS
+      // ------------------------------------------------------
 
-    const activities =
-      recentNotifications.map(
-        (notification) => ({
-
-          id: notification._id,
-
-          title: notification.title,
-
-          message: notification.message,
-
-          time: notification.createdAt,
-
-          type: notification.type,
-
-          link: notification.link,
-
-          isRead: notification.isRead,
-
+      Notification.find({
+        user: userId,
+      })
+        .sort({
+          createdAt: -1,
         })
-      );
+        .limit(5)
+        .select(
+          "title message type link isRead createdAt"
+        )
+        .lean(),
 
+      // ------------------------------------------------------
+      // LATEST ROADMAP
+      // ------------------------------------------------------
+
+      Roadmap.findOne({
+        user: userId,
+      })
+        .sort({
+          updatedAt: -1,
+        })
+        .lean(),
+    ]);
+
+    // ========================================================
+    // PROFILE STRENGTH
+    // ========================================================
+
+    let profileStrength = 20;
+
+    if (user.name) {
+      profileStrength += 15;
+    }
+
+    if (user.email) {
+      profileStrength += 15;
+    }
+
+    if (user.college) {
+      profileStrength += 15;
+    }
+
+    if (user.branch) {
+      profileStrength += 10;
+    }
+
+    if (user.year) {
+      profileStrength += 10;
+    }
+
+    if (user.avatar) {
+      profileStrength += 10;
+    }
+
+    profileStrength = Math.min(
+      profileStrength,
+      100
+    );
+
+    // ========================================================
+    // ROADMAP PROGRESS
+    // ========================================================
+
+    let roadmapProgress = 0;
+
+    let totalRoadmapSteps = 0;
+
+    let completedRoadmapSteps = 0;
+
+    if (
+      latestRoadmap &&
+      Array.isArray(
+        latestRoadmap.roadmapSteps
+      ) &&
+      latestRoadmap.roadmapSteps.length > 0
+    ) {
+      const steps =
+        latestRoadmap.roadmapSteps;
+
+      totalRoadmapSteps =
+        steps.length;
+
+      completedRoadmapSteps =
+        steps.filter(
+          (step) =>
+            step.status ===
+            "completed"
+        ).length;
+
+      const totalProgress =
+        steps.reduce(
+          (total, step) =>
+            total +
+            Number(
+              step.progress || 0
+            ),
+          0
+        );
+
+      roadmapProgress =
+        Math.round(
+          totalProgress /
+            steps.length
+        );
+    }
+
+    // ========================================================
+    // LEARNING DATA
+    // ========================================================
+
+    let learning = null;
+
+    if (latestRoadmap) {
+      learning = {
+        title: `${latestRoadmap.career} Roadmap`,
+
+        name:
+          latestRoadmap.career,
+
+        course:
+          latestRoadmap.career,
+
+        career:
+          latestRoadmap.career,
+
+        level:
+          latestRoadmap.level,
+
+        progress:
+          roadmapProgress,
+
+        completion:
+          roadmapProgress,
+
+        roadmapId:
+          latestRoadmap._id,
+
+        totalSteps:
+          totalRoadmapSteps,
+
+        completedSteps:
+          completedRoadmapSteps,
+
+        route:
+          "/skill-roadmap",
+      };
+    }
+
+    // ========================================================
+    // RECENT ACTIVITIES
+    // ========================================================
+
+    const activities = [];
+
+    // --------------------------------------------------------
+    // AI ACTIVITIES
+    // --------------------------------------------------------
+
+    recentAI.forEach((item) => {
+      activities.push({
+        id: item._id,
+
+        type: "ai",
+
+        title:
+          "Asked CampusHub AI",
+
+        description:
+          item.question ||
+          "Asked CampusHub AI a question",
+
+        category:
+          item.category ||
+          "General",
+
+        createdAt:
+          item.createdAt,
+
+        time:
+          item.createdAt,
+      });
+    });
+
+    // --------------------------------------------------------
+    // NOTIFICATION ACTIVITIES
+    // --------------------------------------------------------
+
+    recentNotifications.forEach(
+      (item) => {
+        activities.push({
+          id: item._id,
+
+          type:
+            item.type ||
+            "system",
+
+          title:
+            item.title,
+
+          description:
+            item.message,
+
+          createdAt:
+            item.createdAt,
+
+          time:
+            item.createdAt,
+
+          isRead:
+            item.isRead,
+
+          link:
+            item.link || "",
+        });
+      }
+    );
+
+    // ========================================================
+    // SORT ACTIVITIES
+    // ========================================================
+
+    activities.sort(
+      (a, b) =>
+        new Date(
+          b.createdAt || 0
+        ) -
+        new Date(
+          a.createdAt || 0
+        )
+    );
+
+    const latestActivities =
+      activities.slice(0, 10);
 
     // ========================================================
     // DASHBOARD RESPONSE
     // ========================================================
 
-    res.status(200).json({
-
+    return res.status(200).json({
       success: true,
 
       dashboard: {
-
-
         // ====================================================
         // USER
         // ====================================================
 
         user: {
+          _id: user._id,
 
-          name: user.name,
+          name:
+            user.name,
 
-          email: user.email,
+          email:
+            user.email,
 
-          college: user.college,
+          avatar:
+            user.avatar || "",
 
-          branch: user.branch,
+          college:
+            user.college || "",
 
-          year: user.year,
+          branch:
+            user.branch || "",
 
-          avatar: user.avatar,
+          year:
+            user.year || "",
 
           profileStrength,
-
         },
-
 
         // ====================================================
         // DASHBOARD STATS
         // ====================================================
 
-        stats: {
+        stats: [
+          {
+            title:
+              "AI Questions",
 
-          notes: notesCount,
+            value:
+              String(
+                aiUsageCount
+              ),
 
-          aiSessions: aiUsageCount,
+            description:
+              aiUsageCount > 0
+                ? "Questions asked to CampusHub AI"
+                : "Ask CampusHub AI to get started",
+          },
 
-          roadmaps: roadmapCount,
+          {
+            title:
+              "Notes",
 
-          resumes: resumeCount,
+            value:
+              String(
+                notesCount
+              ),
 
-          internshipApplications:
-            internshipApplicationsCount,
+            description:
+              notesCount > 0
+                ? "Notes added to your account"
+                : "Start building your notes",
+          },
 
-        },
+          {
+            title:
+              "Internships",
 
+            value:
+              String(
+                internshipCount
+              ),
+
+            description:
+              internshipCount > 0
+                ? "Internship applications"
+                : "Explore internship opportunities",
+          },
+
+          {
+            title:
+              "Certificates",
+
+            value:
+              String(
+                certificateCount
+              ),
+
+            description:
+              certificateCount > 0
+                ? "Certificates earned"
+                : "Complete learning goals",
+          },
+        ],
 
         // ====================================================
-        // CONTINUE LEARNING
+        // LEARNING
         // ====================================================
 
-        learning: {
+        learning,
 
-          hasStarted:
-            roadmapCount > 0 || notesCount > 0,
+        // ====================================================
+        // EXTRA OVERVIEW
+        // ====================================================
 
+        overview: {
           roadmaps:
             roadmapCount,
+
+          resumes:
+            resumeCount,
+
+          aiQuestions:
+            aiUsageCount,
 
           notes:
             notesCount,
 
-          message:
-            roadmapCount === 0 &&
-            notesCount === 0
+          internships:
+            internshipCount,
 
-              ? "Start your learning journey today."
-
-              : "Keep building your skills.",
-
+          certificates:
+            certificateCount,
         },
-
-
-        // ====================================================
-        // RECENT ACTIVITY
-        // ====================================================
-
-        activities,
-
 
         // ====================================================
         // NOTIFICATIONS
         // ====================================================
 
         notifications: {
-
           unreadCount:
             unreadNotifications,
 
+          latest:
+            recentNotifications,
         },
 
-
         // ====================================================
-        // FEATURE STATUS
+        // ACTIVITIES
         // ====================================================
 
-        features: {
-
-          smartNotes:
-            notesCount > 0,
-
-          aiAssistant:
-            aiUsageCount > 0,
-
-          skillRoadmap:
-            roadmapCount > 0,
-
-          resumeBuilder:
-            resumeCount > 0,
-
-          internships:
-            internshipApplicationsCount > 0,
-
-          learningStreak:
-            false,
-
-          achievements:
-            false,
-
-        },
-
+        activities:
+          latestActivities,
       },
-
     });
-
   } catch (error) {
-
     console.error(
       "Dashboard Error:",
       error
     );
 
-    res.status(500).json({
-
+    return res.status(500).json({
       success: false,
 
-      message: error.message,
+      message:
+        "Failed to load dashboard data",
 
+      error:
+        error.message,
     });
-
   }
 };
