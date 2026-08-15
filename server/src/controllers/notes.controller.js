@@ -1,3 +1,14 @@
+import Note from "../models/note.model.js";
+import Groq from "groq-sdk";
+
+// ============================================================
+// GROQ CONFIG
+// ============================================================
+
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
+
 // ============================================================
 // AI SMART NOTE GENERATOR
 // POST /api/notes/generate
@@ -15,9 +26,9 @@ export const generateNote = async (req, res) => {
       difficulty,
     } = req.body;
 
-    // ============================================================
+    // ==========================================================
     // VALIDATION
-    // ============================================================
+    // ==========================================================
 
     if (!description?.trim() && !topic?.trim()) {
       return res.status(400).json({
@@ -27,25 +38,24 @@ export const generateNote = async (req, res) => {
     }
 
     const userRequirement =
-      description?.trim() ||
-      topic?.trim();
+      description?.trim() || topic?.trim();
 
-    // ============================================================
+    // ==========================================================
     // SMART NOTES PROMPT
-    // ============================================================
+    // ==========================================================
 
     const prompt = `
 You are CampusHub AI — an intelligent Smart Notes Generator
 for college students.
 
-Your job is NOT to behave like a normal chatbot.
-
 Your job is to convert the student's input into COMPLETE,
-WELL-STRUCTURED, STUDY-READY NOTES.
+WELL-STRUCTURED, STUDY-READY COLLEGE NOTES.
 
-The student's input may be very short.
+IMPORTANT:
 
-For example:
+The student's input may be extremely short.
+
+Examples:
 
 "Types of Array"
 "OOP"
@@ -56,9 +66,12 @@ For example:
 
 A short input DOES NOT mean the student wants a short answer.
 
-You must understand the topic and generate proper academic notes
-covering the important concepts required to understand and study
-that topic.
+SHORT INPUT = TOPIC
+NOT = SHORT NOTES.
+
+Understand the requested topic and generate proper academic
+notes covering the important concepts required to understand,
+learn, revise and study that topic.
 
 ============================================================
 STUDENT REQUEST
@@ -90,43 +103,80 @@ ${difficulty || "Intermediate"}
 CORE SMART NOTES RULE
 ============================================================
 
-The student's request is the topic of the notes.
+First understand exactly what topic the student wants notes for.
 
-First understand what the student is asking.
+Then determine the natural academic scope of that topic.
 
-Then determine the academic scope of that topic.
+Then create COMPLETE STUDY NOTES.
 
-Then create complete study notes.
+Do NOT simply give a short chatbot-style answer.
 
-DO NOT simply answer the student's sentence.
-
-CREATE NOTES ABOUT THE REQUESTED TOPIC.
-
-SHORT INPUT ≠ SHORT NOTES.
+The result must feel like notes a college student could actually
+study from.
 
 For example:
 
+Student input:
+
 "Types of Array"
 
-must produce proper notes containing the definition of an array,
-important array types, explanation of each type, examples,
-comparison where useful, important points and quick revision.
+The output should naturally contain:
+
+- Title
+- Definition / Introduction
+- Types of Arrays
+- One-Dimensional Array
+- Two-Dimensional Array
+- Multidimensional Array
+- Explanation of each type
+- Examples
+- Comparison where useful
+- Important Points
+- Quick Revision
+- Exam-oriented points/questions when relevant
+
+Student input:
 
 "OOP"
 
-must produce proper notes covering OOP definition, concept,
-major principles, explanation of each principle, examples and
-other fundamental concepts required to understand OOP.
+The output should naturally contain:
 
-"DBMS"
+- Definition
+- Introduction
+- OOP concept
+- Main principles
+- Encapsulation
+- Abstraction
+- Inheritance
+- Polymorphism
+- Explanation of each principle
+- Examples
+- Applications
+- Important Points
+- Quick Revision
 
-must produce broader fundamental DBMS notes.
+Student input:
+
+"Binary Search"
+
+The output should naturally contain:
+
+- Definition
+- Concept
+- Requirements
+- Working
+- Step-by-step algorithm
+- Example
+- Complexity
+- Advantages/limitations if relevant
+- Important Points
+- Quick Revision
 
 ============================================================
 WHAT GOOD STUDY NOTES SHOULD CONTAIN
 ============================================================
 
-Depending on the topic, notes may contain:
+Depending on the topic, include relevant sections such as:
 
 1. Title
 2. Definition / Introduction
@@ -135,25 +185,57 @@ Depending on the topic, notes may contain:
 5. Components
 6. Principles
 7. Steps / Working
-8. Explanation of each important concept
+8. Algorithms
 9. Examples
 10. Comparison
-11. Diagram explanation
+11. Diagram Explanation
 12. Formula
 13. Code / Pseudocode
 14. Applications
-15. Advantages / Disadvantages
-16. Important Points
-17. Quick Revision
-18. Exam-oriented Questions / Points
+15. Advantages
+16. Disadvantages
+17. Important Points
+18. Quick Revision
+19. Exam Questions / Exam Points
 
 IMPORTANT:
 
 These are NOT fixed sections.
 
-DO NOT create all of them for every topic.
+Only include sections that naturally belong to the requested topic.
 
-Choose only the sections that are naturally relevant to the topic.
+Never create irrelevant sections simply to make the answer longer.
+
+============================================================
+COMPLETENESS RULE
+============================================================
+
+DO NOT stop after a basic definition.
+
+DO NOT generate only 4-5 generic points.
+
+If the topic contains important types, explain them.
+
+If it contains principles, explain them.
+
+If it contains components, explain them.
+
+If it contains steps, explain them.
+
+If examples help understanding, provide them.
+
+If comparison helps understanding, provide it.
+
+If complexity is relevant, include it.
+
+If code is relevant, provide a small correct example.
+
+If formulas are relevant, include them.
+
+The notes should be complete enough that a college student can
+study the requested topic from the generated notes.
+
+However, DO NOT add unrelated information.
 
 ============================================================
 TOPIC-SPECIFIC BEHAVIOR
@@ -164,79 +246,40 @@ If the student asks for TYPES:
 Example:
 "Types of Array"
 
-Generate:
-
-- Definition of Array
-- Types of Arrays
-- Explanation of every important type
-- Examples
-- Comparison if useful
-- Important Points
-- Quick Revision
+Generate proper notes about the concept and then explain
+all important types.
 
 If the student asks for a CONCEPT:
 
 Example:
 "OOP"
 
-Generate:
-
-- Definition
-- Introduction
-- Main concept
-- Principles/components
-- Explanation of each
-- Examples
-- Relevant applications/advantages
-- Important Points
-- Quick Revision
+Explain the concept and all major fundamentals required to
+understand it.
 
 If the student asks for a SPECIFIC CONCEPT:
 
 Example:
 "Binary Search"
 
-Generate:
-
-- Definition
-- Concept
-- Working
-- Steps/Algorithm
-- Example
-- Complexity
-- Important Points
-- Quick Revision
+Explain definition, working, algorithm, example and complexity.
 
 If the student asks for a COMPARISON:
 
 Example:
 "Stack vs Queue"
 
-Generate:
-
-- Introduction
-- Stack explanation
-- Queue explanation
-- Clear comparison
-- Examples
-- Important Points
-- Quick Revision
+Explain both concepts and then provide a clear comparison.
 
 If the student asks for ADVANTAGES:
 
 Example:
 "Advantages of DBMS"
 
-Generate:
+Focus mainly on DBMS advantages, but give enough introduction
+to understand the context.
 
-- Short DBMS introduction
-- Advantages
-- Detailed explanation of each advantage
-- Examples where useful
-- Important Points
-- Quick Revision
-
-Do NOT unnecessarily generate a full DBMS chapter.
+Do NOT generate an entire DBMS chapter.
 
 If the student asks for a BROAD TOPIC:
 
@@ -247,88 +290,22 @@ Generate broader chapter-style notes covering the major
 fundamental concepts.
 
 ============================================================
-COMPLETENESS RULE
-============================================================
-
-DO NOT stop after a basic definition.
-
-DO NOT generate only 4-5 generic points.
-
-If the topic naturally contains important types, explain them.
-
-If it contains principles, explain them.
-
-If it contains components, explain them.
-
-If it contains steps, explain them.
-
-If examples help understanding, provide examples.
-
-If comparison helps, provide comparison.
-
-If complexity is relevant, include it.
-
-If code is relevant, include a small correct code example.
-
-The notes should be complete enough that a college student can
-study the requested topic from the generated notes.
-
-However:
-
-DO NOT add unrelated information merely to make the notes longer.
-
-============================================================
 LEARNING LEVEL
 ============================================================
 
 Beginner:
 
-Use simple language and easy examples.
+Use simple student-friendly language and easy examples.
 
 Intermediate:
 
-Give complete conceptual explanations and useful technical details.
+Give complete conceptual explanations with useful technical
+details.
 
 Advanced:
 
 Give deeper technical explanations, implementation details,
 edge cases and complexity where relevant.
-
-============================================================
-IMPORTANT POINTS
-============================================================
-
-Include an "Important Points" section when useful.
-
-These should summarize the most important facts the student
-should remember.
-
-Do not repeat the entire notes.
-
-============================================================
-QUICK REVISION
-============================================================
-
-Include a "Quick Revision" section when useful.
-
-It should contain short revision-friendly points.
-
-Example:
-
-• 1D Array → Single sequence
-• 2D Array → Rows and columns
-• 3D+ → Multidimensional structure
-
-============================================================
-EXAM CONTENT
-============================================================
-
-If the topic is clearly academic/exam-oriented, exam-relevant
-information may be included.
-
-Do NOT force exam tips into every answer.
-
-Do NOT create an exam section just to increase the length.
 
 ============================================================
 TEXT QUALITY
@@ -344,8 +321,9 @@ Use:
 - Short paragraphs
 - Bullet points
 - Examples
-- Comparisons where useful
-- Code examples where relevant
+- Comparisons
+- Code when relevant
+- Quick revision points
 
 Avoid:
 
@@ -358,27 +336,37 @@ Avoid:
 - Generic AI language
 
 ============================================================
-IMPORTANT FORMATTING RULE
+IMPORTANT POINTS
 ============================================================
 
-The content should be written so that the frontend can display it
-as properly formatted study notes.
+Include Important Points when useful.
 
-Use section headings such as:
+They should contain only the most important facts.
 
-Definition
-Introduction
-Types
-Working
-Examples
-Comparison
-Important Points
-Quick Revision
-Exam Questions
+Do not repeat the complete notes.
 
-BUT ONLY WHEN RELEVANT.
+============================================================
+QUICK REVISION
+============================================================
 
-Do not force these headings.
+Include Quick Revision when useful.
+
+Make it short and revision-friendly.
+
+Example:
+
+• 1D Array → Single sequence
+• 2D Array → Rows and columns
+• 3D+ → Multidimensional structure
+
+============================================================
+EXAM CONTENT
+============================================================
+
+If the topic is academic or clearly exam-oriented, include
+relevant exam points or important questions.
+
+Do NOT force exam content into every topic.
 
 ============================================================
 OUTPUT FORMAT
@@ -390,21 +378,18 @@ Use exactly this structure:
 
 {
   "title": "Clear title of the notes",
-
   "subject": "Actual subject or technology",
-
   "category": "Relevant category",
-
-  "topic": "Actual topic covered by the notes",
+  "topic": "Actual topic covered",
 
   "answer": {
-    "introduction": "Definition or introduction of the topic",
+    "introduction": "Direct definition or introduction",
 
     "sections": [
       {
-        "heading": "Relevant section heading",
+        "heading": "Relevant heading",
 
-        "content": "Complete explanation of this section",
+        "content": "Complete explanation",
 
         "points": [
           "Important point",
@@ -419,12 +404,15 @@ Use exactly this structure:
   },
 
   "keyPoints": [
-    "Important study point",
     "Important study point"
   ],
 
   "keywords": [
     "Relevant keyword"
+  ],
+
+  "quickRevision": [
+    "Short revision point"
   ],
 
   "examTips": [
@@ -440,14 +428,16 @@ FINAL RULES
 - No Markdown code fences.
 - No text outside JSON.
 - Generate COMPLETE STUDY NOTES.
-- Short prompt must not produce unnecessarily short notes.
-- Structure must depend on the actual topic.
-- Cover all important fundamentals.
+- Short input must still generate complete notes.
+- Do not simply answer the student's sentence.
+- Understand the academic scope of the topic.
+- Explain all important fundamentals.
 - Explain important types/principles/components/steps.
 - Include examples when useful.
 - Include comparison when useful.
 - Include complexity when relevant.
 - Include code when relevant.
+- Include formulas when relevant.
 - Include Important Points when useful.
 - Include Quick Revision when useful.
 - Include exam content only when relevant.
@@ -456,9 +446,9 @@ FINAL RULES
 - Make the output look like genuine college study notes.
 `;
 
-    // ============================================================
-    // GROQ
-    // ============================================================
+    // ==========================================================
+    // GROQ REQUEST
+    // ==========================================================
 
     const completion =
       await groq.chat.completions.create({
@@ -470,18 +460,18 @@ FINAL RULES
             content: `
 You are CampusHub AI Smart Notes Generator.
 
-Your purpose is to convert student topics and study requirements
-into complete, structured college study notes.
+Convert student topics into complete, structured,
+study-ready college notes.
 
-Understand the topic before generating content.
+Short student input does NOT mean short notes.
 
-Short student input does not mean short notes.
-
-Generate complete academic notes based on the topic's scope.
+Understand the topic first, determine its academic scope,
+and generate complete notes.
 
 Return valid JSON only.
 `,
           },
+
           {
             role: "user",
             content: prompt,
@@ -495,9 +485,9 @@ Return valid JSON only.
         },
       });
 
-    // ============================================================
+    // ==========================================================
     // GET AI RESPONSE
-    // ============================================================
+    // ==========================================================
 
     let text =
       completion?.choices?.[0]?.message?.content || "";
@@ -511,9 +501,9 @@ Return valid JSON only.
       });
     }
 
-    // ============================================================
+    // ==========================================================
     // PARSE JSON
-    // ============================================================
+    // ==========================================================
 
     let aiNotes;
 
@@ -536,9 +526,9 @@ Return valid JSON only.
       });
     }
 
-    // ============================================================
-    // NORMALIZE DATA
-    // ============================================================
+    // ==========================================================
+    // NORMALIZE AI RESPONSE
+    // ==========================================================
 
     const finalSubject =
       aiNotes.subject ||
@@ -563,7 +553,9 @@ Return valid JSON only.
       aiNotes.answer || {};
 
     const introduction =
-      answer.introduction || "";
+      typeof answer.introduction === "string"
+        ? answer.introduction
+        : "";
 
     const sections =
       Array.isArray(answer.sections)
@@ -580,54 +572,61 @@ Return valid JSON only.
         ? aiNotes.keywords
         : [];
 
+    const quickRevision =
+      Array.isArray(aiNotes.quickRevision)
+        ? aiNotes.quickRevision
+        : [];
+
     const examTips =
       Array.isArray(aiNotes.examTips)
         ? aiNotes.examTips
         : [];
 
-    // ============================================================
-    // SAVE AI GENERATED NOTE
-    // ============================================================
+    // ==========================================================
+    // SAVE COMPLETE AI NOTE
+    // ==========================================================
 
-    const note = await Note.create({
-      title: finalTitle,
+    const note =
+      await Note.create({
+        title: finalTitle,
 
-      description: userRequirement,
+        description: userRequirement,
 
-      subject: finalSubject,
+        subject: finalSubject,
 
-      topic: finalTopic,
+        topic: finalTopic,
 
-      category: finalCategory,
+        category: finalCategory,
 
-      branch: branch || "",
+        branch: branch || "",
 
-      year: year || "",
+        year: year || "",
 
-      summary: introduction,
+        summary: introduction,
 
-      answer: {
-        introduction,
+        answer: {
+          introduction,
+          sections,
+        },
 
-        sections,
-      },
+        points: keyPoints,
 
-      points: keyPoints,
+        keywords,
 
-      keywords,
+        examTips,
 
-      examTips,
+        quickRevision,
 
-      fileUrl: "ai-generated",
+        fileUrl: "ai-generated",
 
-      uploadedBy: req.user.id,
+        uploadedBy: req.user.id,
 
-      status: "approved",
-    });
+        status: "approved",
+      });
 
-    // ============================================================
+    // ==========================================================
     // RESPONSE
-    // ============================================================
+    // ==========================================================
 
     return res.status(201).json({
       success: true,
@@ -646,7 +645,178 @@ Return valid JSON only.
 
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message:
+        error?.message ||
+        "Smart notes generation failed",
+    });
+  }
+};
+
+
+// ============================================================
+// CREATE / UPLOAD NOTE
+// POST /api/notes/create
+// ============================================================
+
+export const createNote = async (req, res) => {
+  try {
+    const {
+      title,
+      description,
+      subject,
+      topic,
+      category,
+      branch,
+      year,
+      summary,
+      answer,
+      points,
+      keywords,
+      examTips,
+      quickRevision,
+      fileUrl,
+    } = req.body;
+
+    // ==========================================================
+    // VALIDATION
+    // ==========================================================
+
+    if (!title?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Note title is required",
+      });
+    }
+
+    // ==========================================================
+    // CREATE NOTE
+    // ==========================================================
+
+    const note =
+      await Note.create({
+        title: title.trim(),
+
+        description:
+          description?.trim() || "",
+
+        subject:
+          subject?.trim() || "General",
+
+        topic:
+          topic?.trim() || "",
+
+        category:
+          category?.trim() || subject?.trim() || "General",
+
+        branch:
+          branch || "",
+
+        year:
+          year || "",
+
+        summary:
+          summary || "",
+
+        answer:
+          answer || {
+            introduction: "",
+            sections: [],
+          },
+
+        points:
+          Array.isArray(points)
+            ? points
+            : [],
+
+        keywords:
+          Array.isArray(keywords)
+            ? keywords
+            : [],
+
+        examTips:
+          Array.isArray(examTips)
+            ? examTips
+            : [],
+
+        quickRevision:
+          Array.isArray(quickRevision)
+            ? quickRevision
+            : [],
+
+        fileUrl:
+          fileUrl || "",
+
+        uploadedBy:
+          req.user.id,
+
+        status:
+          "pending",
+      });
+
+    // ==========================================================
+    // RESPONSE
+    // ==========================================================
+
+    return res.status(201).json({
+      success: true,
+
+      message:
+        "Note created successfully",
+
+      note,
+    });
+
+  } catch (error) {
+    console.error(
+      "CREATE NOTE ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        error?.message ||
+        "Failed to create note",
+    });
+  }
+};
+
+
+// ============================================================
+// GET MY NOTES
+// GET /api/notes
+// ============================================================
+
+export const getNotes = async (req, res) => {
+  try {
+    const notes =
+      await Note.find({
+        uploadedBy: req.user.id,
+      })
+        .sort({
+          createdAt: -1,
+        })
+        .lean();
+
+    return res.status(200).json({
+      success: true,
+
+      count: notes.length,
+
+      notes,
+    });
+
+  } catch (error) {
+    console.error(
+      "GET NOTES ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        error?.message ||
+        "Failed to fetch notes",
     });
   }
 };
