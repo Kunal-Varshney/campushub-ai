@@ -4,8 +4,6 @@ import HowItWorks from "../../components/HowItWorks/HowItWorks";
 import FAQ from "../../components/FAQ/FAQ";
 import Stats from "../../components/Stats/Stats";
 import Testimonials from "../../components/Testimonials/Testimonials";
-// import CTA from "../../components/CTA/CTA";
-
 function Home() {
   return (
     <>
@@ -15,7 +13,7 @@ function Home() {
       <Stats />
       <Testimonials />
       <FAQ />
-      {/* <CTA /> */}
+
     </>
 
   );
