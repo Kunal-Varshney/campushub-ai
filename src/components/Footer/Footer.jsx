@@ -1,6 +1,10 @@
-import { Mail } from "lucide-react";
+import { Mail, ArrowUpRight, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
-import { FaGithub, FaLinkedin, FaInstagram } from "react-icons/fa";
+import {
+  FaGithub,
+  FaLinkedin,
+  FaInstagram,
+} from "react-icons/fa";
 
 function Footer() {
   return (
@@ -8,68 +12,120 @@ function Footer() {
       id="contact"
       className="relative overflow-hidden border-t border-slate-800 bg-slate-950 text-white"
     >
-      {/* Background glow */}
-      <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-blue-600/10 blur-[110px]" />
-      <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-cyan-500/10 blur-[110px]" />
+      {/* Background Glow */}
+      <div className="pointer-events-none absolute -left-32 -top-32 h-80 w-80 rounded-full bg-blue-600/10 blur-[120px]" />
+      <div className="pointer-events-none absolute -bottom-32 -right-32 h-80 w-80 rounded-full bg-cyan-500/10 blur-[120px]" />
 
-      <div className="relative mx-auto max-w-7xl px-6 py-16">
-        <div className="grid gap-10 md:grid-cols-4">
+      <div className="relative mx-auto max-w-7xl px-6 py-16 lg:px-8">
 
-          {/* Brand */}
-          <div>
-            <h3 className="text-2xl font-bold">
+        {/* =====================================================
+            MAIN FOOTER
+        ===================================================== */}
+
+        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
+
+          {/* =================================================
+              BRAND
+          ================================================= */}
+
+          <div className="lg:col-span-1">
+
+            <Link
+              to="/"
+              className="inline-block text-2xl font-bold tracking-tight"
+            >
               CampusHub
               <span className="text-blue-500">AI</span>
-            </h3>
+            </Link>
 
-            <p className="mt-4 leading-relaxed text-gray-400">
-              AI-powered campus platform helping students learn smarter,
-              connect better and build their future.
+            <p className="mt-5 max-w-xs text-sm leading-7 text-slate-400">
+              An AI-powered campus platform helping students
+              learn smarter, build skills, discover opportunities,
+              and move toward the right career path.
             </p>
+
+            {/* Social Icons */}
+
+            <div className="mt-6 flex gap-3">
+
+              <a
+                href="https://github.com/Kunal-Varshney"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="GitHub"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/70 text-slate-400 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/50 hover:bg-blue-500/10 hover:text-blue-400"
+              >
+                <FaGithub size={18} />
+              </a>
+
+              <a
+                href="https://www.linkedin.com/in/kunalvarshney/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="LinkedIn"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/70 text-slate-400 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/50 hover:bg-blue-500/10 hover:text-blue-400"
+              >
+                <FaLinkedin size={18} />
+              </a>
+
+              <a
+                href="https://www.instagram.com/ddraaculaaa_01/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/70 text-slate-400 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/50 hover:bg-blue-500/10 hover:text-blue-400"
+              >
+                <FaInstagram size={18} />
+              </a>
+
+            </div>
           </div>
 
 
-          {/* Product */}
+          {/* =================================================
+              PLATFORM
+          ================================================= */}
+
           <div>
-            <h4 className="mb-4 font-semibold">
-              Product
+            <h4 className="mb-5 text-sm font-semibold text-white">
+              Platform
             </h4>
 
-            <ul className="space-y-3 text-gray-400">
+            <ul className="space-y-3 text-sm text-slate-400">
+
+              <li>
+                <a
+                  href="#features"
+                  className="transition-colors duration-300 hover:text-cyan-400"
+                >
+                  Features
+                </a>
+              </li>
+
+              <li>
+                <a
+                  href="#how-it-works"
+                  className="transition-colors duration-300 hover:text-cyan-400"
+                >
+                  How It Works
+                </a>
+              </li>
 
               <li>
                 <Link
-                  to="/ai-assistant"
-                  className="transition-colors duration-300 hover:text-blue-400"
+                  to="/about"
+                  className="transition-colors duration-300 hover:text-cyan-400"
                 >
-                  AI Assistant
+                  About CampusHub AI
                 </Link>
               </li>
 
               <li>
                 <Link
-                  to="/smart-notes"
-                  className="transition-colors duration-300 hover:text-blue-400"
+                  to="/careers"
+                  className="transition-colors duration-300 hover:text-cyan-400"
                 >
-                  Smart Notes
-                </Link>
-              </li>
-
-              <li>
-                <Link
-                  to="/internship-finder"
-                  className="transition-colors duration-300 hover:text-blue-400"
-                >
-                  Internship Finder
-                </Link>
-              </li>
-
-              <li>
-                <Link
-                  to="/community"
-                  className="transition-colors duration-300 hover:text-blue-400"
-                >
-                  Community
+                  Careers
                 </Link>
               </li>
 
@@ -77,36 +133,30 @@ function Footer() {
           </div>
 
 
-          {/* Company */}
+          {/* =================================================
+              RESOURCES
+          ================================================= */}
+
           <div>
-            <h4 className="mb-4 font-semibold">
-              Company
+            <h4 className="mb-5 text-sm font-semibold text-white">
+              Resources
             </h4>
 
-            <ul className="space-y-3 text-gray-400">
+            <ul className="space-y-3 text-sm text-slate-400">
 
               <li>
-                <Link
-                  to="/about"
-                  className="transition-colors duration-300 hover:text-blue-400"
+                <a
+                  href="#faq"
+                  className="transition-colors duration-300 hover:text-cyan-400"
                 >
-                  About
-                </Link>
-              </li>
-
-              <li>
-                <Link
-                  to="/careers"
-                  className="transition-colors duration-300 hover:text-blue-400"
-                >
-                  Careers
-                </Link>
+                  FAQs
+                </a>
               </li>
 
               <li>
                 <Link
                   to="/privacy"
-                  className="transition-colors duration-300 hover:text-blue-400"
+                  className="transition-colors duration-300 hover:text-cyan-400"
                 >
                   Privacy Policy
                 </Link>
@@ -115,19 +165,18 @@ function Footer() {
               <li>
                 <Link
                   to="/terms"
-                  className="transition-colors duration-300 hover:text-blue-400"
+                  className="transition-colors duration-300 hover:text-cyan-400"
                 >
                   Terms & Conditions
                 </Link>
               </li>
 
-
               <li>
                 <a
                   href="mailto:kunalvarshney187@gmail.com"
-                  className="transition-colors duration-300 hover:text-blue-400"
+                  className="transition-colors duration-300 hover:text-cyan-400"
                 >
-                  Contact
+                  Contact Support
                 </a>
               </li>
 
@@ -135,65 +184,73 @@ function Footer() {
           </div>
 
 
-          {/* Connect */}
+          {/* =================================================
+              GET IN TOUCH
+          ================================================= */}
+
           <div>
-            <h4 className="mb-4 font-semibold">
-              Connect
+
+            <h4 className="mb-5 text-sm font-semibold text-white">
+              Get in Touch
             </h4>
 
-            <div className="mb-5 flex gap-4">
-
-              <a
-                href="https://github.com/Kunal-Varshney"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="GitHub"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-800 bg-slate-900/80 backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-500 hover:text-blue-400 hover:shadow-lg hover:shadow-blue-500/20"
-              >
-                <FaGithub size={18} />
-              </a>
-
-
-              <a
-                href="https://www.linkedin.com/in/kunalvarshney/"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="LinkedIn"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-800 bg-slate-900/80 backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-500 hover:text-blue-400 hover:shadow-lg hover:shadow-blue-500/20"
-              >
-                <FaLinkedin size={18} />
-              </a>
-
-
-              <a
-                href="https://www.instagram.com/ddraaculaaa_01/"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-800 bg-slate-900/80 backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-500 hover:text-blue-400 hover:shadow-lg hover:shadow-blue-500/20"
-              >
-                <FaInstagram size={18} />
-              </a>
-
-            </div>
-
+            <p className="mb-5 text-sm leading-6 text-slate-400">
+              Have a question, suggestion, or want to know more
+              about CampusHub AI?
+            </p>
 
             <a
               href="mailto:kunalvarshney187@gmail.com"
-              className="flex items-center gap-2 text-gray-400 transition-colors duration-300 hover:text-blue-400"
+              className="group inline-flex items-center gap-2 text-sm text-slate-300 transition-colors duration-300 hover:text-cyan-400"
             >
-              <Mail size={18} />
-              kunalvarshney187@gmail.com
+              <Mail className="h-4 w-4 text-cyan-400" />
+
+              <span>
+                kunalvarshney187@gmail.com
+              </span>
+
+              <ArrowUpRight
+                className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+              />
             </a>
+
+            <p className="mt-6 text-xs leading-5 text-slate-500">
+              Built to help students discover their potential
+              and move confidently toward their careers.
+            </p>
 
           </div>
 
         </div>
 
 
-        {/* Bottom */}
-        <div className="mt-12 border-t border-slate-800 pt-6 text-center text-sm text-gray-500">
-          © 2026 CampusHub AI. All rights reserved.
+        {/* =====================================================
+            DIVIDER
+        ===================================================== */}
+
+        <div className="my-10 h-px bg-slate-800" />
+
+
+        {/* =====================================================
+            BOTTOM BAR
+        ===================================================== */}
+
+        <div className="flex flex-col gap-4 text-center text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:text-left">
+
+          <p>
+            © 2026 CampusHub AI. All rights reserved.
+          </p>
+
+          <div className="flex items-center justify-center gap-1.5 sm:justify-end">
+            <span>Made for students</span>
+
+            <Heart
+              className="h-3.5 w-3.5 fill-current text-red-400"
+            />
+
+            <span>with AI</span>
+          </div>
+
         </div>
 
       </div>
