@@ -14,6 +14,12 @@ const internshipSchema = new mongoose.Schema(
       trim: true,
     },
 
+    description: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
     location: {
       type: String,
       required: true,
@@ -23,11 +29,13 @@ const internshipSchema = new mongoose.Schema(
     stipend: {
       type: Number,
       default: 0,
+      min: 0,
     },
 
     duration: {
       type: String,
       default: "3 Months",
+      trim: true,
     },
 
     mode: {
@@ -36,40 +44,54 @@ const internshipSchema = new mongoose.Schema(
       default: "Remote",
     },
 
+    category: {
+      type: String,
+      default: "Developer",
+      trim: true,
+    },
+
+    experience: {
+      type: String,
+      enum: [
+        "Fresher",
+        "Intermediate",
+        "Advanced",
+      ],
+      default: "Fresher",
+    },
+
     skills: {
       type: [String],
       default: [],
     },
 
-    experience: {
-      type: String,
-      enum: ["Fresher", "Intermediate", "Advanced"],
-      default: "Fresher",
-    },
-
-    category: {
-      type: String,
-      default: "Developer",
-    },
-
-    description: {
-      type: String,
-      default: "",
-    },
-
-    applyUrl: {
-      type: String,
-      default: "",
-    },
-
-    matchScore: {
-      type: Number,
-      default: 0,
+    companyVerified: {
+      type: Boolean,
+      default: true,
     },
 
     isActive: {
       type: Boolean,
       default: true,
+    },
+
+    applicationUrl: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    matchScore: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+
+    applicantsCount: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
   },
   {
@@ -77,6 +99,21 @@ const internshipSchema = new mongoose.Schema(
   }
 );
 
-const Internship = mongoose.model("Internship", internshipSchema);
+internshipSchema.index({
+  role: "text",
+  company: "text",
+  skills: "text",
+});
+
+internshipSchema.index({
+  location: 1,
+  category: 1,
+  mode: 1,
+});
+
+const Internship = mongoose.model(
+  "Internship",
+  internshipSchema
+);
 
 export default Internship;

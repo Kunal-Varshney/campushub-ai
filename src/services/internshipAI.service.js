@@ -1,127 +1,241 @@
+import Internship from "../models/internship.model.js";
+
 const normalize = (value = "") =>
-  value.toString().toLowerCase().trim();
+  String(value)
+    .toLowerCase()
+    .trim();
 
-const calculateMatchScore = (internship, searchData = {}) => {
-  let score = 0;
-
-  const userSkills = normalize(searchData.skills)
-    .split(",")
-    .map((skill) => skill.trim())
+const tokenize = (value = "") =>
+  normalize(value)
+    .split(/[,\s]+/)
+    .map((item) => item.trim())
     .filter(Boolean);
 
-  const role = normalize(searchData.role);
-  const location = normalize(searchData.location);
-  const workType = normalize(searchData.workType);
-  const experience = normalize(searchData.experience);
-
-  const internshipSkills = Array.isArray(internship.skills)
-    ? internship.skills.map(normalize)
-    : [];
-
-  // =========================
-  // SKILLS
-  // =========================
-
-  if (userSkills.length > 0) {
-    const matchedSkills = userSkills.filter((userSkill) =>
-      internshipSkills.some(
-        (internshipSkill) =>
-          internshipSkill.includes(userSkill) ||
-          userSkill.includes(internshipSkill)
-      )
-    );
-
-    score += Math.min(50, matchedSkills.length * 15);
+const calculateSkillScore = (
+  userSkills,
+  internshipSkills
+) => {
+  if (!userSkills.length || !internshipSkills.length) {
+    return 0;
   }
 
-  // =========================
-  // ROLE
-  // =========================
+  const normalizedInternshipSkills =
+    internshipSkills.map(normalize);
 
-  if (
-    role &&
-    normalize(internship.role).includes(role)
-  ) {
-    score += 20;
-  }
+  const matched = userSkills.filter((skill) =>
+    normalizedInternshipSkills.some(
+      (internshipSkill) =>
+        internshipSkill.includes(skill) ||
+        skill.includes(internshipSkill)
+    )
+  );
 
-  // =========================
-  // LOCATION
-  // =========================
-
-  if (location) {
-    const internshipLocation = normalize(
-      internship.location
-    );
-
-    const internshipMode = normalize(
-      internship.mode
-    );
-
-    if (
-      internshipLocation.includes(location) ||
-      (location === "remote" && internshipMode === "remote")
-    ) {
-      score += 15;
-    }
-  }
-
-  // =========================
-  // WORK TYPE
-  // =========================
-
-  if (
-    workType &&
-    workType !== "all" &&
-    normalize(internship.mode) === workType
-  ) {
-    score += 10;
-  }
-
-  // =========================
-  // EXPERIENCE
-  // =========================
-
-  if (
-    experience &&
-    internship.experience &&
-    normalize(internship.experience) === experience
-  ) {
-    score += 5;
-  }
-
-  return Math.min(99, score);
+  return Math.min(
+    100,
+    Math.round(
+      (matched.length /
+        Math.max(userSkills.length, 1)) *
+        100
+    )
+  );
 };
 
-// ============================================================
-// RANK INTERNSHIPS
-// ============================================================
-
-export const rankInternships = (
-  internships = [],
-  searchData = {}
+const calculateRoleScore = (
+  preferredRole,
+  internshipRole
 ) => {
-  return internships
-    .map((internship) => {
-      // MongoDB document ko plain object mein convert karo
-      const internshipData =
-        typeof internship?.toObject === "function"
-          ? internship.toObject()
-          : { ...internship };
+  if (!preferredRole) return 0;
 
-      return {
-        ...internshipData,
-        matchScore: calculateMatchScore(
-          internshipData,
-          searchData
-        ),
-      };
-    })
-    .sort(
+  const role = normalize(internshipRole);
+  const preferred = normalize(preferredRole);
+
+  if (role === preferred) return 100;
+
+  if (
+    role.includes(preferred) ||
+    preferred.includes(role)
+  ) {
+    return 90;
+  }
+
+  const preferredWords = tokenize(preferred);
+  const roleWords = tokenize(role);
+
+  const matches = preferredWords.filter((word) =>
+    roleWords.includes(word)
+  );
+
+  if (!matches.length) return 0;
+
+  return Math.round(
+    (matches.length /
+      Math.max(preferredWords.length, 1)) *
+      100
+  );
+};
+
+const calculateLocationScore = (
+  preferredLocation,
+  internshipLocation
+) => {
+  if (!preferredLocation) return 0;
+
+  const preferred = normalize(preferredLocation);
+  const location = normalize(internshipLocation);
+
+  if (preferred === "remote" && location === "remote") {
+    return 100;
+  }
+
+  if (
+    location.includes(preferred) ||
+    preferred.includes(location)
+  ) {
+    return 100;
+  }
+
+  const preferredLocations = preferred
+    .split(",")
+    .map(normalize)
+    .filter(Boolean);
+
+  if (
+    preferredLocations.some((item) =>
+      location.includes(item)
+    )
+  ) {
+    return 100;
+  }
+
+  return 0;
+};
+
+const calculateWorkTypeScore = (
+  workType,
+  internshipMode
+) => {
+  if (!workType) return 0;
+
+  return normalize(workType) ===
+    normalize(internshipMode)
+    ? 100
+    : 0;
+};
+
+const calculateExperienceScore = (
+  experience,
+  internshipExperience
+) => {
+  if (!experience) return 0;
+
+  return normalize(experience) ===
+    normalize(internshipExperience)
+    ? 100
+    : 0;
+};
+
+const calculateStipendScore = (
+  expectedStipend,
+  internshipStipend
+) => {
+  if (!expectedStipend) return 0;
+
+  const expected = Number(
+    String(expectedStipend).replace(/[^\d]/g, "")
+  );
+
+  if (!expected || expected <= 0) {
+    return 0;
+  }
+
+  if (internshipStipend >= expected) {
+    return 100;
+  }
+
+  if (internshipStipend >= expected * 0.8) {
+    return 70;
+  }
+
+  if (internshipStipend >= expected * 0.6) {
+    return 40;
+  }
+
+  return 0;
+};
+
+export const getInternshipRecommendations =
+  async (searchData = {}) => {
+    const {
+      skills = "",
+      role = "",
+      location = "",
+      stipend = "",
+      workType = "",
+      experience = "",
+    } = searchData;
+
+    const internships = await Internship.find({
+      isActive: true,
+    }).lean();
+
+    const userSkills = tokenize(skills);
+
+    const scoredInternships =
+      internships.map((internship) => {
+        const skillScore =
+          calculateSkillScore(
+            userSkills,
+            internship.skills
+          );
+
+        const roleScore =
+          calculateRoleScore(
+            role,
+            internship.role
+          );
+
+        const locationScore =
+          calculateLocationScore(
+            location,
+            internship.location
+          );
+
+        const workTypeScore =
+          calculateWorkTypeScore(
+            workType,
+            internship.mode
+          );
+
+        const experienceScore =
+          calculateExperienceScore(
+            experience,
+            internship.experience
+          );
+
+        const stipendScore =
+          calculateStipendScore(
+            stipend,
+            internship.stipend
+          );
+
+        const matchScore = Math.round(
+          skillScore * 0.40 +
+            roleScore * 0.20 +
+            locationScore * 0.15 +
+            workTypeScore * 0.10 +
+            experienceScore * 0.10 +
+            stipendScore * 0.05
+        );
+
+        return {
+          ...internship,
+          matchScore,
+        };
+      });
+
+    scoredInternships.sort(
       (a, b) => b.matchScore - a.matchScore
     );
-};
 
-export default {
-  rankInternships,
-};
+    return scoredInternships.slice(0, 12);
+  };

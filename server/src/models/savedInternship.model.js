@@ -6,12 +6,14 @@ const savedInternshipSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
 
     internship: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Internship",
       required: true,
+      index: true,
     },
   },
   {
@@ -20,8 +22,13 @@ const savedInternshipSchema = new mongoose.Schema(
 );
 
 savedInternshipSchema.index(
-  { user: 1, internship: 1 },
-  { unique: true }
+  {
+    user: 1,
+    internship: 1,
+  },
+  {
+    unique: true,
+  }
 );
 
 const SavedInternship = mongoose.model(

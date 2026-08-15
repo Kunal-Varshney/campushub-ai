@@ -4,11 +4,12 @@ import {
   getInternships,
   getInternshipById,
   searchInternships,
-  saveInternship,
+  toggleSavedInternship,
   getSavedInternships,
   applyInternship,
-  getApplications,
+  getMyApplications,
   updateApplicationStatus,
+  withdrawApplication,
 } from "../controllers/internship.controller.js";
 
 import authMiddleware from "../middleware/auth.middleware.js";
@@ -16,74 +17,73 @@ import authMiddleware from "../middleware/auth.middleware.js";
 const router = express.Router();
 
 // ============================================================
-// PUBLIC INTERNSHIP ROUTES
+// PUBLIC
 // ============================================================
 
-// Get all internships
-// GET /api/internships
+// GET /api/internship
 router.get(
   "/",
   getInternships
 );
 
-// Search internships
-// POST /api/internships/search
+// POST /api/internship/search
 router.post(
   "/search",
   searchInternships
 );
 
 // ============================================================
-// AUTHENTICATED ROUTES
+// AUTHENTICATED
 // ============================================================
 
-// Save / Unsave internship
-// POST /api/internships/save
+// POST /api/internship/save
 router.post(
   "/save",
   authMiddleware,
-  saveInternship
+  toggleSavedInternship
 );
 
-// Get saved internships
-// GET /api/internships/saved
+// GET /api/internship/saved
 router.get(
   "/saved",
   authMiddleware,
   getSavedInternships
 );
 
-// Apply for internship
-// POST /api/internships/apply
+// POST /api/internship/apply
 router.post(
   "/apply",
   authMiddleware,
   applyInternship
 );
 
-// Get user's applications
-// GET /api/internships/applications
+// GET /api/internship/applications
 router.get(
   "/applications",
   authMiddleware,
-  getApplications
+  getMyApplications
 );
 
-// Update application status
-// PATCH /api/internships/application/:id
+// PATCH /api/internship/application/:id
 router.patch(
   "/application/:id",
   authMiddleware,
   updateApplicationStatus
 );
 
+// DELETE /api/internship/application/:id
+router.delete(
+  "/application/:id",
+  authMiddleware,
+  withdrawApplication
+);
+
 // ============================================================
 // SINGLE INTERNSHIP
-// IMPORTANT: Keep this AFTER static routes
+// Keep this AFTER /saved, /apply and /applications
 // ============================================================
 
-// Get single internship
-// GET /api/internships/:id
+// GET /api/internship/:id
 router.get(
   "/:id",
   getInternshipById
