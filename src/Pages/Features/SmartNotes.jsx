@@ -1,8 +1,8 @@
 import API from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import { saveLastVisited } from "../../utils/lastVisited";
-import { useEffect } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
 import {
   Sparkles,
   ArrowRight,
@@ -20,102 +20,141 @@ import {
   Target,
   TrendingUp,
 } from "lucide-react";
+
 import { motion, AnimatePresence } from "framer-motion";
+
+// ============================================================
+// FEATURES
+// ============================================================
 
 const features = [
   {
     icon: Wand2,
     title: "AI Summarization",
-    description: "Convert lengthy content into short and meaningful summaries.",
+    description:
+      "Convert lengthy content into short and meaningful explanations.",
   },
   {
     icon: Target,
-    title: "Exam Focused Notes",
-    description: "Highlight important topics and frequently asked concepts.",
+    title: "Question Focused Notes",
+    description:
+      "AI focuses on exactly what you ask instead of adding unnecessary sections.",
   },
   {
     icon: Layers,
     title: "Smart Formatting",
-    description: "Automatically organize headings, points and examples.",
+    description:
+      "Automatically organize definitions, concepts, types, examples and explanations.",
   },
   {
     icon: BookOpen,
     title: "Multiple Subjects",
-    description: "Generate notes for coding, science, maths and more.",
+    description:
+      "Generate notes for coding, science, maths and almost any academic topic.",
   },
   {
     icon: Zap,
     title: "Quick Revision",
-    description: "Create last minute revision notes instantly.",
+    description:
+      "Get clear explanations and revision material instantly.",
   },
   {
     icon: GraduationCap,
     title: "Personalized Learning",
-    description: "Notes adapted according to your learning level.",
+    description:
+      "Explanations can be adapted to beginner, intermediate or advanced level.",
   },
 ];
+
+// ============================================================
+// HOW IT WORKS
+// ============================================================
 
 const steps = [
   {
     number: "01",
     icon: UploadCloud,
-    title: "Upload Content",
-    description: "Paste your chapter, lecture notes or study material.",
+    title: "Ask Anything",
+    description:
+      "Enter a topic, question, concept or study requirement.",
   },
   {
     number: "02",
     icon: Brain,
     title: "AI Understands",
-    description: "CampusHub AI reads and identifies key concepts.",
+    description:
+      "CampusHub AI understands what you are actually asking.",
   },
   {
     number: "03",
     icon: FileText,
-    title: "Notes Generated",
-    description: "Structured, exam-ready notes are created instantly.",
+    title: "Answer Generated",
+    description:
+      "Relevant and structured study material is generated.",
   },
   {
     number: "04",
     icon: TrendingUp,
     title: "Learn Faster",
-    description: "Revise smarter with clear, organized material.",
+    description:
+      "Use the explanation for learning, revision and exam preparation.",
   },
 ];
 
+// ============================================================
+// BENEFITS
+// ============================================================
+
 const benefits = [
-  "Saves hours of manual note making",
-  "Improves exam preparation",
-  "Makes difficult topics simple",
-  "Helps quick revision",
+  "Ask for exactly what you want to learn",
+  "No unnecessary fixed sections",
+  "Definitions, types and examples when relevant",
+  "Useful for both learning and revision",
 ];
+
+// ============================================================
+// SMART NOTES
+// ============================================================
 
 function SmartNotes() {
   const navigate = useNavigate();
+
   const [inputText, setInputText] = useState("");
   const [subject, setSubject] = useState("Computer Science");
   const [difficulty, setDifficulty] = useState("Intermediate");
+
   const [isLoading, setIsLoading] = useState(false);
   const [generatedNotes, setGeneratedNotes] = useState(null);
   const [savedNotes, setSavedNotes] = useState([]);
 
+  // ============================================================
+  // FETCH PREVIOUS NOTES
+  // ============================================================
+
   const fetchNotes = async () => {
     try {
-
       const response = await API.get("/notes");
 
-      console.log(response.data);
+      console.log("SAVED NOTES:", response.data);
 
-      setSavedNotes(response.data.notes);
-
+      if (response.data?.success) {
+        setSavedNotes(response.data.notes || []);
+      }
     } catch (error) {
-
-      console.log("FETCH ERROR:", error);
-
+      console.log(
+        "FETCH NOTES ERROR:",
+        error?.response?.data || error.message
+      );
     }
   };
 
-   useEffect(() => {
+  // ============================================================
+  // AUTH + LAST VISITED
+  // ============================================================
+
+  useEffect(() => {
     saveLastVisited("/smart-notes");
+
     const token = localStorage.getItem("token");
 
     if (!token) {
@@ -123,91 +162,145 @@ function SmartNotes() {
       return;
     }
 
-
     fetchNotes();
   }, [navigate]);
-  
+
+  // ============================================================
+  // GENERATE NOTES
+  // ============================================================
+
   const handleGenerate = async () => {
+    if (!inputText.trim() || isLoading) return;
 
-    if(!inputText.trim() || isLoading) return;
+    try {
+      setIsLoading(true);
+      setGeneratedNotes(null);
 
-      try {
+      const response = await API.post("/notes/generate", {
+        description: inputText,
+        subject,
+        difficulty,
+        branch: "AI & ML",
+        year: 2,
+      });
 
-        setIsLoading(true);
-        setGeneratedNotes(null);
+      console.log("NOTE RESPONSE:", response.data);
 
-
-        const response = await API.post(
-          "/notes/generate",
-          {
-            description: inputText,
-            subject,
-             branch: "AI & ML",
-             year: 2,
-          }
+      if (!response.data?.success || !response.data?.note) {
+        throw new Error(
+          response.data?.message || "Unable to generate notes"
         );
-
-
-        console.log(
-          "NOTE RESPONSE:",
-          response.data
-        );
-
-
-        const note = response.data.note;
-
-        setGeneratedNotes({
-          subject: note.subject,
-          chapter: note.title,
-          difficulty,
-
-          points: note.points,
-          summary: note.summary,
-          keywords: note.keywords,
-          examTips: note.examTips,
-        });
-       
-        fetchNotes();
-
       }
-      catch(error){
 
-        console.log(
-          "NOTE ERROR:",
-          error.response?.data || error.message
-        );
+      const note = response.data.note;
 
-        alert(
-          error.response?.data?.message ||
+      setGeneratedNotes({
+        title: note.title,
+        subject: note.subject || subject,
+        difficulty,
+
+        // Flexible AI response
+        summary: note.summary || "",
+        sections: Array.isArray(note.sections)
+          ? note.sections
+          : [],
+
+        points: Array.isArray(note.points)
+          ? note.points
+          : [],
+
+        examples: Array.isArray(note.examples)
+          ? note.examples
+          : [],
+
+        types: Array.isArray(note.types)
+          ? note.types
+          : [],
+
+        conclusion: note.conclusion || "",
+      });
+
+      fetchNotes();
+    } catch (error) {
+      console.log(
+        "NOTE ERROR:",
+        error?.response?.data || error.message
+      );
+
+      alert(
+        error?.response?.data?.message ||
+          error.message ||
           "Note generation failed"
-        );
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      }
-      finally{
+  // ============================================================
+  // RENDER FLEXIBLE SECTION
+  // ============================================================
 
-        setIsLoading(false);
+  const renderSectionContent = (section) => {
+    if (!section) return null;
 
-      }
+    if (Array.isArray(section.content)) {
+      return (
+        <div className="space-y-3">
+          {section.content.map((item, index) => (
+            <div
+              key={index}
+              className="flex items-start gap-3 text-gray-300"
+            >
+              <CheckCircle2
+                size={17}
+                className="mt-1 shrink-0 text-blue-400"
+              />
 
-    };
+              <span className="leading-7">
+                {item}
+              </span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <p className="whitespace-pre-line leading-7 text-gray-300">
+        {section.content}
+      </p>
+    );
+  };
 
   return (
     <div className="relative w-full overflow-hidden bg-slate-950 text-white">
-      {/* Grid texture — shared across sections */}
+      {/* ====================================================== */}
+      {/* BACKGROUND GRID */}
+      {/* ====================================================== */}
+
       <div className="pointer-events-none fixed inset-0 opacity-[0.04] [background-image:linear-gradient(rgba(255,255,255,.3)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.3)_1px,transparent_1px)] [background-size:56px_56px]" />
 
-      {/* ---------------------------------------------------------------- */}
+      {/* ====================================================== */}
       {/* HERO */}
-      {/* ---------------------------------------------------------------- */}
+      {/* ====================================================== */}
+
       <section className="relative overflow-hidden px-6 pb-20 pt-28 sm:pt-32">
-        <div className="pointer-events-none absolute -top-24 -left-24 h-80 w-80 rounded-full bg-blue-600/20 blur-[110px]" />
+        <div className="pointer-events-none absolute -left-24 -top-24 h-80 w-80 rounded-full bg-blue-600/20 blur-[110px]" />
+
         <div className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-cyan-500/20 blur-[110px]" />
 
         <div className="relative mx-auto flex w-full max-w-7xl flex-col items-center gap-12 lg:grid lg:grid-cols-2 lg:items-center lg:gap-10">
+
+          {/* HERO TEXT */}
+
           <motion.div
             initial={{ opacity: 0, x: -40 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
+            transition={{
+              duration: 0.7,
+              ease: "easeOut",
+            }}
             className="w-full max-w-xl text-center lg:text-left"
           >
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-4 py-2 text-sm text-blue-400 backdrop-blur">
@@ -216,23 +309,23 @@ function SmartNotes() {
             </div>
 
             <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
-              Transform Learning With{" "}
+              Learn Any Topic With{" "}
               <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
                 AI Generated Notes
               </span>
             </h1>
 
             <p className="mt-6 text-base leading-7 text-gray-400 sm:text-lg sm:leading-8">
-              Convert your lectures, PDFs and chapters into structured,
-              exam-ready notes within seconds.
+              Ask CampusHub AI anything about your studies and get a
+              clear, structured and topic-focused explanation.
             </p>
 
             <div className="mt-8 flex flex-wrap justify-center gap-4 lg:justify-start">
               <a
                 href="#generator"
-                className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-7 py-3.5 font-semibold transition-all duration-300 hover:-translate-y-1 hover:from-blue-500 hover:to-cyan-400 hover:shadow-2xl hover:shadow-blue-500/30 active:scale-95"
+                className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-7 py-3.5 font-semibold transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/30 active:scale-95"
               >
-                Generate Notes
+                Ask AI
                 <ArrowRight
                   size={18}
                   className="transition-transform duration-300 group-hover:translate-x-1"
@@ -241,120 +334,203 @@ function SmartNotes() {
 
               <a
                 href="#generator"
-                className="group flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-900/70 px-7 py-3.5 font-semibold transition-all duration-300 hover:border-blue-500 hover:bg-slate-800 hover:shadow-xl hover:shadow-blue-500/20"
+                className="group flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-900/70 px-7 py-3.5 font-semibold transition-all duration-300 hover:border-blue-500 hover:bg-slate-800"
               >
                 <UploadCloud
                   size={20}
-                  className="text-blue-400 transition-transform duration-300 group-hover:scale-110"
+                  className="text-blue-400"
                 />
-                Upload Material
+                Add Material
               </a>
             </div>
           </motion.div>
 
+          {/* HERO PREVIEW */}
+
           <motion.div
-            initial={{ opacity: 0, scale: 0.94 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.15, ease: "easeOut" }}
+            initial={{
+              opacity: 0,
+              scale: 0.94,
+            }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+            }}
+            transition={{
+              duration: 0.7,
+              delay: 0.15,
+              ease: "easeOut",
+            }}
             className="flex w-full max-w-md justify-center lg:ml-auto"
           >
             <div className="w-full rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-2xl shadow-blue-900/20 backdrop-blur-xl sm:p-8">
+
               <div className="mb-6 flex items-center gap-4 rounded-2xl bg-slate-800/80 p-5">
                 <div className="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 p-3">
                   <FileText size={24} />
                 </div>
+
                 <div>
-                  <p className="text-sm text-gray-400">Computer Science</p>
-                  <h3 className="text-lg font-semibold">Data Structures — Trees</h3>
+                  <p className="text-sm text-gray-400">
+                    Computer Science
+                  </p>
+
+                  <h3 className="text-lg font-semibold">
+                    Types of Arrays
+                  </h3>
                 </div>
               </div>
 
-              <div className="space-y-2.5">
-                {[
-                  "A tree is a hierarchical, non-linear data structure.",
-                  "Each node has a value and references to child nodes.",
-                  "Binary trees allow a maximum of two children per node.",
-                  "Traversals: Inorder, Preorder, Postorder.",
-                ].map((point, index) => (
-                  <div key={index} className="flex items-start gap-2 text-sm text-gray-300">
-                    <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-blue-400" />
-                    <span>{point}</span>
-                  </div>
-                ))}
+              <div className="space-y-4">
+
+                <div>
+                  <p className="text-sm font-semibold text-blue-400">
+                    One-Dimensional Array
+                  </p>
+
+                  <p className="mt-1 text-sm leading-6 text-gray-300">
+                    Stores elements in a single sequence and
+                    can be accessed using one index.
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-blue-400">
+                    Multi-Dimensional Array
+                  </p>
+
+                  <p className="mt-1 text-sm leading-6 text-gray-300">
+                    Organizes elements across multiple dimensions,
+                    such as rows and columns.
+                  </p>
+                </div>
+
               </div>
 
-              <div className="mt-5 rounded-xl border border-blue-500/30 bg-blue-600/10 p-4 text-sm text-gray-200">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-blue-400">
-                  Summary
+              <div className="mt-5 rounded-xl border border-blue-500/30 bg-blue-600/10 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-blue-400">
+                  AI understands your question
                 </p>
-                Trees are essential for representing hierarchical data and are
-                the foundation for more advanced structures like heaps and
-                graphs.
+
+                <p className="mt-1 text-sm text-gray-300">
+                  It explains the requested concept instead of
+                  forcing unrelated sections.
+                </p>
               </div>
 
-              <div className="mt-4 flex items-center gap-2 pl-1">
-                <span className="h-2 w-2 animate-bounce rounded-full bg-blue-400" />
-                <span className="h-2 w-2 animate-bounce rounded-full bg-blue-400" style={{ animationDelay: "0.2s" }} />
-                <span className="h-2 w-2 animate-bounce rounded-full bg-blue-400" style={{ animationDelay: "0.4s" }} />
-                <span className="ml-1 text-xs text-gray-400">AI is generating notes...</span>
-              </div>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* ---------------------------------------------------------------- */}
+      {/* ====================================================== */}
       {/* GENERATOR */}
-      {/* ---------------------------------------------------------------- */}
-      <section id="generator" className="relative px-6 py-20">
-        <div className="pointer-events-none absolute -top-24 -right-24 h-80 w-80 rounded-full bg-cyan-500/10 blur-[110px]" />
+      {/* ====================================================== */}
+
+      <section
+        id="generator"
+        className="relative px-6 py-20"
+      >
+        <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-cyan-500/10 blur-[110px]" />
 
         <div className="relative mx-auto max-w-4xl">
+
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6 }}
+            initial={{
+              opacity: 0,
+              y: 20,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{
+              once: true,
+              amount: 0.3,
+            }}
+            transition={{
+              duration: 0.6,
+            }}
             className="mb-12 text-center"
           >
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-4 py-2 text-sm text-blue-400 backdrop-blur">
               <MessageSquare size={16} />
-              Try It Now
+              Ask CampusHub AI
             </div>
+
             <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Generate your{" "}
+              Ask anything about your{" "}
               <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
-                notes instantly
+                studies
               </span>
             </h2>
+
             <p className="mt-4 text-base text-gray-400 sm:text-lg">
-              Paste your material below and let AI structure it for you.
+              Ask a question, explain a concept, list types,
+              compare topics or paste your study material.
             </p>
           </motion.div>
 
+          {/* INPUT CARD */}
+
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
+            initial={{
+              opacity: 0,
+              y: 20,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{
+              once: true,
+              amount: 0.2,
+            }}
+            transition={{
+              duration: 0.6,
+              delay: 0.1,
+            }}
             className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-2xl shadow-blue-900/10 backdrop-blur-xl sm:p-8"
           >
+
             <textarea
               value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              rows={6}
-              placeholder="Paste your chapter, lecture notes or study material here..."
-              className="w-full resize-none rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition-all duration-300 focus:border-blue-500 focus:shadow-lg focus:shadow-blue-500/20"
+              onChange={(e) =>
+                setInputText(e.target.value)
+              }
+              rows={7}
+              placeholder={`Example:
+
+Explain OOP in detail
+
+OR
+
+What are the types of arrays?
+
+OR
+
+Explain DBMS normalization with examples
+
+OR
+
+Explain binary search step by step`}
+              className="w-full resize-none rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm leading-7 text-white outline-none transition-all duration-300 focus:border-blue-500 focus:shadow-lg focus:shadow-blue-500/20"
             />
 
             <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+              {/* SUBJECT */}
+
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-300">
                   Select Subject
                 </label>
+
                 <select
                   value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
+                  onChange={(e) =>
+                    setSubject(e.target.value)
+                  }
                   className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition-all duration-300 focus:border-blue-500"
                 >
                   <option>Computer Science</option>
@@ -366,13 +542,18 @@ function SmartNotes() {
                 </select>
               </div>
 
+              {/* DIFFICULTY */}
+
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-300">
-                  Select Difficulty
+                  Learning Level
                 </label>
+
                 <select
                   value={difficulty}
-                  onChange={(e) => setDifficulty(e.target.value)}
+                  onChange={(e) =>
+                    setDifficulty(e.target.value)
+                  }
                   className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition-all duration-300 focus:border-blue-500"
                 >
                   <option>Beginner</option>
@@ -380,337 +561,526 @@ function SmartNotes() {
                   <option>Advanced</option>
                 </select>
               </div>
+
             </div>
+
+            {/* GENERATE BUTTON */}
 
             <button
               type="button"
               onClick={handleGenerate}
-              disabled={!inputText.trim() || isLoading}
-              className="group mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-7 py-3.5 font-semibold transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/30 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+              disabled={
+                !inputText.trim() ||
+                isLoading
+              }
+              className="group mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-7 py-3.5 font-semibold transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/30 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
             >
               {isLoading ? (
                 <>
                   <span className="h-2 w-2 animate-bounce rounded-full bg-white" />
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-white" style={{ animationDelay: "0.2s" }} />
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-white" style={{ animationDelay: "0.4s" }} />
-                  <span className="ml-2">AI is analyzing your content...</span>
+
+                  <span
+                    className="h-2 w-2 animate-bounce rounded-full bg-white"
+                    style={{
+                      animationDelay: "0.2s",
+                    }}
+                  />
+
+                  <span
+                    className="h-2 w-2 animate-bounce rounded-full bg-white"
+                    style={{
+                      animationDelay: "0.4s",
+                    }}
+                  />
+
+                  <span className="ml-2">
+                    AI is understanding your question...
+                  </span>
                 </>
               ) : (
                 <>
-                  Generate Notes
-                  <Wand2 size={18} className="transition-transform duration-300 group-hover:scale-110" />
+                  Generate Answer
+                  <Wand2
+                    size={18}
+                    className="transition-transform duration-300 group-hover:scale-110"
+                  />
                 </>
               )}
             </button>
 
+            {/* ================================================== */}
+            {/* GENERATED ANSWER */}
+            {/* ================================================== */}
+
             <AnimatePresence>
               {generatedNotes && !isLoading && (
                 <motion.div
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -16 }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  initial={{
+                    opacity: 0,
+                    y: 16,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  exit={{
+                    opacity: 0,
+                    y: -16,
+                  }}
+                  transition={{
+                    duration: 0.4,
+                    ease: "easeOut",
+                  }}
                   className="mt-8 rounded-2xl border border-slate-800 bg-slate-950/70 p-6 sm:p-7"
                 >
-                  <div className="mb-5 flex items-center gap-4 rounded-xl bg-slate-800/80 p-4">
+
+                  {/* HEADER */}
+
+                  <div className="mb-7 flex items-start gap-4 rounded-xl bg-slate-800/80 p-4">
+
                     <div className="rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 p-2.5">
                       <FileText size={20} />
                     </div>
+
                     <div>
-                      <p className="text-xs text-gray-400">{generatedNotes.subject}</p>
-                      <h3 className="text-base font-semibold">{generatedNotes.chapter}</h3>
+                      <p className="text-xs text-gray-400">
+                        {generatedNotes.subject}
+                      </p>
+
+                      <h3 className="mt-1 text-xl font-bold">
+                        {generatedNotes.title}
+                      </h3>
                     </div>
+
                     <span className="ml-auto rounded-full border border-blue-500/30 bg-blue-600/10 px-3 py-1 text-xs font-medium text-blue-400">
                       {generatedNotes.difficulty}
                     </span>
+
                   </div>
 
-                  {/* Summary */}
-                  <div className="mt-5 rounded-xl border border-blue-500/30 bg-blue-600/10 p-4">
-                    <h3 className="mb-2 text-blue-400 font-semibold">
-                      Summary
-                    </h3>
+                  {/* SUMMARY */}
 
-                    <p className="text-gray-300">
-                      {generatedNotes.summary}
-                    </p>
-                  </div>
+                  {generatedNotes.summary && (
+                    <div className="rounded-xl border border-blue-500/30 bg-blue-600/10 p-5">
 
-                  {/* Key Points */}
-                  <div className="mt-6">
-                    <h3 className="mb-3 font-semibold text-lg">
-                      Key Points
-                    </h3>
+                      <h3 className="mb-3 flex items-center gap-2 font-semibold text-blue-400">
+                        <BookOpen size={18} />
+                        Explanation
+                      </h3>
 
-                    <div className="space-y-2">
-                      {generatedNotes.points?.map((point, index) => (
-                        <div
-                          key={index}
-                          className="flex gap-2 items-start"
-                        >
-                          <CheckCircle2
-                            className="text-green-400 mt-1"
-                            size={18}
+                      <p className="whitespace-pre-line leading-7 text-gray-300">
+                        {generatedNotes.summary}
+                      </p>
+
+                    </div>
+                  )}
+
+                  {/* DYNAMIC SECTIONS */}
+
+                  {generatedNotes.sections?.length > 0 && (
+                    <div className="mt-7 space-y-6">
+
+                      {generatedNotes.sections.map(
+                        (section, index) => (
+                          <div
+                            key={index}
+                            className="rounded-xl border border-slate-800 bg-slate-900/60 p-5"
+                          >
+
+                            <h3 className="mb-4 text-lg font-semibold text-white">
+                              {section.title}
+                            </h3>
+
+                            {renderSectionContent(
+                              section
+                            )}
+
+                          </div>
+                        )
+                      )}
+
+                    </div>
+                  )}
+
+                  {/* FALLBACK POINTS */}
+
+                  {generatedNotes.sections?.length === 0 &&
+                    generatedNotes.points?.length > 0 && (
+                      <div className="mt-7">
+
+                        <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+                          <ListChecks
+                            size={19}
+                            className="text-blue-400"
                           />
+                          Important Points
+                        </h3>
 
-                          <span>{point}</span>
+                        <div className="space-y-3">
+
+                          {generatedNotes.points.map(
+                            (point, index) => (
+                              <div
+                                key={index}
+                                className="flex items-start gap-3"
+                              >
+                                <CheckCircle2
+                                  size={18}
+                                  className="mt-1 shrink-0 text-blue-400"
+                                />
+
+                                <span className="leading-7 text-gray-300">
+                                  {point}
+                                </span>
+                              </div>
+                            )
+                          )}
+
                         </div>
-                      ))}
+
+                      </div>
+                    )}
+
+                  {/* TYPES */}
+
+                  {generatedNotes.types?.length > 0 && (
+                    <div className="mt-7">
+
+                      <h3 className="mb-4 text-lg font-semibold">
+                        Types
+                      </h3>
+
+                      <div className="space-y-4">
+
+                        {generatedNotes.types.map(
+                          (type, index) => (
+                            <div
+                              key={index}
+                              className="rounded-xl border border-slate-800 bg-slate-900/70 p-5"
+                            >
+
+                              <h4 className="mb-2 font-semibold text-blue-400">
+                                {type.name}
+                              </h4>
+
+                              <p className="leading-7 text-gray-300">
+                                {type.description}
+                              </p>
+
+                              {type.example && (
+                                <div className="mt-3 rounded-lg bg-slate-950 p-3 text-sm text-gray-400">
+                                  <span className="font-semibold text-gray-300">
+                                    Example:
+                                  </span>{" "}
+                                  {type.example}
+                                </div>
+                              )}
+
+                            </div>
+                          )
+                        )}
+
+                      </div>
+
                     </div>
-                  </div>
+                  )}
 
-                  {/* Keywords */}
-                  <div className="mt-6">
-                    <h3 className="mb-3 font-semibold text-lg">
-                      Keywords
-                    </h3>
+                  {/* EXAMPLES */}
 
-                    <div className="flex flex-wrap gap-2">
-                      {generatedNotes.keywords?.map((word, index) => (
-                        <span
-                          key={index}
-                          className="px-3 py-1 rounded-full bg-blue-600/20 border border-blue-500 text-sm"
-                        >
-                          {word}
-                        </span>
-                      ))}
+                  {generatedNotes.examples?.length > 0 && (
+                    <div className="mt-7">
+
+                      <h3 className="mb-4 text-lg font-semibold">
+                        Examples
+                      </h3>
+
+                      <div className="space-y-3">
+
+                        {generatedNotes.examples.map(
+                          (example, index) => (
+                            <div
+                              key={index}
+                              className="rounded-xl border border-slate-800 bg-slate-900 p-4 text-gray-300"
+                            >
+                              {example}
+                            </div>
+                          )
+                        )}
+
+                      </div>
+
                     </div>
-                  </div>
+                  )}
 
-                  {/* Exam Tips */}
-                  <div className="mt-6">
-                    <h3 className="mb-3 font-semibold text-lg">
-                      Exam Tips
-                    </h3>
+                  {/* CONCLUSION */}
 
-                    <div className="space-y-2">
-                      {generatedNotes.examTips?.map((tip, index) => (
-                        <div
-                          key={index}
-                          className="flex gap-2 items-start"
-                        >
-                          <CheckCircle2
-                            className="text-yellow-400 mt-1"
-                            size={18}
-                          />
+                  {generatedNotes.conclusion && (
+                    <div className="mt-7 rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-5">
 
-                          <span>{tip}</span>
-                        </div>
-                      ))}
+                      <h3 className="mb-2 font-semibold text-cyan-400">
+                        Conclusion
+                      </h3>
+
+                      <p className="leading-7 text-gray-300">
+                        {generatedNotes.conclusion}
+                      </p>
+
                     </div>
-                  </div>
-                 
+                  )}
+
                 </motion.div>
               )}
             </AnimatePresence>
+
           </motion.div>
         </div>
       </section>
 
-      {/* ---------------------------------------------------------------- */}
+      {/* ====================================================== */}
       {/* FEATURES */}
-      {/* ---------------------------------------------------------------- */}
+      {/* ====================================================== */}
+
       <section className="relative px-6 py-20">
+
         <div className="pointer-events-none absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-purple-600/10 blur-[110px]" />
 
         <div className="relative mx-auto max-w-7xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6 }}
-            className="mx-auto mb-16 max-w-2xl text-center"
-          >
+
+          <div className="mx-auto mb-16 max-w-2xl text-center">
+
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-4 py-2 text-sm text-blue-400 backdrop-blur">
               <Sparkles size={16} />
               Why It Works
             </div>
+
             <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Everything you need for{" "}
+              AI that understands{" "}
               <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
-                smarter notes
+                your question
               </span>
             </h2>
-          </motion.div>
+
+          </div>
 
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+
             {features.map((item, index) => {
               const Icon = item.icon;
+
               return (
                 <motion.div
                   key={item.title}
-                  initial={{ opacity: 0, y: 28 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
-                  className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/60 p-8 shadow-xl shadow-black/20 backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/20"
+                  initial={{
+                    opacity: 0,
+                    y: 28,
+                  }}
+                  whileInView={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  viewport={{
+                    once: true,
+                    amount: 0.3,
+                  }}
+                  transition={{
+                    duration: 0.5,
+                    delay: index * 0.1,
+                  }}
+                  className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/60 p-8 shadow-xl backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:border-blue-500/50"
                 >
-                  <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-blue-500/20 blur-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
-                  <div className="relative flex h-full flex-col">
-                    <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl border border-blue-400/20 bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/20 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
-                      <Icon size={26} />
-                    </div>
-                    <h3 className="mb-3 text-xl font-semibold leading-snug">{item.title}</h3>
-                    <p className="text-base leading-relaxed text-gray-400">{item.description}</p>
+                  <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg">
+                    <Icon size={26} />
                   </div>
+
+                  <h3 className="mb-3 text-xl font-semibold">
+                    {item.title}
+                  </h3>
+
+                  <p className="text-base leading-relaxed text-gray-400">
+                    {item.description}
+                  </p>
+
                 </motion.div>
               );
             })}
+
           </div>
+
         </div>
       </section>
 
-      {/* ---------------------------------------------------------------- */}
+      {/* ====================================================== */}
       {/* HOW IT WORKS */}
-      {/* ---------------------------------------------------------------- */}
+      {/* ====================================================== */}
+
       <section className="relative px-6 py-20">
-        <div className="pointer-events-none absolute inset-0 opacity-[0.05] [background-image:linear-gradient(rgba(255,255,255,.3)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.3)_1px,transparent_1px)] [background-size:56px_56px]" />
 
         <div className="relative mx-auto max-w-7xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6 }}
-            className="mx-auto mb-16 max-w-2xl text-center"
-          >
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-4 py-2 text-sm text-blue-400 backdrop-blur">
+
+          <div className="mx-auto mb-16 max-w-2xl text-center">
+
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-4 py-2 text-sm text-blue-400">
               <ListChecks size={16} />
               How It Works
             </div>
-            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-              From raw content to{" "}
+
+            <h2 className="text-3xl font-extrabold sm:text-4xl">
+              From question to{" "}
               <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
-                ready notes
+                complete answer
               </span>
             </h2>
-          </motion.div>
+
+          </div>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+
             {steps.map((step, index) => {
               const Icon = step.icon;
+
               return (
                 <motion.div
                   key={step.title}
-                  initial={{ opacity: 0, y: 28 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
-                  className="relative rounded-3xl border border-slate-800 bg-slate-900/60 p-6 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/10"
+                  initial={{
+                    opacity: 0,
+                    y: 28,
+                  }}
+                  whileInView={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  viewport={{
+                    once: true,
+                  }}
+                  transition={{
+                    duration: 0.5,
+                    delay: index * 0.1,
+                  }}
+                  className="relative rounded-3xl border border-slate-800 bg-slate-900/60 p-6 backdrop-blur-xl"
                 >
+
                   <span className="absolute right-6 top-6 text-3xl font-bold text-slate-800">
                     {step.number}
                   </span>
+
                   <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500">
                     <Icon size={22} />
                   </div>
-                  <h3 className="mb-2 text-lg font-semibold">{step.title}</h3>
-                  <p className="text-sm leading-relaxed text-gray-400">{step.description}</p>
+
+                  <h3 className="mb-2 text-lg font-semibold">
+                    {step.title}
+                  </h3>
+
+                  <p className="text-sm leading-relaxed text-gray-400">
+                    {step.description}
+                  </p>
+
                 </motion.div>
               );
             })}
+
           </div>
+
         </div>
       </section>
 
-      {/* ---------------------------------------------------------------- */}
+      {/* ====================================================== */}
       {/* BENEFITS */}
-      {/* ---------------------------------------------------------------- */}
+      {/* ====================================================== */}
+
       <section className="relative px-6 py-20">
-        <div className="pointer-events-none absolute -top-24 -left-24 h-80 w-80 rounded-full bg-blue-600/10 blur-[110px]" />
 
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-4 py-2 text-sm text-blue-400 backdrop-blur">
+
+          <div>
+
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-4 py-2 text-sm text-blue-400">
               <Target size={16} />
               Why Students Choose It
             </div>
-            <h2 className="text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+
+            <h2 className="text-3xl font-extrabold sm:text-4xl">
               Study Smarter{" "}
               <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
                 With AI
               </span>
             </h2>
-            <p className="mt-6 text-base leading-7 text-gray-400 sm:text-lg">
-              Stop spending hours rewriting notes by hand — let AI do the
-              heavy lifting so you can focus on understanding.
-            </p>
-          </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="space-y-4"
-          >
+            <p className="mt-6 text-base leading-7 text-gray-400 sm:text-lg">
+              Ask your actual question and let CampusHub AI
+              create the explanation you need.
+            </p>
+
+          </div>
+
+          <div className="space-y-4">
+
             {benefits.map((benefit) => (
               <div
                 key={benefit}
-                className="flex items-center gap-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-5 backdrop-blur-xl transition-all duration-300 hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/10"
+                className="flex items-center gap-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-5 backdrop-blur-xl"
               >
-                <CheckCircle2 size={20} className="shrink-0 text-green-400" />
-                <p className="text-sm text-gray-200 sm:text-base">{benefit}</p>
+                <CheckCircle2
+                  size={20}
+                  className="shrink-0 text-green-400"
+                />
+
+                <p className="text-sm text-gray-200 sm:text-base">
+                  {benefit}
+                </p>
               </div>
             ))}
-          </motion.div>
+
+          </div>
+
         </div>
       </section>
 
-      {/* ---------------------------------------------------------------- */}
+      {/* ====================================================== */}
       {/* FINAL CTA */}
-      {/* ---------------------------------------------------------------- */}
+      {/* ====================================================== */}
+
       <section className="relative px-6 py-24">
-        <div className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-cyan-500/20 blur-[110px]" />
 
         <div className="relative mx-auto max-w-5xl">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 20 }}
-            whileInView={{ opacity: 1, scale: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="group relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/60 px-8 py-16 text-center shadow-2xl shadow-black/30 backdrop-blur-xl transition-all duration-300 hover:border-blue-500/50 hover:shadow-blue-500/20 sm:px-12 sm:py-20"
-          >
-            <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-blue-500/20 blur-3xl opacity-60 transition-opacity duration-500 group-hover:opacity-100" />
-            <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-cyan-500/20 blur-3xl opacity-40 transition-opacity duration-500 group-hover:opacity-90" />
+
+          <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/60 px-8 py-16 text-center shadow-2xl backdrop-blur-xl sm:px-12 sm:py-20">
 
             <div className="relative flex flex-col items-center">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-4 py-2 text-sm text-blue-400 backdrop-blur">
+
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-4 py-2 text-sm text-blue-400">
                 <FileText size={16} />
                 Smart Notes Generator
               </div>
 
-              <h2 className="max-w-2xl text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
-                Ready to create your{" "}
-                <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
-                  smart notes?
+              <h2 className="max-w-2xl text-4xl font-extrabold sm:text-5xl">
+                Ask your question.
+                <span className="block bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
+                  Learn the answer.
                 </span>
               </h2>
 
               <p className="mt-6 max-w-xl text-lg leading-8 text-gray-400">
-                Turn any chapter or lecture into structured notes in seconds.
+                Explain a concept, ask for types, request examples,
+                or paste your complete study material.
               </p>
 
               <a
                 href="#generator"
-                className="group/btn mt-10 flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-8 py-4 font-semibold transition-all duration-300 hover:-translate-y-1 hover:from-blue-500 hover:to-cyan-400 hover:shadow-2xl hover:shadow-blue-500/30 active:scale-95"
+                className="mt-10 flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-8 py-4 font-semibold transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/30"
               >
                 Generate My Notes
-                <ArrowRight
-                  size={18}
-                  className="transition-transform duration-300 group-hover/btn:translate-x-1"
-                />
+                <ArrowRight size={18} />
               </a>
+
             </div>
-          </motion.div>
+
+          </div>
+
         </div>
       </section>
+
     </div>
   );
 }

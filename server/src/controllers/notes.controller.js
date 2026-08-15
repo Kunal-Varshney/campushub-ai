@@ -1,62 +1,3 @@
-import "dotenv/config";
-import Note from "../models/note.js";
-import Groq from "groq-sdk";
-
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
-
-console.log(
-  "Groq Key:",
-  process.env.GROQ_API_KEY ? "Loaded ✅" : "Missing ❌"
-);
-
-
-// ============================================================
-// CREATE NOTE
-// POST /api/notes
-// ============================================================
-
-export const createNote = async (req, res) => {
-  try {
-    const {
-      title,
-      description,
-      subject,
-      category,
-      branch,
-      year,
-      fileUrl,
-    } = req.body;
-
-    const note = await Note.create({
-      title,
-      description: description || "",
-      subject: subject || "General",
-      category: category || subject || "General",
-      branch: branch || "",
-      year: year || "",
-      fileUrl: fileUrl || "",
-      uploadedBy: req.user.id,
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: "Note Uploaded Successfully 🚀",
-      note,
-    });
-
-  } catch (error) {
-    console.error("CREATE NOTE ERROR:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-
 // ============================================================
 // AI SMART NOTE GENERATOR
 // POST /api/notes/generate
@@ -71,8 +12,8 @@ export const generateNote = async (req, res) => {
       branch,
       year,
       topic,
+      difficulty,
     } = req.body;
-
 
     // ----------------------------------------------------------
     // VALIDATION
@@ -85,26 +26,44 @@ export const generateNote = async (req, res) => {
       });
     }
 
-
     const userRequirement =
       description?.trim() ||
       topic?.trim();
 
 
-    // ----------------------------------------------------------
-    // GROQ PROMPT
-    // ----------------------------------------------------------
+    // ==========================================================
+    // SMART AI PROMPT
+    // ==========================================================
 
     const prompt = `
-You are CampusHub AI, an advanced AI study assistant for college students.
+You are CampusHub AI, an intelligent study assistant for college students.
 
-The student can ask for notes about ANY subject, technology, concept,
-programming language, university topic, exam topic, or technical topic.
+Your most important job is to understand EXACTLY what the student is
+asking and answer that requirement completely.
 
-There are NO fixed subjects or categories.
+The student's request is the PRIMARY instruction.
 
-Student's notes requirement:
+Do NOT force every answer into the same structure.
+
+Do NOT automatically add sections such as:
+- Keywords
+- Exam Tips
+- Key Benefits
+- Advantages
+- Disadvantages
+- Extra Information
+
+unless they are relevant to the student's actual request.
+
+------------------------------------------------------------
+STUDENT REQUEST
+------------------------------------------------------------
+
 ${userRequirement}
+
+------------------------------------------------------------
+STUDENT CONTEXT
+------------------------------------------------------------
 
 Subject:
 ${subject || "Not specified"}
@@ -118,86 +77,219 @@ ${branch || "Not specified"}
 Year:
 ${year || "Not specified"}
 
+Difficulty:
+${difficulty || "Intermediate"}
 
-YOUR TASK:
 
-Understand exactly what the student is asking for.
+============================================================
+UNDERSTAND THE REQUEST FIRST
+============================================================
 
-Generate complete, useful and exam-focused study notes.
+Before generating the answer, determine what the student actually wants.
 
-If the student mentions a broad subject, identify the important topics
-inside that subject.
+Examples:
 
-If the student mentions a specific topic, focus mainly on that topic.
+If the student asks:
+"Types of Array"
 
-If the student asks for programming-related notes, include concepts,
-examples and important points where useful.
+The answer should primarily contain:
 
-If the student asks for exam preparation, prioritize definitions,
-concepts, important questions, key points and exam tips.
+1. What is an Array?
+2. Types of Arrays
+3. Explanation of each type
+4. Simple examples where useful
+5. Important differences if they help understanding
 
-If the student asks for a specific topic, do NOT force it into a
-predefined category.
+Do NOT spend most of the answer discussing keywords or exam tips.
 
-Generate the content according to the student's actual requirement.
+------------------------------------------------------------
 
+If the student asks:
+"Explain OOP"
+
+The answer should contain:
+
+1. Definition of OOP
+2. Explanation of OOP
+3. Main principles/concepts of OOP
+4. Explanation of each principle
+5. Simple examples
+6. Related information that helps understand OOP
+
+------------------------------------------------------------
+
+If the student asks:
+"What are the advantages of DBMS?"
+
+Focus mainly on the advantages of DBMS.
+
+You may briefly explain DBMS first if necessary for context.
+
+Do NOT generate unrelated sections.
+
+------------------------------------------------------------
+
+If the student asks:
+"Explain binary search with example"
+
+Provide:
+
+1. What binary search is
+2. How it works
+3. Step-by-step explanation
+4. Example
+5. Time complexity if relevant
+
+------------------------------------------------------------
+
+If the student asks:
+"Prepare notes for Operating System"
+
+Then create broader structured notes covering important OS concepts.
+
+------------------------------------------------------------
+
+If the student asks for exam preparation:
+
+Include exam-focused information such as:
+- important definitions
+- important concepts
+- commonly asked areas
+- exam tips
+- important questions
+
+ONLY when exam preparation is actually requested or clearly relevant.
+
+
+============================================================
+CONTENT RULES
+============================================================
+
+1. ANSWER THE EXACT QUESTION FIRST.
+
+2. Give a complete answer to the requested topic.
+
+3. Add a small amount of useful extra information only when it helps
+   the student understand the topic better.
+
+4. Do not add unrelated information just to make the answer longer.
+
+5. If the student asks for "types", clearly explain the types.
+
+6. If the student asks for "definition", give the definition first.
+
+7. If the student asks "difference between X and Y", create a clear
+   comparison.
+
+8. If the student asks "advantages", focus on advantages.
+
+9. If the student asks "disadvantages", focus on disadvantages.
+
+10. If the student asks "example", provide examples.
+
+11. If programming is involved, include code or pseudocode only when
+    useful or requested.
+
+12. Use simple student-friendly language.
+
+13. Maintain technically accurate information.
+
+14. Use headings and subheadings whenever they improve readability.
+
+15. Do not unnecessarily repeat the same information.
+
+16. Do not create generic sections just because they exist in the
+    response format.
+
+17. The answer should feel like a knowledgeable teacher explaining
+    the exact question to the student.
+
+18. If a concept naturally has types, principles, components, steps,
+    features, examples, applications, advantages, disadvantages,
+    complexity, or other important parts, include those parts ONLY
+    when they are relevant to understanding the requested topic.
+
+19. Do not assume that every topic needs "exam tips".
+
+20. Do not assume that every topic needs "keywords".
+
+21. Do not assume that every topic needs "key points".
+
+22. Give enough detail to completely answer the student's request,
+    but avoid unnecessary filler.
+
+
+============================================================
+OUTPUT FORMAT
+============================================================
 
 Return ONLY valid JSON.
 
-Use exactly this structure:
+Use this structure:
 
 {
-  "title": "Clear title for the notes",
+  "title": "Clear title based on the student's request",
 
   "subject": "Actual subject or technology",
 
   "category": "Relevant category",
 
-  "summary": "Clear and easy explanation of the topic",
+  "answer": {
+    "introduction": "Direct introduction/definition answering the student's request",
 
-  "topics": [
-    "Important topic 1",
-    "Important topic 2",
-    "Important topic 3",
-    "Important topic 4"
-  ],
+    "sections": [
+      {
+        "heading": "Relevant heading",
+        "content": "Clear explanation of this part",
+        "points": [
+          "Useful point if applicable",
+          "Useful point if applicable"
+        ],
+        "examples": [
+          "Example if useful"
+        ]
+      }
+    ]
+  },
 
-  "points": [
-    "Important concept 1",
-    "Important concept 2",
-    "Important concept 3",
-    "Important concept 4",
-    "Important concept 5"
+  "keyPoints": [
+    "Only include the most important points if they are useful"
   ],
 
   "keywords": [
-    "keyword1",
-    "keyword2",
-    "keyword3"
+    "Only include relevant keywords"
   ],
 
   "examTips": [
-    "Exam tip 1",
-    "Exam tip 2",
-    "Exam tip 3"
+    "Only include these when exam preparation or exam relevance is appropriate"
   ]
 }
 
-IMPORTANT:
 
-- Return ONLY JSON.
-- Do not use markdown.
-- Do not use code fences.
-- Do not add explanations outside JSON.
-- Keep the notes educational and accurate.
-- Use simple language where possible.
-- Generate enough content to actually help the student.
+============================================================
+IMPORTANT OUTPUT RULES
+============================================================
+
+- Return ONLY valid JSON.
+- Do not use Markdown code fences.
+- Do not add text outside JSON.
+- Do not create empty unnecessary sections.
+- Do not force keywords, exam tips, advantages, disadvantages,
+  examples, or other sections when they are not relevant.
+- The "sections" must be based on the student's actual question.
+- "introduction" must directly answer the student's request.
+- If the student asks for multiple things, answer ALL of them.
+- If the student asks for "types", explain ALL important types.
+- If the student asks for a comparison, include a clear comparison.
+- If the student asks for an example, include an example.
+- If the student asks for an explanation, explain the concept properly.
+- Keep the answer educational, complete and easy to read.
 `;
 
 
-    // ----------------------------------------------------------
+    // ==========================================================
     // GROQ API
-    // ----------------------------------------------------------
+    // ==========================================================
 
     const completion =
       await groq.chat.completions.create({
@@ -206,8 +298,18 @@ IMPORTANT:
         messages: [
           {
             role: "system",
-            content:
-              "You are CampusHub AI study assistant. Always return valid JSON only.",
+            content: `
+You are CampusHub AI.
+
+You are a highly intelligent college study assistant.
+
+Understand the student's exact requirement before answering.
+
+The student's question always has priority over any predefined
+answer structure.
+
+Return valid JSON only.
+`,
           },
 
           {
@@ -216,7 +318,7 @@ IMPORTANT:
           },
         ],
 
-        temperature: 0.4,
+        temperature: 0.3,
 
         response_format: {
           type: "json_object",
@@ -224,9 +326,12 @@ IMPORTANT:
       });
 
 
+    // ==========================================================
+    // GET AI RESPONSE
+    // ==========================================================
+
     let text =
       completion?.choices?.[0]?.message?.content || "";
-
 
     text = text.trim();
 
@@ -239,9 +344,9 @@ IMPORTANT:
     }
 
 
-    // ----------------------------------------------------------
-    // PARSE AI RESPONSE
-    // ----------------------------------------------------------
+    // ==========================================================
+    // PARSE JSON
+    // ==========================================================
 
     let aiNotes;
 
@@ -249,6 +354,7 @@ IMPORTANT:
       aiNotes = JSON.parse(text);
 
     } catch (parseError) {
+
       console.error(
         "AI JSON PARSE ERROR:",
         parseError
@@ -261,15 +367,14 @@ IMPORTANT:
 
       return res.status(500).json({
         success: false,
-        message:
-          "AI returned an invalid response",
+        message: "AI returned an invalid response",
       });
     }
 
 
-    // ----------------------------------------------------------
-    // NORMALIZE AI DATA
-    // ----------------------------------------------------------
+    // ==========================================================
+    // NORMALIZE DATA
+    // ==========================================================
 
     const finalSubject =
       aiNotes.subject ||
@@ -288,15 +393,23 @@ IMPORTANT:
       `${finalSubject} Notes`;
 
 
-    const topics =
-      Array.isArray(aiNotes.topics)
-        ? aiNotes.topics
+    const answer =
+      aiNotes.answer || {};
+
+
+    const introduction =
+      answer.introduction || "";
+
+
+    const sections =
+      Array.isArray(answer.sections)
+        ? answer.sections
         : [];
 
 
-    const points =
-      Array.isArray(aiNotes.points)
-        ? aiNotes.points
+    const keyPoints =
+      Array.isArray(aiNotes.keyPoints)
+        ? aiNotes.keyPoints
         : [];
 
 
@@ -312,56 +425,54 @@ IMPORTANT:
         : [];
 
 
-    // ----------------------------------------------------------
-    // SAVE AI GENERATED NOTE
-    // ----------------------------------------------------------
+    // ==========================================================
+    // SAVE AI NOTE
+    // ==========================================================
 
     const note =
       await Note.create({
 
         title: finalTitle,
 
-        description:
-          userRequirement,
+        description: userRequirement,
 
-        subject:
-          finalSubject,
+        subject: finalSubject,
 
-        category:
-          finalCategory,
+        category: finalCategory,
 
-        branch:
-          branch || "",
+        branch: branch || "",
 
-        year:
-          year || "",
+        year: year || "",
 
-        summary:
-          aiNotes.summary || "",
+        summary: introduction,
 
-        topics,
+        topics: sections.map(
+          (section) => section.heading
+        ),
 
-        points,
+        points: keyPoints,
 
         keywords,
 
         examTips,
 
-        // AI generated note does not require a real file
-        fileUrl:
-          "ai-generated",
+        // Store complete structured answer
+        answer: {
+          introduction,
+          sections,
+        },
 
-        uploadedBy:
-          req.user.id,
+        fileUrl: "ai-generated",
 
-        status:
-          "approved",
+        uploadedBy: req.user.id,
+
+        status: "approved",
       });
 
 
-    // ----------------------------------------------------------
+    // ==========================================================
     // RESPONSE
-    // ----------------------------------------------------------
+    // ==========================================================
 
     return res.status(201).json({
 
@@ -378,54 +489,6 @@ IMPORTANT:
 
     console.error(
       "GROQ / GENERATE NOTE ERROR:",
-      error
-    );
-
-    return res.status(500).json({
-
-      success: false,
-
-      message:
-        error.message,
-
-    });
-  }
-};
-
-
-// ============================================================
-// GET MY NOTES
-// GET /api/notes
-// ============================================================
-
-export const getNotes = async (req, res) => {
-  try {
-
-    const notes =
-      await Note.find({
-        uploadedBy: req.user.id,
-      })
-        .populate(
-          "uploadedBy",
-          "name email"
-        )
-        .sort({
-          createdAt: -1,
-        });
-
-
-    return res.status(200).json({
-
-      success: true,
-
-      notes,
-
-    });
-
-  } catch (error) {
-
-    console.error(
-      "GET NOTES ERROR:",
       error
     );
 

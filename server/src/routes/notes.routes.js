@@ -2,7 +2,6 @@ import express from "express";
 
 import {
   recordNoteDownload,
-  getAllNotes,
 } from "../controllers/admin.controller.js";
 
 import {
@@ -15,14 +14,8 @@ import authMiddleware from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-/*
-|--------------------------------------------------------------------------
-| Notes Routes
-|--------------------------------------------------------------------------
-*/
-
 // ============================================================
-// GET ALL NOTES
+// GET MY NOTES
 // GET /api/notes
 // ============================================================
 

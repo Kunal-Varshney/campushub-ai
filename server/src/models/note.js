@@ -18,22 +18,18 @@ const noteSchema = new mongoose.Schema(
       default: "",
     },
 
-    // Student ka actual subject
     subject: {
       type: String,
       trim: true,
       default: "",
     },
 
-    // Student ka actual topic
     topic: {
       type: String,
       trim: true,
       default: "",
     },
 
-    // Category sirf classification ke liye hai.
-    // Student ko predefined categories tak restrict nahi karega.
     category: {
       type: String,
       trim: true,
@@ -50,21 +46,60 @@ const noteSchema = new mongoose.Schema(
       default: "",
     },
 
+    // Main structured AI answer
+    answer: {
+      introduction: {
+        type: String,
+        trim: true,
+        default: "",
+      },
+
+      sections: [
+        {
+          heading: {
+            type: String,
+            trim: true,
+            default: "",
+          },
+
+          content: {
+            type: String,
+            trim: true,
+            default: "",
+          },
+
+          points: {
+            type: [String],
+            default: [],
+          },
+
+          examples: {
+            type: [String],
+            default: [],
+          },
+        },
+      ],
+    },
+
+    // Important points
     points: {
       type: [String],
       default: [],
     },
 
+    // General examples
     examples: {
       type: [String],
       default: [],
     },
 
+    // Relevant keywords only
     keywords: {
       type: [String],
       default: [],
     },
 
+    // Only generated when relevant
     examTips: {
       type: [String],
       default: [],
