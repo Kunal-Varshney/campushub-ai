@@ -1,4 +1,4 @@
-import Note from "../models/note.model.js";
+import Note from "../models/note.js";
 import Groq from "groq-sdk";
 
 // ============================================================
