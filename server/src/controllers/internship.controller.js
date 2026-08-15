@@ -6,7 +6,7 @@ import InternshipApplication from "../models/internshipApplication.model.js";
 
 import {
   getInternshipRecommendations,
-} from "../../src/services/internshipAI.service.js";
+} from "../services/internshipAI.service.js";
 
 
 // ============================================================
