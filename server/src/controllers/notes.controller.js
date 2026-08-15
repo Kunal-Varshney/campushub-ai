@@ -13,261 +13,268 @@ console.log(
   process.env.GROQ_API_KEY ? "Loaded ✅" : "Missing ❌"
 );
 
-
-// =======================
+// ============================================================
 // CREATE NOTE
-// =======================
+// POST /api/notes
+// ============================================================
+
 export const createNote = async (req, res) => {
   try {
-
     const {
       title,
       description,
       subject,
+      category,
       branch,
       year,
       fileUrl,
     } = req.body;
 
-
     const note = await Note.create({
-
       title,
       description,
       subject,
+      category: category || subject || "General",
       branch,
       year,
       fileUrl,
       uploadedBy: req.user.id,
-
     });
 
-
-    res.status(201).json({
-
-      success:true,
-      message:"Note Uploaded Successfully 🚀",
+    return res.status(201).json({
+      success: true,
+      message: "Note Uploaded Successfully 🚀",
       note,
-
     });
 
+  } catch (error) {
+    console.error("CREATE NOTE ERROR:", error);
 
-  } catch(error){
-
-    res.status(500).json({
-
-      success:false,
-      message:error.message,
-
+    return res.status(500).json({
+      success: false,
+      message: error.message,
     });
-
   }
 };
 
 
-
-
-// =======================
+// ============================================================
 // AI SMART NOTE GENERATOR
-// =======================
-export const generateNote = async(req,res)=>{
+// POST /api/notes/generate
+// ============================================================
 
-try{
+export const generateNote = async (req, res) => {
+  try {
+    const {
+      description,
+      subject,
+      category,
+      branch,
+      year,
+    } = req.body;
 
+    // ----------------------------------------------------------
+    // VALIDATION
+    // ----------------------------------------------------------
 
-const {
-  description,
-  subject,
-  branch,
-  year
-}=req.body;
+    if (!description?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Description required",
+      });
+    }
 
+    // ----------------------------------------------------------
+    // GROQ PROMPT
+    // ----------------------------------------------------------
 
-
-if(!description){
-
-return res.status(400).json({
-
-success:false,
-message:"Description required"
-
-});
-
-}
-
-
-
-// Groq Prompt
-
-const prompt = `
-
+    const prompt = `
 You are CampusHub AI study assistant.
 
-Create detailed exam focused notes.
+Create detailed, clear and exam-focused study notes.
 
 Subject:
-${subject}
+${subject || "General"}
 
+Category:
+${category || subject || "General"}
 
 Topic Content:
 ${description}
-
 
 Return ONLY valid JSON.
 
 Format:
 
 {
-"title":"Topic name",
-"summary":"Short explanation",
-"points":[
-"point 1",
-"point 2",
-"point 3"
-],
-"keywords":[
-"keyword1",
-"keyword2"
-],
-"examTips":[
-"tip1",
-"tip2"
-]
+  "title": "Topic name",
+  "summary": "Short and clear explanation",
+  "points": [
+    "point 1",
+    "point 2",
+    "point 3"
+  ],
+  "keywords": [
+    "keyword1",
+    "keyword2"
+  ],
+  "examTips": [
+    "tip1",
+    "tip2"
+  ]
 }
-
 `;
 
+    // ----------------------------------------------------------
+    // GROQ API
+    // ----------------------------------------------------------
 
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      temperature: 0.4,
+    });
 
-// Groq API Call
+    let text =
+      completion?.choices?.[0]?.message?.content || "";
 
-const completion = await groq.chat.completions.create({
-  model: "llama-3.3-70b-versatile",
-  messages: [
-    {
-      role: "user",
-      content: prompt,
-    },
-  ],
-  temperature: 0.4,
-});
+    text = text
+      .replace(/```json/gi, "")
+      .replace(/```/g, "")
+      .trim();
 
+    if (!text) {
+      return res.status(500).json({
+        success: false,
+        message: "AI returned an empty response",
+      });
+    }
 
-let text = completion.choices[0].message.content;
+    // ----------------------------------------------------------
+    // PARSE AI RESPONSE
+    // ----------------------------------------------------------
 
-text = text
-.replace(/```json/g,"")
-.replace(/```/g,"")
-.trim();
+    let aiNotes;
 
-const aiNotes = JSON.parse(text);
+    try {
+      aiNotes = JSON.parse(text);
+    } catch (parseError) {
+      console.error("AI JSON PARSE ERROR:", parseError);
+      console.error("AI RESPONSE:", text);
 
+      return res.status(500).json({
+        success: false,
+        message: "AI returned an invalid response",
+      });
+    }
 
+    // ----------------------------------------------------------
+    // SAVE AI NOTE
+    // ----------------------------------------------------------
 
+    const note = await Note.create({
+      title:
+        aiNotes.title ||
+        `${subject || "General"} Notes`,
 
-// Save Notes
+      description,
 
-const note = await Note.create({
-  title: aiNotes.title || `${subject} Notes`,
-  description,
-  subject,
+      subject:
+        subject || "General",
 
-  summary: aiNotes.summary || "",
-  points: aiNotes.points || [],
-  keywords: aiNotes.keywords || [],
-  examTips: aiNotes.examTips || [],
+      category:
+        category ||
+        subject ||
+        "General",
 
-  branch: branch || "",
-  year: year || null,
+      summary:
+        aiNotes.summary || "",
 
-  fileUrl: "",
-  uploadedBy: req.user.id,
-});
+      points:
+        Array.isArray(aiNotes.points)
+          ? aiNotes.points
+          : [],
 
+      keywords:
+        Array.isArray(aiNotes.keywords)
+          ? aiNotes.keywords
+          : [],
 
-res.status(201).json({
+      examTips:
+        Array.isArray(aiNotes.examTips)
+          ? aiNotes.examTips
+          : [],
 
-success:true,
+      branch:
+        branch || "",
 
-message:"AI Notes Generated Successfully 🚀",
+      year:
+        year || null,
 
-note
+      // AI generated notes do not have an uploaded file.
+      // Model requires fileUrl, so use a valid placeholder.
+      fileUrl:
+        "ai-generated",
 
-});
+      uploadedBy:
+        req.user.id,
+    });
 
+    // ----------------------------------------------------------
+    // RESPONSE
+    // ----------------------------------------------------------
 
+    return res.status(201).json({
+      success: true,
+      message: "AI Notes Generated Successfully 🚀",
+      note,
+    });
 
-}
-catch(error){
+  } catch (error) {
+    console.error("GROQ / GENERATE NOTE ERROR:", error);
 
-
-console.log("GROQ ERROR:",error);
-
-
-res.status(500).json({
-
-success:false,
-
-message:error.message
-
-});
-
-
-}
-
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
 
 
+// ============================================================
+// GET MY NOTES
+// GET /api/notes
+// ============================================================
 
+export const getNotes = async (req, res) => {
+  try {
+    const notes = await Note.find({
+      uploadedBy: req.user.id,
+    })
+      .populate(
+        "uploadedBy",
+        "name email"
+      )
+      .sort({
+        createdAt: -1,
+      });
 
-// =======================
-// GET ALL NOTES
-// =======================
+    return res.status(200).json({
+      success: true,
+      notes,
+    });
 
-export const getNotes = async(req,res)=>{
+  } catch (error) {
+    console.error("GET NOTES ERROR:", error);
 
-try{
-
-
-const notes = await Note.find({
-  uploadedBy: req.user.id,
-})
-
-.populate(
-"uploadedBy",
-"name email"
-)
-
-.sort({
-
-createdAt:-1
-
-});
-
-
-
-res.status(200).json({
-
-success:true,
-
-notes
-
-});
-
-
-
-}catch(error){
-
-
-res.status(500).json({
-
-success:false,
-
-message:error.message
-
-});
-
-
-}
-
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
