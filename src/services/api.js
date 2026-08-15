@@ -218,10 +218,99 @@ export const deleteNote = async (id) => {
 };
 
 // ============================================================
+// STUDENT NOTES
+// ============================================================
+
+// Get logged-in user's notes
+export const getMyNotes = async () => {
+  try {
+    const { data } = await api.get("/notes");
+
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to fetch your notes"
+    );
+  }
+};
+
+
+// ============================================================
+// AI NOTE GENERATOR
+// POST /api/notes/generate
+// ============================================================
+
+export const generateNote = async (
+  noteData = {}
+) => {
+  try {
+    const { data } = await api.post(
+      "/notes/generate",
+      noteData
+    );
+
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to generate AI notes"
+    );
+  }
+};
+
+
+// ============================================================
+// CREATE / UPLOAD NOTE
+// POST /api/notes/create
+// ============================================================
+
+export const createNote = async (
+  noteData = {}
+) => {
+  try {
+    const { data } = await api.post(
+      "/notes/create",
+      noteData
+    );
+
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to create note"
+    );
+  }
+};
+
+
+// ============================================================
+// NOTE DOWNLOAD
+// POST /api/notes/:id/download
+// ============================================================
+
+export const recordNoteDownload = async (id) => {
+  try {
+    const { data } = await api.post(
+      `/notes/${id}/download`
+    );
+
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to record note download"
+    );
+  }
+};
+
+// ============================================================
 // ADMIN DOWNLOAD HISTORY
 // ============================================================
 
-export const getDownloadHistory = async (params = {}) => {
+export const getDownloadHistory = async (
+  params = {}
+) => {
   try {
     const { data } = await api.get(
       "/admin/download-history",
@@ -262,7 +351,9 @@ export const getAnalytics = async () => {
 // ADMIN AI USAGE
 // ============================================================
 
-export const getAIUsage = async (params = {}) => {
+export const getAIUsage = async (
+  params = {}
+) => {
   try {
     const { data } = await api.get(
       "/admin/ai-usage",
@@ -284,7 +375,9 @@ export const getAIUsage = async (params = {}) => {
 // INTERNSHIP FINDER
 // ============================================================
 
-export const getInternships = async (params = {}) => {
+export const getInternships = async (
+  params = {}
+) => {
   try {
     const { data } = await api.get(
       "/internship",
@@ -371,41 +464,40 @@ export const applyInternship = async (
   }
 };
 
-export const getInternshipApplications = async () => {
-  try {
-    const { data } = await api.get(
-      "/internship/applications"
-    );
+export const getInternshipApplications =
+  async () => {
+    try {
+      const { data } = await api.get(
+        "/internship/applications"
+      );
 
-    return data;
-  } catch (error) {
-    return handleError(
-      error,
-      "Failed to fetch internship applications"
-    );
-  }
-};
+      return data;
+    } catch (error) {
+      return handleError(
+        error,
+        "Failed to fetch internship applications"
+      );
+    }
+  };
 
-export const updateInternshipApplicationStatus = async (
-  id,
-  status
-) => {
-  try {
-    const { data } = await api.patch(
-      `/internship/application/${id}`,
-      {
-        status,
-      }
-    );
+export const updateInternshipApplicationStatus =
+  async (id, status) => {
+    try {
+      const { data } = await api.patch(
+        `/internship/application/${id}`,
+        {
+          status,
+        }
+      );
 
-    return data;
-  } catch (error) {
-    return handleError(
-      error,
-      "Failed to update internship application status"
-    );
-  }
-};
+      return data;
+    } catch (error) {
+      return handleError(
+        error,
+        "Failed to update internship application status"
+      );
+    }
+  };
 
 export const getInternshipById = async (id) => {
   try {
@@ -459,26 +551,24 @@ export const getCareerApplications = async () => {
   }
 };
 
-export const updateCareerApplicationStatus = async (
-  id,
-  status
-) => {
-  try {
-    const { data } = await api.patch(
-      `/careers/applications/${id}/status`,
-      {
-        status,
-      }
-    );
+export const updateCareerApplicationStatus =
+  async (id, status) => {
+    try {
+      const { data } = await api.patch(
+        `/careers/applications/${id}/status`,
+        {
+          status,
+        }
+      );
 
-    return data;
-  } catch (error) {
-    return handleError(
-      error,
-      "Failed to update career application status"
-    );
-  }
-};
+      return data;
+    } catch (error) {
+      return handleError(
+        error,
+        "Failed to update career application status"
+      );
+    }
+  };
 
 // ============================================================
 // ABOUT PAGE

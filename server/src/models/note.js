@@ -1,15 +1,11 @@
 import mongoose from "mongoose";
 
-const NOTE_CATEGORIES = [
-  "DSA",
-  "Machine Learning",
-  "DBMS",
-  "Web Development",
-  "Programming",
-];
-
 const noteSchema = new mongoose.Schema(
   {
+    // ============================================================
+    // BASIC NOTE INFORMATION
+    // ============================================================
+
     title: {
       type: String,
       required: [true, "Title is required"],
@@ -22,10 +18,71 @@ const noteSchema = new mongoose.Schema(
       default: "",
     },
 
+    // Student ka actual subject
+    subject: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    // Student ka actual topic
+    topic: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    // Category sirf classification ke liye hai.
+    // Student ko predefined categories tak restrict nahi karega.
     category: {
       type: String,
-      enum: NOTE_CATEGORIES,
-      required: [true, "Category is required"],
+      trim: true,
+      default: "AI Generated",
+    },
+
+    // ============================================================
+    // AI GENERATED CONTENT
+    // ============================================================
+
+    summary: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    points: {
+      type: [String],
+      default: [],
+    },
+
+    examples: {
+      type: [String],
+      default: [],
+    },
+
+    keywords: {
+      type: [String],
+      default: [],
+    },
+
+    examTips: {
+      type: [String],
+      default: [],
+    },
+
+    // ============================================================
+    // STUDENT INFORMATION
+    // ============================================================
+
+    branch: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    year: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
     },
 
     uploadedBy: {
@@ -34,16 +91,28 @@ const noteSchema = new mongoose.Schema(
       required: true,
     },
 
+    // ============================================================
+    // FILE
+    // ============================================================
+
     fileUrl: {
       type: String,
-      required: [true, "File URL is required"],
+      default: "",
     },
+
+    // ============================================================
+    // STATUS
+    // ============================================================
 
     status: {
       type: String,
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+
+    // ============================================================
+    // DOWNLOADS
+    // ============================================================
 
     downloads: {
       type: Number,
@@ -55,12 +124,19 @@ const noteSchema = new mongoose.Schema(
   }
 );
 
+// ============================================================
+// SEARCH INDEX
+// ============================================================
+
 noteSchema.index({
   title: "text",
   description: "text",
+  subject: "text",
+  topic: "text",
+  summary: "text",
+  keywords: "text",
 });
 
 const Note = mongoose.model("Note", noteSchema);
 
-export { NOTE_CATEGORIES };
 export default Note;

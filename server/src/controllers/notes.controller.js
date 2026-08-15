@@ -2,8 +2,6 @@ import "dotenv/config";
 import Note from "../models/note.js";
 import Groq from "groq-sdk";
 
-console.log("GROQ_API_KEY =", process.env.GROQ_API_KEY);
-
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
@@ -12,6 +10,7 @@ console.log(
   "Groq Key:",
   process.env.GROQ_API_KEY ? "Loaded ✅" : "Missing ❌"
 );
+
 
 // ============================================================
 // CREATE NOTE
@@ -32,12 +31,12 @@ export const createNote = async (req, res) => {
 
     const note = await Note.create({
       title,
-      description,
-      subject,
+      description: description || "",
+      subject: subject || "General",
       category: category || subject || "General",
-      branch,
-      year,
-      fileUrl,
+      branch: branch || "",
+      year: year || "",
+      fileUrl: fileUrl || "",
       uploadedBy: req.user.id,
     });
 
@@ -71,82 +70,166 @@ export const generateNote = async (req, res) => {
       category,
       branch,
       year,
+      topic,
     } = req.body;
+
 
     // ----------------------------------------------------------
     // VALIDATION
     // ----------------------------------------------------------
 
-    if (!description?.trim()) {
+    if (!description?.trim() && !topic?.trim()) {
       return res.status(400).json({
         success: false,
-        message: "Description required",
+        message: "Please enter the topic or notes requirement",
       });
     }
+
+
+    const userRequirement =
+      description?.trim() ||
+      topic?.trim();
+
 
     // ----------------------------------------------------------
     // GROQ PROMPT
     // ----------------------------------------------------------
 
     const prompt = `
-You are CampusHub AI study assistant.
+You are CampusHub AI, an advanced AI study assistant for college students.
 
-Create detailed, clear and exam-focused study notes.
+The student can ask for notes about ANY subject, technology, concept,
+programming language, university topic, exam topic, or technical topic.
+
+There are NO fixed subjects or categories.
+
+Student's notes requirement:
+${userRequirement}
 
 Subject:
-${subject || "General"}
+${subject || "Not specified"}
 
 Category:
-${category || subject || "General"}
+${category || "Not specified"}
 
-Topic Content:
-${description}
+Branch:
+${branch || "Not specified"}
+
+Year:
+${year || "Not specified"}
+
+
+YOUR TASK:
+
+Understand exactly what the student is asking for.
+
+Generate complete, useful and exam-focused study notes.
+
+If the student mentions a broad subject, identify the important topics
+inside that subject.
+
+If the student mentions a specific topic, focus mainly on that topic.
+
+If the student asks for programming-related notes, include concepts,
+examples and important points where useful.
+
+If the student asks for exam preparation, prioritize definitions,
+concepts, important questions, key points and exam tips.
+
+If the student asks for a specific topic, do NOT force it into a
+predefined category.
+
+Generate the content according to the student's actual requirement.
+
 
 Return ONLY valid JSON.
 
-Format:
+Use exactly this structure:
 
 {
-  "title": "Topic name",
-  "summary": "Short and clear explanation",
-  "points": [
-    "point 1",
-    "point 2",
-    "point 3"
+  "title": "Clear title for the notes",
+
+  "subject": "Actual subject or technology",
+
+  "category": "Relevant category",
+
+  "summary": "Clear and easy explanation of the topic",
+
+  "topics": [
+    "Important topic 1",
+    "Important topic 2",
+    "Important topic 3",
+    "Important topic 4"
   ],
+
+  "points": [
+    "Important concept 1",
+    "Important concept 2",
+    "Important concept 3",
+    "Important concept 4",
+    "Important concept 5"
+  ],
+
   "keywords": [
     "keyword1",
-    "keyword2"
+    "keyword2",
+    "keyword3"
   ],
+
   "examTips": [
-    "tip1",
-    "tip2"
+    "Exam tip 1",
+    "Exam tip 2",
+    "Exam tip 3"
   ]
 }
+
+IMPORTANT:
+
+- Return ONLY JSON.
+- Do not use markdown.
+- Do not use code fences.
+- Do not add explanations outside JSON.
+- Keep the notes educational and accurate.
+- Use simple language where possible.
+- Generate enough content to actually help the student.
 `;
+
 
     // ----------------------------------------------------------
     // GROQ API
     // ----------------------------------------------------------
 
-    const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages: [
-        {
-          role: "user",
-          content: prompt,
+    const completion =
+      await groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are CampusHub AI study assistant. Always return valid JSON only.",
+          },
+
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+
+        temperature: 0.4,
+
+        response_format: {
+          type: "json_object",
         },
-      ],
-      temperature: 0.4,
-    });
+      });
+
 
     let text =
       completion?.choices?.[0]?.message?.content || "";
 
-    text = text
-      .replace(/```json/gi, "")
-      .replace(/```/g, "")
-      .trim();
+
+    text = text.trim();
+
 
     if (!text) {
       return res.status(500).json({
@@ -154,6 +237,7 @@ Format:
         message: "AI returned an empty response",
       });
     }
+
 
     // ----------------------------------------------------------
     // PARSE AI RESPONSE
@@ -163,84 +247,147 @@ Format:
 
     try {
       aiNotes = JSON.parse(text);
+
     } catch (parseError) {
-      console.error("AI JSON PARSE ERROR:", parseError);
-      console.error("AI RESPONSE:", text);
+      console.error(
+        "AI JSON PARSE ERROR:",
+        parseError
+      );
+
+      console.error(
+        "AI RESPONSE:",
+        text
+      );
 
       return res.status(500).json({
         success: false,
-        message: "AI returned an invalid response",
+        message:
+          "AI returned an invalid response",
       });
     }
 
+
     // ----------------------------------------------------------
-    // SAVE AI NOTE
+    // NORMALIZE AI DATA
     // ----------------------------------------------------------
 
-    const note = await Note.create({
-      title:
-        aiNotes.title ||
-        `${subject || "General"} Notes`,
+    const finalSubject =
+      aiNotes.subject ||
+      subject ||
+      "General";
 
-      description,
 
-      subject:
-        subject || "General",
+    const finalCategory =
+      aiNotes.category ||
+      category ||
+      finalSubject;
 
-      category:
-        category ||
-        subject ||
-        "General",
 
-      summary:
-        aiNotes.summary || "",
+    const finalTitle =
+      aiNotes.title ||
+      `${finalSubject} Notes`;
 
-      points:
-        Array.isArray(aiNotes.points)
-          ? aiNotes.points
-          : [],
 
-      keywords:
-        Array.isArray(aiNotes.keywords)
-          ? aiNotes.keywords
-          : [],
+    const topics =
+      Array.isArray(aiNotes.topics)
+        ? aiNotes.topics
+        : [];
 
-      examTips:
-        Array.isArray(aiNotes.examTips)
-          ? aiNotes.examTips
-          : [],
 
-      branch:
-        branch || "",
+    const points =
+      Array.isArray(aiNotes.points)
+        ? aiNotes.points
+        : [];
 
-      year:
-        year || null,
 
-      // AI generated notes do not have an uploaded file.
-      // Model requires fileUrl, so use a valid placeholder.
-      fileUrl:
-        "ai-generated",
+    const keywords =
+      Array.isArray(aiNotes.keywords)
+        ? aiNotes.keywords
+        : [];
 
-      uploadedBy:
-        req.user.id,
-    });
+
+    const examTips =
+      Array.isArray(aiNotes.examTips)
+        ? aiNotes.examTips
+        : [];
+
+
+    // ----------------------------------------------------------
+    // SAVE AI GENERATED NOTE
+    // ----------------------------------------------------------
+
+    const note =
+      await Note.create({
+
+        title: finalTitle,
+
+        description:
+          userRequirement,
+
+        subject:
+          finalSubject,
+
+        category:
+          finalCategory,
+
+        branch:
+          branch || "",
+
+        year:
+          year || "",
+
+        summary:
+          aiNotes.summary || "",
+
+        topics,
+
+        points,
+
+        keywords,
+
+        examTips,
+
+        // AI generated note does not require a real file
+        fileUrl:
+          "ai-generated",
+
+        uploadedBy:
+          req.user.id,
+
+        status:
+          "approved",
+      });
+
 
     // ----------------------------------------------------------
     // RESPONSE
     // ----------------------------------------------------------
 
     return res.status(201).json({
+
       success: true,
-      message: "AI Notes Generated Successfully 🚀",
+
+      message:
+        "AI Notes Generated Successfully 🚀",
+
       note,
+
     });
 
   } catch (error) {
-    console.error("GROQ / GENERATE NOTE ERROR:", error);
+
+    console.error(
+      "GROQ / GENERATE NOTE ERROR:",
+      error
+    );
 
     return res.status(500).json({
+
       success: false,
-      message: error.message,
+
+      message:
+        error.message,
+
     });
   }
 };
@@ -253,28 +400,42 @@ Format:
 
 export const getNotes = async (req, res) => {
   try {
-    const notes = await Note.find({
-      uploadedBy: req.user.id,
-    })
-      .populate(
-        "uploadedBy",
-        "name email"
-      )
-      .sort({
-        createdAt: -1,
-      });
+
+    const notes =
+      await Note.find({
+        uploadedBy: req.user.id,
+      })
+        .populate(
+          "uploadedBy",
+          "name email"
+        )
+        .sort({
+          createdAt: -1,
+        });
+
 
     return res.status(200).json({
+
       success: true,
+
       notes,
+
     });
 
   } catch (error) {
-    console.error("GET NOTES ERROR:", error);
+
+    console.error(
+      "GET NOTES ERROR:",
+      error
+    );
 
     return res.status(500).json({
+
       success: false,
-      message: error.message,
+
+      message:
+        error.message,
+
     });
   }
 };
