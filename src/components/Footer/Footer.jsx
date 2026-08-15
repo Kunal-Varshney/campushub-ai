@@ -1,5 +1,5 @@
 import { Mail, ArrowUpRight, Heart } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   FaGithub,
   FaLinkedin,
@@ -7,6 +7,25 @@ import {
 } from "react-icons/fa";
 
 function Footer() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleSectionNavigation = (sectionId) => {
+    if (location.pathname !== "/") {
+      navigate("/");
+
+      setTimeout(() => {
+        document.getElementById(sectionId)?.scrollIntoView({
+          behavior: "smooth",
+        });
+      }, 150);
+    } else {
+      document.getElementById(sectionId)?.scrollIntoView({
+        behavior: "smooth",
+      });
+    }
+  };
+
   return (
     <footer
       id="contact"
@@ -18,18 +37,13 @@ function Footer() {
 
       <div className="relative mx-auto max-w-7xl px-6 py-16 lg:px-8">
 
-        {/* =====================================================
-            MAIN FOOTER
-        ===================================================== */}
+        {/* ================= MAIN FOOTER ================= */}
 
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
 
-          {/* =================================================
-              BRAND
-          ================================================= */}
+          {/* ================= BRAND ================= */}
 
-          <div className="lg:col-span-1">
-
+          <div>
             <Link
               to="/"
               className="inline-block text-2xl font-bold tracking-tight"
@@ -82,9 +96,7 @@ function Footer() {
           </div>
 
 
-          {/* =================================================
-              PLATFORM
-          ================================================= */}
+          {/* ================= PLATFORM ================= */}
 
           <div>
             <h4 className="mb-5 text-sm font-semibold text-white">
@@ -94,21 +106,21 @@ function Footer() {
             <ul className="space-y-3 text-sm text-slate-400">
 
               <li>
-                <a
-                  href="#features"
+                <button
+                  onClick={() => handleSectionNavigation("features")}
                   className="transition-colors duration-300 hover:text-cyan-400"
                 >
                   Features
-                </a>
+                </button>
               </li>
 
               <li>
-                <a
-                  href="#how-it-works"
+                <button
+                  onClick={() => handleSectionNavigation("how-it-works")}
                   className="transition-colors duration-300 hover:text-cyan-400"
                 >
                   How It Works
-                </a>
+                </button>
               </li>
 
               <li>
@@ -133,9 +145,7 @@ function Footer() {
           </div>
 
 
-          {/* =================================================
-              RESOURCES
-          ================================================= */}
+          {/* ================= RESOURCES ================= */}
 
           <div>
             <h4 className="mb-5 text-sm font-semibold text-white">
@@ -145,12 +155,12 @@ function Footer() {
             <ul className="space-y-3 text-sm text-slate-400">
 
               <li>
-                <a
-                  href="#faq"
+                <button
+                  onClick={() => handleSectionNavigation("faq")}
                   className="transition-colors duration-300 hover:text-cyan-400"
                 >
                   FAQs
-                </a>
+                </button>
               </li>
 
               <li>
@@ -184,9 +194,7 @@ function Footer() {
           </div>
 
 
-          {/* =================================================
-              GET IN TOUCH
-          ================================================= */}
+          {/* ================= GET IN TOUCH ================= */}
 
           <div>
 
@@ -224,16 +232,12 @@ function Footer() {
         </div>
 
 
-        {/* =====================================================
-            DIVIDER
-        ===================================================== */}
+        {/* ================= DIVIDER ================= */}
 
         <div className="my-10 h-px bg-slate-800" />
 
 
-        {/* =====================================================
-            BOTTOM BAR
-        ===================================================== */}
+        {/* ================= BOTTOM BAR ================= */}
 
         <div className="flex flex-col gap-4 text-center text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:text-left">
 
