@@ -8,7 +8,6 @@ const BASE_URL =
   import.meta.env.VITE_API_URL ||
   "http://localhost:5000/api";
 
-
 // ============================================================
 // AXIOS INSTANCE
 // ============================================================
@@ -68,7 +67,7 @@ export const getAdminStats = async () => {
 };
 
 // ============================================================
-// USERS
+// ADMIN USERS
 // ============================================================
 
 export const getUsers = async (params = {}) => {
@@ -91,7 +90,10 @@ export const getUserActivity = async (id) => {
 
     return data;
   } catch (error) {
-    return handleError(error, "Failed to fetch user activity");
+    return handleError(
+      error,
+      "Failed to fetch user activity"
+    );
   }
 };
 
@@ -151,7 +153,7 @@ export const updateUserPermissions = async (
 };
 
 // ============================================================
-// NOTES
+// ADMIN NOTES
 // ============================================================
 
 export const getNotes = async (params = {}) => {
@@ -216,7 +218,7 @@ export const deleteNote = async (id) => {
 };
 
 // ============================================================
-// DOWNLOAD HISTORY
+// ADMIN DOWNLOAD HISTORY
 // ============================================================
 
 export const getDownloadHistory = async (params = {}) => {
@@ -238,7 +240,7 @@ export const getDownloadHistory = async (params = {}) => {
 };
 
 // ============================================================
-// ANALYTICS
+// ADMIN ANALYTICS
 // ============================================================
 
 export const getAnalytics = async () => {
@@ -257,7 +259,7 @@ export const getAnalytics = async () => {
 };
 
 // ============================================================
-// AI ASSISTANT MONITORING
+// ADMIN AI USAGE
 // ============================================================
 
 export const getAIUsage = async (params = {}) => {
@@ -282,31 +284,31 @@ export const getAIUsage = async (params = {}) => {
 // INTERNSHIP FINDER
 // ============================================================
 
-export const getInternshipRecommendations = async (
-  searchData
-) => {
+export const getInternships = async (params = {}) => {
   try {
-    const { data } = await api.post(
-      "/internship/recommend",
-      searchData
+    const { data } = await api.get(
+      "/internship",
+      {
+        params,
+      }
     );
 
     return data;
   } catch (error) {
     return handleError(
       error,
-      "Failed to get internship recommendations"
+      "Failed to fetch internships"
     );
   }
 };
 
-export const searchInternships = async (params = {}) => {
+export const searchInternships = async (
+  searchData = {}
+) => {
   try {
-    const { data } = await api.get(
+    const { data } = await api.post(
       "/internship/search",
-      {
-        params,
-      }
+      searchData
     );
 
     return data;
@@ -318,10 +320,13 @@ export const searchInternships = async (params = {}) => {
   }
 };
 
-export const toggleSavedInternship = async (id) => {
+export const toggleSavedInternship = async (
+  internshipData
+) => {
   try {
     const { data } = await api.post(
-      `/internship/${id}/save`
+      "/internship/save",
+      internshipData
     );
 
     return data;
@@ -333,10 +338,28 @@ export const toggleSavedInternship = async (id) => {
   }
 };
 
-export const applyInternship = async (id) => {
+export const getSavedInternships = async () => {
+  try {
+    const { data } = await api.get(
+      "/internship/saved"
+    );
+
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to fetch saved internships"
+    );
+  }
+};
+
+export const applyInternship = async (
+  applicationData
+) => {
   try {
     const { data } = await api.post(
-      `/internship/${id}/apply`
+      "/internship/apply",
+      applicationData
     );
 
     return data;
@@ -344,6 +367,57 @@ export const applyInternship = async (id) => {
     return handleError(
       error,
       "Failed to apply for internship"
+    );
+  }
+};
+
+export const getInternshipApplications = async () => {
+  try {
+    const { data } = await api.get(
+      "/internship/applications"
+    );
+
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to fetch internship applications"
+    );
+  }
+};
+
+export const updateInternshipApplicationStatus = async (
+  id,
+  status
+) => {
+  try {
+    const { data } = await api.patch(
+      `/internship/application/${id}`,
+      {
+        status,
+      }
+    );
+
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to update internship application status"
+    );
+  }
+};
+
+export const getInternshipById = async (id) => {
+  try {
+    const { data } = await api.get(
+      `/internship/${id}`
+    );
+
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to fetch internship"
     );
   }
 };
