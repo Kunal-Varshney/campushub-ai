@@ -1,3 +1,107 @@
+import "dotenv/config";
+import Note from "../models/note.js";
+import Groq from "groq-sdk";
+
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
+
+console.log(
+  "Groq Key:",
+  process.env.GROQ_API_KEY ? "Loaded ✅" : "Missing ❌"
+);
+
+
+// ============================================================
+// CREATE NOTE
+// POST /api/notes/create
+// ============================================================
+
+export const createNote = async (req, res) => {
+  try {
+    const {
+      title,
+      description,
+      subject,
+      topic,
+      category,
+      branch,
+      year,
+      fileUrl,
+    } = req.body;
+
+    // ----------------------------------------------------------
+    // VALIDATION
+    // ----------------------------------------------------------
+
+    if (!title?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Title is required",
+      });
+    }
+
+    // ----------------------------------------------------------
+    // CREATE NOTE
+    // ----------------------------------------------------------
+
+    const note = await Note.create({
+      title: title.trim(),
+
+      description:
+        description?.trim() || "",
+
+      subject:
+        subject?.trim() || "General",
+
+      topic:
+        topic?.trim() || "",
+
+      category:
+        category?.trim() ||
+        subject?.trim() ||
+        "General",
+
+      branch:
+        branch?.trim() || "",
+
+      year:
+        year || "",
+
+      fileUrl:
+        fileUrl || "",
+
+      uploadedBy:
+        req.user.id,
+
+      status:
+        "pending",
+    });
+
+    // ----------------------------------------------------------
+    // RESPONSE
+    // ----------------------------------------------------------
+
+    return res.status(201).json({
+      success: true,
+      message: "Note Uploaded Successfully 🚀",
+      note,
+    });
+
+  } catch (error) {
+    console.error(
+      "CREATE NOTE ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
 // ============================================================
 // AI SMART NOTE GENERATOR
 // POST /api/notes/generate
@@ -15,6 +119,7 @@ export const generateNote = async (req, res) => {
       difficulty,
     } = req.body;
 
+
     // ----------------------------------------------------------
     // VALIDATION
     // ----------------------------------------------------------
@@ -22,9 +127,11 @@ export const generateNote = async (req, res) => {
     if (!description?.trim() && !topic?.trim()) {
       return res.status(400).json({
         success: false,
-        message: "Please enter the topic or notes requirement",
+        message:
+          "Please enter the topic or notes requirement",
       });
     }
+
 
     const userRequirement =
       description?.trim() ||
@@ -339,7 +446,8 @@ Return valid JSON only.
     if (!text) {
       return res.status(500).json({
         success: false,
-        message: "AI returned an empty response",
+        message:
+          "AI returned an empty response",
       });
     }
 
@@ -367,7 +475,8 @@ Return valid JSON only.
 
       return res.status(500).json({
         success: false,
-        message: "AI returned an invalid response",
+        message:
+          "AI returned an invalid response",
       });
     }
 
@@ -398,13 +507,39 @@ Return valid JSON only.
 
 
     const introduction =
-      answer.introduction || "";
+      typeof answer.introduction === "string"
+        ? answer.introduction
+        : "";
 
 
     const sections =
       Array.isArray(answer.sections)
         ? answer.sections
         : [];
+
+
+    const normalizedSections =
+      sections.map((section) => ({
+        heading:
+          typeof section?.heading === "string"
+            ? section.heading
+            : "",
+
+        content:
+          typeof section?.content === "string"
+            ? section.content
+            : "",
+
+        points:
+          Array.isArray(section?.points)
+            ? section.points
+            : [],
+
+        examples:
+          Array.isArray(section?.examples)
+            ? section.examples
+            : [],
+      }));
 
 
     const keyPoints =
@@ -432,41 +567,57 @@ Return valid JSON only.
     const note =
       await Note.create({
 
-        title: finalTitle,
+        title:
+          finalTitle,
 
-        description: userRequirement,
+        description:
+          userRequirement,
 
-        subject: finalSubject,
+        subject:
+          finalSubject,
 
-        category: finalCategory,
+        topic:
+          topic?.trim() || "",
 
-        branch: branch || "",
+        category:
+          finalCategory,
 
-        year: year || "",
+        branch:
+          branch || "",
 
-        summary: introduction,
+        year:
+          year || "",
 
-        topics: sections.map(
-          (section) => section.heading
-        ),
+        summary:
+          introduction,
 
-        points: keyPoints,
+        topics:
+          normalizedSections
+            .map((section) => section.heading)
+            .filter(Boolean),
+
+        points:
+          keyPoints,
 
         keywords,
 
         examTips,
 
-        // Store complete structured answer
         answer: {
           introduction,
-          sections,
+
+          sections:
+            normalizedSections,
         },
 
-        fileUrl: "ai-generated",
+        fileUrl:
+          "ai-generated",
 
-        uploadedBy: req.user.id,
+        uploadedBy:
+          req.user.id,
 
-        status: "approved",
+        status:
+          "approved",
       });
 
 
@@ -489,6 +640,54 @@ Return valid JSON only.
 
     console.error(
       "GROQ / GENERATE NOTE ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+
+      success: false,
+
+      message:
+        error.message,
+
+    });
+  }
+};
+
+
+// ============================================================
+// GET MY NOTES
+// GET /api/notes
+// ============================================================
+
+export const getNotes = async (req, res) => {
+  try {
+
+    const notes =
+      await Note.find({
+        uploadedBy: req.user.id,
+      })
+        .populate(
+          "uploadedBy",
+          "name email"
+        )
+        .sort({
+          createdAt: -1,
+        });
+
+
+    return res.status(200).json({
+
+      success: true,
+
+      notes,
+
+    });
+
+  } catch (error) {
+
+    console.error(
+      "GET NOTES ERROR:",
       error
     );
 
