@@ -35,9 +35,6 @@ import {
   TrendingUp,
   Users,
   Calendar,
-  XCircle,
-  Hourglass,
-  UserCheck,
   ClipboardList,
 } from "lucide-react";
 
@@ -178,7 +175,7 @@ const steps = [
     number: "04",
     icon: Rocket,
     title: "Apply Instantly",
-    desc: "Apply directly and track every application in one place.",
+    desc: "Apply directly using your CampusHub AI profile.",
   },
 ];
 
@@ -234,43 +231,9 @@ const faqs = [
   },
 ];
 
-const trackerStages = [
-  {
-    key: "applied",
-    label: "Applied",
-    icon: FileCheck2,
-  },
-  {
-    key: "review",
-    label: "Under Review",
-    icon: Hourglass,
-  },
-  {
-    key: "interview",
-    label: "Interview",
-    icon: UserCheck,
-  },
-  {
-    key: "selected",
-    label: "Selected",
-    icon: CheckCircle2,
-  },
-];
-
 /* ============================================================
    HELPERS
 ============================================================ */
-
-/*
-  Backend response ko safely normalize karta hai.
-
-  Ye intentionally multiple possible backend shapes support karta hai:
-  - []
-  - { internships: [] }
-  - { recommendations: [] }
-  - { data: [] }
-  - { data: { internships: [] } }
-*/
 
 function extractInternshipList(response) {
   if (Array.isArray(response)) {
@@ -301,8 +264,7 @@ function extractInternshipList(response) {
 }
 
 /*
-  Internship object ko frontend ke expected format me rakhta hai.
-  Backend me optional/missing fields hone par UI crash nahi karega.
+  Internship object ko frontend expected format me normalize karta hai.
 */
 
 function normalizeInternship(item = {}) {
@@ -384,11 +346,18 @@ function normalizeInternship(item = {}) {
 }
 
 function getInternshipDate(item) {
-  const date = item?.createdAt
-    ? new Date(item.createdAt).getTime()
+  const date =
+    item?.createdAt ||
+    item?.updatedAt ||
+    null;
+
+  const timestamp = date
+    ? new Date(date).getTime()
     : 0;
 
-  return Number.isNaN(date) ? 0 : date;
+  return Number.isNaN(timestamp)
+    ? 0
+    : timestamp;
 }
 
 /* ============================================================
@@ -499,7 +468,7 @@ function InternshipCard({
   item,
   index,
   saved,
-  applied,
+  applying,
   onSave,
   onApply,
 }) {
@@ -558,7 +527,11 @@ function InternshipCard({
 
         <span className="flex items-center gap-1">
           <Wallet className="h-3.5 w-3.5 text-cyan-400" />
-          ₹{Number(item.stipend || 0).toLocaleString("en-IN")}/mo
+          ₹
+          {Number(item.stipend || 0).toLocaleString(
+            "en-IN"
+          )}
+          /mo
         </span>
       </div>
 
@@ -581,24 +554,26 @@ function InternshipCard({
 
       <div className="mt-6 flex items-center gap-3">
         <motion.button
-          onClick={() => internshipId && onApply(internshipId)}
+          onClick={() =>
+            internshipId && onApply(internshipId)
+          }
           whileHover={{
-            scale: applied ? 1 : 1.03,
+            scale: applying ? 1 : 1.03,
           }}
           whileTap={{
-            scale: applied ? 1 : 0.97,
+            scale: applying ? 1 : 0.97,
           }}
-          disabled={applied || !internshipId}
+          disabled={applying || !internshipId}
           className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition ${
-            applied
-              ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+            applying
+              ? "bg-slate-800 text-slate-400"
               : "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/20"
           }`}
         >
-          {applied ? (
+          {applying ? (
             <>
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              Applied
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              Applying...
             </>
           ) : (
             <>
@@ -609,7 +584,9 @@ function InternshipCard({
         </motion.button>
 
         <motion.button
-          onClick={() => internshipId && onSave(internshipId)}
+          onClick={() =>
+            internshipId && onSave(internshipId)
+          }
           disabled={!internshipId}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -634,7 +611,11 @@ function InternshipCard({
    FAQ
 ============================================================ */
 
-function FAQItem({ item, isOpen, onClick }) {
+function FAQItem({
+  item,
+  isOpen,
+  onClick,
+}) {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/50 backdrop-blur-md">
       <button
@@ -706,11 +687,14 @@ export default function InternshipFinder() {
   const [isLoadingInternships, setIsLoadingInternships] =
     useState(true);
 
-  const [isSearching, setIsSearching] = useState(false);
+  const [isSearching, setIsSearching] =
+    useState(false);
 
-  const [hasSearched, setHasSearched] = useState(false);
+  const [hasSearched, setHasSearched] =
+    useState(false);
 
-  const [recommendations, setRecommendations] = useState([]);
+  const [recommendations, setRecommendations] =
+    useState([]);
 
   const [filters, setFilters] = useState({
     search: "",
@@ -721,13 +705,18 @@ export default function InternshipFinder() {
     sortBy: "Best Match",
   });
 
-  const [savedIds, setSavedIds] = useState([]);
+  const [savedIds, setSavedIds] =
+    useState([]);
 
-  const [appliedIds, setAppliedIds] = useState([]);
+  /*
+    Tracker/application status state intentionally removed.
+  */
 
-  const [trackerStage, setTrackerStage] = useState(0);
+  const [applyingId, setApplyingId] =
+    useState(null);
 
-  const [openFaq, setOpenFaq] = useState(0);
+  const [openFaq, setOpenFaq] =
+    useState(0);
 
   /* ==========================================================
      INITIAL LOAD
@@ -742,7 +731,8 @@ export default function InternshipFinder() {
       setIsLoadingInternships(true);
 
       try {
-        const response = await getInternships();
+        const response =
+          await getInternships();
 
         console.log(
           "Internships from backend:",
@@ -755,15 +745,19 @@ export default function InternshipFinder() {
         const normalizedInternships =
           backendInternships
             .map(normalizeInternship)
-            .filter((item) => item._id);
+            .filter(
+              (item) => item._id
+            );
 
         if (!mounted) return;
 
-        setInternships(normalizedInternships);
+        setInternships(
+          normalizedInternships
+        );
 
         /*
-          Backend agar saved/applied information return karta hai
-          to automatically frontend state populate ho jayegi.
+          Saved internships only.
+          Application tracker intentionally removed.
         */
 
         const backendSavedIds =
@@ -773,32 +767,24 @@ export default function InternshipFinder() {
           response?.data?.savedInternshipIds ||
           [];
 
-        const backendAppliedIds =
-          response?.appliedIds ||
-          response?.appliedInternshipIds ||
-          response?.data?.appliedIds ||
-          response?.data?.appliedInternshipIds ||
-          [];
-
-        if (Array.isArray(backendSavedIds)) {
+        if (
+          Array.isArray(
+            backendSavedIds
+          )
+        ) {
           setSavedIds(
             backendSavedIds
-              .map((id) => String(id))
-              .filter(Boolean)
-          );
-        }
-
-        if (Array.isArray(backendAppliedIds)) {
-          setAppliedIds(
-            backendAppliedIds
-              .map((id) => String(id))
+              .map((id) =>
+                String(id)
+              )
               .filter(Boolean)
           );
         }
       } catch (error) {
         console.error(
           "Failed to load internships:",
-          error?.response?.data || error?.message
+          error?.response?.data ||
+            error?.message
         );
 
         if (!mounted) return;
@@ -823,7 +809,10 @@ export default function InternshipFinder() {
   ========================================================== */
 
   const handleSearchChange = (e) => {
-    const { name, value } = e.target;
+    const {
+      name,
+      value,
+    } = e.target;
 
     setSearchForm((prev) => ({
       ...prev,
@@ -835,52 +824,65 @@ export default function InternshipFinder() {
      AI RECOMMENDATION
   ========================================================== */
 
-  const handleFindInternship = async () => {
-    setIsSearching(true);
-    setHasSearched(false);
+  const handleFindInternship =
+    async () => {
+      setIsSearching(true);
+      setHasSearched(false);
 
-    try {
-      const response =
-        await getInternshipRecommendations({
-          skills: searchForm.skills,
-          role: searchForm.role,
-          location: searchForm.location,
-          stipend: searchForm.stipend,
-          workType: searchForm.workType,
-          experience: searchForm.experience,
-        });
+      try {
+        const response =
+          await getInternshipRecommendations({
+            skills: searchForm.skills,
+            role: searchForm.role,
+            location:
+              searchForm.location,
+            stipend:
+              searchForm.stipend,
+            workType:
+              searchForm.workType,
+            experience:
+              searchForm.experience,
+          });
 
-      console.log(
-        "Internship AI Response:",
-        response
-      );
+        console.log(
+          "Internship AI Response:",
+          response
+        );
 
-      const results =
-        extractInternshipList(response)
-          .map(normalizeInternship)
-          .filter((item) => item._id);
+        const results =
+          extractInternshipList(
+            response
+          )
+            .map(normalizeInternship)
+            .filter(
+              (item) => item._id
+            );
 
-      setRecommendations(results);
+        setRecommendations(
+          results
+        );
 
-      setHasSearched(true);
-    } catch (error) {
-      console.error(
-        "Internship recommendation error:",
-        error?.response?.data || error?.message
-      );
+        setHasSearched(true);
+      } catch (error) {
+        console.error(
+          "Internship recommendation error:",
+          error?.response?.data ||
+            error?.message
+        );
 
-      setRecommendations([]);
+        setRecommendations([]);
 
-      setHasSearched(true);
+        setHasSearched(true);
 
-      alert(
-        error?.response?.data?.message ||
-          "Unable to find internships. Please try again."
-      );
-    } finally {
-      setIsSearching(false);
-    }
-  };
+        alert(
+          error?.response?.data
+            ?.message ||
+            "Unable to find internships. Please try again."
+        );
+      } finally {
+        setIsSearching(false);
+      }
+    };
 
   /* ==========================================================
      FILTERING
@@ -892,110 +894,170 @@ export default function InternshipFinder() {
     /* SEARCH */
 
     if (filters.search.trim()) {
-      const term = filters.search
-        .toLowerCase()
-        .trim();
+      const term =
+        filters.search
+          .toLowerCase()
+          .trim();
 
-      list = list.filter((item) => {
-        const role =
-          String(item.role || "").toLowerCase();
+      list = list.filter(
+        (item) => {
+          const role =
+            String(
+              item.role || ""
+            ).toLowerCase();
 
-        const company =
-          String(item.company || "").toLowerCase();
+          const company =
+            String(
+              item.company || ""
+            ).toLowerCase();
 
-        const skills = Array.isArray(item.skills)
-          ? item.skills
-          : [];
+          const skills =
+            Array.isArray(
+              item.skills
+            )
+              ? item.skills
+              : [];
 
-        return (
-          role.includes(term) ||
-          company.includes(term) ||
-          skills.some((skill) =>
-            String(skill)
-              .toLowerCase()
-              .includes(term)
-          )
-        );
-      });
+          return (
+            role.includes(term) ||
+            company.includes(term) ||
+            skills.some(
+              (skill) =>
+                String(skill)
+                  .toLowerCase()
+                  .includes(term)
+            )
+          );
+        }
+      );
     }
 
     /* CATEGORY */
 
-    if (filters.category !== "All") {
+    if (
+      filters.category !==
+      "All"
+    ) {
       list = list.filter(
         (item) =>
-          String(item.category || "")
-            .toLowerCase() ===
+          String(
+            item.category || ""
+          ).toLowerCase() ===
           filters.category.toLowerCase()
       );
     }
 
     /* LOCATION */
 
-    if (filters.location !== "All") {
+    if (
+      filters.location !==
+      "All"
+    ) {
       list = list.filter(
         (item) =>
-          String(item.location || "")
-            .toLowerCase() ===
+          String(
+            item.location || ""
+          ).toLowerCase() ===
           filters.location.toLowerCase()
       );
     }
 
     /* SALARY */
 
-    if (filters.salary !== "All") {
-      if (filters.salary === "Below 25k") {
+    if (
+      filters.salary !==
+      "All"
+    ) {
+      if (
+        filters.salary ===
+        "Below 25k"
+      ) {
         list = list.filter(
           (item) =>
-            Number(item.stipend || 0) < 25000
+            Number(
+              item.stipend || 0
+            ) < 25000
         );
       }
 
-      if (filters.salary === "25k - 40k") {
+      if (
+        filters.salary ===
+        "25k - 40k"
+      ) {
         list = list.filter(
           (item) =>
-            Number(item.stipend || 0) >= 25000 &&
-            Number(item.stipend || 0) <= 40000
+            Number(
+              item.stipend || 0
+            ) >= 25000 &&
+            Number(
+              item.stipend || 0
+            ) <= 40000
         );
       }
 
-      if (filters.salary === "Above 40k") {
+      if (
+        filters.salary ===
+        "Above 40k"
+      ) {
         list = list.filter(
           (item) =>
-            Number(item.stipend || 0) > 40000
+            Number(
+              item.stipend || 0
+            ) > 40000
         );
       }
     }
 
     /* REMOTE */
 
-    if (filters.remoteOnly) {
+    if (
+      filters.remoteOnly
+    ) {
       list = list.filter(
         (item) =>
-          String(item.mode || "").toLowerCase() ===
+          String(
+            item.mode || ""
+          ).toLowerCase() ===
           "remote"
       );
     }
 
     /* SORT */
 
-    if (filters.sortBy === "Highest Stipend") {
+    if (
+      filters.sortBy ===
+      "Highest Stipend"
+    ) {
       list.sort(
         (a, b) =>
-          Number(b.stipend || 0) -
-          Number(a.stipend || 0)
+          Number(
+            b.stipend || 0
+          ) -
+          Number(
+            a.stipend || 0
+          )
       );
     }
 
-    if (filters.sortBy === "Best Match") {
+    if (
+      filters.sortBy ===
+      "Best Match"
+    ) {
       list.sort(
         (a, b) =>
-          Number(b.matchScore || 0) -
-          Number(a.matchScore || 0)
+          Number(
+            b.matchScore || 0
+          ) -
+          Number(
+            a.matchScore || 0
+          )
       );
     }
 
-    if (filters.sortBy === "Newest") {
+    if (
+      filters.sortBy ===
+      "Newest"
+    ) {
       list.sort(
         (a, b) =>
           getInternshipDate(b) -
@@ -1003,82 +1065,117 @@ export default function InternshipFinder() {
       );
     }
 
-    if (filters.sortBy === "Most Popular") {
-      list.sort((a, b) =>
-        String(a.company || "").localeCompare(
-          String(b.company || "")
-        )
+    if (
+      filters.sortBy ===
+      "Most Popular"
+    ) {
+      list.sort(
+        (a, b) =>
+          String(
+            a.company || ""
+          ).localeCompare(
+            String(
+              b.company || ""
+            )
+          )
       );
     }
 
     return list;
-  }, [filters, internships]);
+  }, [
+    filters,
+    internships,
+  ]);
 
   /* ==========================================================
      LOCATION OPTIONS
   ========================================================== */
 
-  const locationOptions = useMemo(() => {
-    const locations = internships
-      .map((item) => item.location)
-      .filter(Boolean)
-      .map((location) => String(location));
+  const locationOptions =
+    useMemo(() => {
+      const locations =
+        internships
+          .map(
+            (item) =>
+              item.location
+          )
+          .filter(Boolean)
+          .map((location) =>
+            String(location)
+          );
 
-    return [
-      "All",
-      ...Array.from(new Set(locations)),
-    ];
-  }, [internships]);
+      return [
+        "All",
+        ...Array.from(
+          new Set(locations)
+        ),
+      ];
+    }, [internships]);
 
   /* ==========================================================
      SAVE INTERNSHIP
   ========================================================== */
 
-  const toggleSave = async (id) => {
+  const toggleSave = async (
+    id
+  ) => {
     if (!id) return;
 
     try {
       const response =
-        await toggleSavedInternship(id);
+        await toggleSavedInternship(
+          id
+        );
 
       console.log(
         "Toggle saved internship response:",
         response
       );
 
-      /*
-        Backend expected:
-        {
-          success: true,
-          saved: true/false
-        }
-      */
-
-      if (response?.success) {
+      if (
+        response?.success
+      ) {
         const isSaved =
-          response.saved === true;
+          response.saved ===
+          true;
 
-        setSavedIds((prev) => {
-          const normalizedId = String(id);
+        setSavedIds(
+          (prev) => {
+            const normalizedId =
+              String(id);
 
-          if (isSaved) {
-            if (
-              prev.some(
-                (existingId) =>
-                  String(existingId) === normalizedId
-              )
-            ) {
-              return prev;
+            if (isSaved) {
+              if (
+                prev.some(
+                  (
+                    existingId
+                  ) =>
+                    String(
+                      existingId
+                    ) ===
+                    normalizedId
+                )
+              ) {
+                return prev;
+              }
+
+              return [
+                ...prev,
+                normalizedId,
+              ];
             }
 
-            return [...prev, id];
+            return prev.filter(
+              (
+                existingId
+              ) =>
+                String(
+                  existingId
+                ) !==
+                normalizedId
+            );
           }
-
-          return prev.filter(
-            (existingId) =>
-              String(existingId) !== normalizedId
-          );
-        });
+        );
       } else {
         alert(
           response?.message ||
@@ -1093,7 +1190,8 @@ export default function InternshipFinder() {
       );
 
       alert(
-        error?.response?.data?.message ||
+        error?.response?.data
+          ?.message ||
           "Unable to save internship"
       );
     }
@@ -1101,39 +1199,47 @@ export default function InternshipFinder() {
 
   /* ==========================================================
      APPLY INTERNSHIP
+     NO TRACKER / NO APPLICATION STATUS
   ========================================================== */
 
-  const toggleApply = async (id) => {
+  const handleApply = async (
+    id
+  ) => {
     if (!id) return;
 
+    if (
+      applyingId ===
+      String(id)
+    ) {
+      return;
+    }
+
     try {
+      setApplyingId(
+        String(id)
+      );
+
       const response =
-        await applyInternship(id);
+        await applyInternship(
+          id
+        );
 
       console.log(
         "Apply internship response:",
         response
       );
 
-      if (response?.success) {
-        setAppliedIds((prev) => {
-          const normalizedId = String(id);
-
-          if (
-            prev.some(
-              (existingId) =>
-                String(existingId) === normalizedId
-            )
-          ) {
-            return prev;
-          }
-
-          return [...prev, id];
-        });
+      if (
+        response?.success
+      ) {
+        alert(
+          response?.message ||
+            "Application submitted successfully."
+        );
       } else {
         alert(
           response?.message ||
-            "Unable to apply"
+            "Unable to apply for this internship."
         );
       }
     } catch (error) {
@@ -1144,9 +1250,12 @@ export default function InternshipFinder() {
       );
 
       alert(
-        error?.response?.data?.message ||
-          "Unable to apply"
+        error?.response?.data
+          ?.message ||
+          "Unable to apply for this internship."
       );
+    } finally {
+      setApplyingId(null);
     }
   };
 
@@ -1185,8 +1294,7 @@ export default function InternshipFinder() {
             </h1>
 
             <p className="mt-6 max-w-xl text-base text-slate-400 sm:text-lg">
-              CampusHub AI helps students discover internships based on skills, interests, education and
-              career goals.
+              CampusHub AI helps students discover internships based on skills, interests, education and career goals.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">
@@ -1345,7 +1453,9 @@ export default function InternshipFinder() {
                 <input
                   name="skills"
                   value={searchForm.skills}
-                  onChange={handleSearchChange}
+                  onChange={
+                    handleSearchChange
+                  }
                   placeholder="React, Node.js, Python"
                   className="rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-2.5 text-sm text-slate-100 outline-none transition focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20"
                 />
@@ -1359,7 +1469,9 @@ export default function InternshipFinder() {
                 <input
                   name="role"
                   value={searchForm.role}
-                  onChange={handleSearchChange}
+                  onChange={
+                    handleSearchChange
+                  }
                   placeholder="Frontend Developer Intern"
                   className="rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-2.5 text-sm text-slate-100 outline-none transition focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20"
                 />
@@ -1372,8 +1484,12 @@ export default function InternshipFinder() {
 
                 <input
                   name="location"
-                  value={searchForm.location}
-                  onChange={handleSearchChange}
+                  value={
+                    searchForm.location
+                  }
+                  onChange={
+                    handleSearchChange
+                  }
                   placeholder="Bengaluru, Remote"
                   className="rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-2.5 text-sm text-slate-100 outline-none transition focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20"
                 />
@@ -1386,8 +1502,12 @@ export default function InternshipFinder() {
 
                 <input
                   name="stipend"
-                  value={searchForm.stipend}
-                  onChange={handleSearchChange}
+                  value={
+                    searchForm.stipend
+                  }
+                  onChange={
+                    handleSearchChange
+                  }
                   placeholder="₹25,000"
                   className="rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-2.5 text-sm text-slate-100 outline-none transition focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20"
                 />
@@ -1400,13 +1520,25 @@ export default function InternshipFinder() {
 
                 <select
                   name="workType"
-                  value={searchForm.workType}
-                  onChange={handleSearchChange}
+                  value={
+                    searchForm.workType
+                  }
+                  onChange={
+                    handleSearchChange
+                  }
                   className="rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-2.5 text-sm text-slate-100 outline-none transition focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20"
                 >
-                  <option>Remote</option>
-                  <option>Hybrid</option>
-                  <option>On-site</option>
+                  <option>
+                    Remote
+                  </option>
+
+                  <option>
+                    Hybrid
+                  </option>
+
+                  <option>
+                    On-site
+                  </option>
                 </select>
               </div>
 
@@ -1417,25 +1549,45 @@ export default function InternshipFinder() {
 
                 <select
                   name="experience"
-                  value={searchForm.experience}
-                  onChange={handleSearchChange}
+                  value={
+                    searchForm.experience
+                  }
+                  onChange={
+                    handleSearchChange
+                  }
                   className="rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-2.5 text-sm text-slate-100 outline-none transition focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20"
                 >
-                  <option>Fresher</option>
-                  <option>Intermediate</option>
-                  <option>Advanced</option>
+                  <option>
+                    Fresher
+                  </option>
+
+                  <option>
+                    Intermediate
+                  </option>
+
+                  <option>
+                    Advanced
+                  </option>
                 </select>
               </div>
             </div>
 
             <motion.button
-              onClick={handleFindInternship}
-              disabled={isSearching}
+              onClick={
+                handleFindInternship
+              }
+              disabled={
+                isSearching
+              }
               whileHover={{
-                scale: isSearching ? 1 : 1.02,
+                scale: isSearching
+                  ? 1
+                  : 1.02,
               }}
               whileTap={{
-                scale: isSearching ? 1 : 0.98,
+                scale: isSearching
+                  ? 1
+                  : 0.98,
               }}
               className="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 disabled:opacity-70 sm:w-auto"
             >
@@ -1490,31 +1642,52 @@ export default function InternshipFinder() {
                 </h2>
               </div>
 
-              {recommendations.length === 0 ? (
+              {recommendations.length ===
+              0 ? (
                 <p className="text-center text-sm text-slate-500">
                   No matching internships found. Try changing your preferences.
                 </p>
               ) : (
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {recommendations.map((item, i) => (
-                    <InternshipCard
-                      key={item._id}
-                      item={item}
-                      index={i}
-                      saved={savedIds.some(
-                        (id) =>
-                          String(id) ===
-                          String(item._id)
-                      )}
-                      applied={appliedIds.some(
-                        (id) =>
-                          String(id) ===
-                          String(item._id)
-                      )}
-                      onSave={toggleSave}
-                      onApply={toggleApply}
-                    />
-                  ))}
+                  {recommendations.map(
+                    (
+                      item,
+                      i
+                    ) => (
+                      <InternshipCard
+                        key={
+                          item._id
+                        }
+                        item={
+                          item
+                        }
+                        index={i}
+                        saved={savedIds.some(
+                          (
+                            id
+                          ) =>
+                            String(
+                              id
+                            ) ===
+                            String(
+                              item._id
+                            )
+                        )}
+                        applying={
+                          applyingId ===
+                          String(
+                            item._id
+                          )
+                        }
+                        onSave={
+                          toggleSave
+                        }
+                        onApply={
+                          handleApply
+                        }
+                      />
+                    )
+                  )}
                 </div>
               )}
             </div>
@@ -1566,12 +1739,18 @@ export default function InternshipFinder() {
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
 
                 <input
-                  value={filters.search}
+                  value={
+                    filters.search
+                  }
                   onChange={(e) =>
-                    setFilters((f) => ({
-                      ...f,
-                      search: e.target.value,
-                    }))
+                    setFilters(
+                      (f) => ({
+                        ...f,
+                        search:
+                          e.target
+                            .value,
+                      })
+                    )
                   }
                   placeholder="Search role, company, skill"
                   className="w-full rounded-xl border border-slate-800 bg-slate-950/60 py-2.5 pl-9 pr-4 text-sm text-slate-100 outline-none transition focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20"
@@ -1579,29 +1758,45 @@ export default function InternshipFinder() {
               </div>
 
               <select
-                value={filters.location}
+                value={
+                  filters.location
+                }
                 onChange={(e) =>
-                  setFilters((f) => ({
-                    ...f,
-                    location: e.target.value,
-                  }))
+                  setFilters(
+                    (f) => ({
+                      ...f,
+                      location:
+                        e.target
+                          .value,
+                    })
+                  )
                 }
                 className="rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20"
               >
-                {locationOptions.map((loc) => (
-                  <option key={loc}>
-                    {loc}
-                  </option>
-                ))}
+                {locationOptions.map(
+                  (loc) => (
+                    <option
+                      key={loc}
+                    >
+                      {loc}
+                    </option>
+                  )
+                )}
               </select>
 
               <select
-                value={filters.category}
+                value={
+                  filters.category
+                }
                 onChange={(e) =>
-                  setFilters((f) => ({
-                    ...f,
-                    category: e.target.value,
-                  }))
+                  setFilters(
+                    (f) => ({
+                      ...f,
+                      category:
+                        e.target
+                          .value,
+                    })
+                  )
                 }
                 className="rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20"
               >
@@ -1627,12 +1822,18 @@ export default function InternshipFinder() {
               </select>
 
               <select
-                value={filters.salary}
+                value={
+                  filters.salary
+                }
                 onChange={(e) =>
-                  setFilters((f) => ({
-                    ...f,
-                    salary: e.target.value,
-                  }))
+                  setFilters(
+                    (f) => ({
+                      ...f,
+                      salary:
+                        e.target
+                          .value,
+                    })
+                  )
                 }
                 className="rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20"
               >
@@ -1654,12 +1855,18 @@ export default function InternshipFinder() {
               </select>
 
               <select
-                value={filters.sortBy}
+                value={
+                  filters.sortBy
+                }
                 onChange={(e) =>
-                  setFilters((f) => ({
-                    ...f,
-                    sortBy: e.target.value,
-                  }))
+                  setFilters(
+                    (f) => ({
+                      ...f,
+                      sortBy:
+                        e.target
+                          .value,
+                    })
+                  )
                 }
                 className="rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20"
               >
@@ -1684,12 +1891,18 @@ export default function InternshipFinder() {
             <label className="mt-4 flex w-fit items-center gap-2 text-xs text-slate-400">
               <input
                 type="checkbox"
-                checked={filters.remoteOnly}
+                checked={
+                  filters.remoteOnly
+                }
                 onChange={(e) =>
-                  setFilters((f) => ({
-                    ...f,
-                    remoteOnly: e.target.checked,
-                  }))
+                  setFilters(
+                    (f) => ({
+                      ...f,
+                      remoteOnly:
+                        e.target
+                          .checked,
+                    })
+                  )
                 }
                 className="h-4 w-4 rounded border-slate-700 bg-slate-950 accent-cyan-500"
               />
@@ -1707,30 +1920,44 @@ export default function InternshipFinder() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredList.length === 0 ? (
+              {filteredList.length ===
+              0 ? (
                 <p className="col-span-full text-center text-sm text-slate-500">
                   No internships match your filters. Try adjusting them.
                 </p>
               ) : (
-                filteredList.map((item, i) => (
-                  <InternshipCard
-                    key={item._id}
-                    item={item}
-                    index={i}
-                    saved={savedIds.some(
-                      (id) =>
-                        String(id) ===
-                        String(item._id)
-                    )}
-                    applied={appliedIds.some(
-                      (id) =>
-                        String(id) ===
-                        String(item._id)
-                    )}
-                    onSave={toggleSave}
-                    onApply={toggleApply}
-                  />
-                ))
+                filteredList.map(
+                  (item, i) => (
+                    <InternshipCard
+                      key={
+                        item._id
+                      }
+                      item={item}
+                      index={i}
+                      saved={savedIds.some(
+                        (id) =>
+                          String(
+                            id
+                          ) ===
+                          String(
+                            item._id
+                          )
+                      )}
+                      applying={
+                        applyingId ===
+                        String(
+                          item._id
+                        )
+                      }
+                      onSave={
+                        toggleSave
+                      }
+                      onApply={
+                        handleApply
+                      }
+                    />
+                  )
+                )
               )}
             </div>
           )}
@@ -1761,34 +1988,46 @@ export default function InternshipFinder() {
           </motion.div>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature, i) => (
-              <motion.div
-                key={feature.title}
-                custom={i}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeUp}
-                whileHover={{
-                  y: -6,
-                  borderColor:
-                    "rgba(34,211,238,0.4)",
-                }}
-                className="group rounded-3xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-xl transition"
-              >
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-600/20 text-cyan-400 transition group-hover:from-cyan-500 group-hover:to-blue-600 group-hover:text-white">
-                  <feature.icon className="h-6 w-6" />
-                </div>
+            {features.map(
+              (feature, i) => (
+                <motion.div
+                  key={
+                    feature.title
+                  }
+                  custom={i}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{
+                    once: true,
+                  }}
+                  variants={
+                    fadeUp
+                  }
+                  whileHover={{
+                    y: -6,
+                    borderColor:
+                      "rgba(34,211,238,0.4)",
+                  }}
+                  className="group rounded-3xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-xl transition"
+                >
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-600/20 text-cyan-400 transition group-hover:from-cyan-500 group-hover:to-blue-600 group-hover:text-white">
+                    <feature.icon className="h-6 w-6" />
+                  </div>
 
-                <h3 className="text-lg font-semibold text-white">
-                  {feature.title}
-                </h3>
+                  <h3 className="text-lg font-semibold text-white">
+                    {
+                      feature.title
+                    }
+                  </h3>
 
-                <p className="mt-2 text-sm leading-relaxed text-slate-400">
-                  {feature.desc}
-                </p>
-              </motion.div>
-            ))}
+                  <p className="mt-2 text-sm leading-relaxed text-slate-400">
+                    {
+                      feature.desc
+                    }
+                  </p>
+                </motion.div>
+              )
+            )}
           </div>
         </div>
       </section>
@@ -1803,7 +2042,9 @@ export default function InternshipFinder() {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
+            viewport={{
+              once: true,
+            }}
             variants={fadeUp}
             className="mb-14 text-center"
           >
@@ -1817,209 +2058,78 @@ export default function InternshipFinder() {
           </motion.div>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {TOP_COMPANIES.map((company, i) => (
-              <motion.div
-                key={company.name}
-                custom={i}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={scaleIn}
-                whileHover={{
-                  y: -6,
-                }}
-                className="rounded-3xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-xl"
-              >
-                <div className="flex items-center justify-between">
-
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 text-sm font-bold text-white">
-                      <Building2 className="h-5 w-5" />
-                    </div>
-
-                    <h3 className="text-base font-semibold text-white">
-                      {company.name}
-                    </h3>
-                  </div>
-
-                  {company.hiring && (
-                    <span className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-medium text-emerald-400">
-                      <CheckCircle2 className="h-3 w-3" />
-                      Hiring
-                    </span>
-                  )}
-                </div>
-
-                <div className="mt-5 flex items-center justify-between text-xs text-slate-400">
-                  <span>
-                    Open Positions
-                  </span>
-
-                  <span className="font-semibold text-slate-200">
-                    {company.openings}
-                  </span>
-                </div>
-
-                <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
-                  <span>
-                    Average Stipend
-                  </span>
-
-                  <span className="font-semibold text-cyan-300">
-                    {company.avgStipend}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ======================================================
-          APPLICATION TRACKER
-      ====================================================== */}
-
-      <section className="relative px-6 py-24 sm:px-10 lg:px-20">
-        <div className="mx-auto max-w-5xl">
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeUp}
-            className="mb-14 text-center"
-          >
-            <SectionBadge>
-              Application Tracker
-            </SectionBadge>
-
-            <h2 className="mt-4 text-3xl font-bold text-white sm:text-4xl">
-              Track every application
-            </h2>
-
-            <p className="mt-3 text-slate-400">
-              Follow your journey from applied to selected.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeUp}
-            className="rounded-3xl border border-slate-800 bg-slate-900/50 p-8 backdrop-blur-xl"
-          >
-            <div className="relative flex items-center justify-between">
-
-              <div className="absolute left-0 right-0 top-5 h-0.5 bg-slate-800">
+            {TOP_COMPANIES.map(
+              (
+                company,
+                i
+              ) => (
                 <motion.div
-                  className="h-0.5 bg-gradient-to-r from-cyan-500 to-blue-600"
-                  initial={{
-                    width: "0%",
-                  }}
-                  whileInView={{
-                    width: `${
-                      trackerStage >= 0
-                        ? (trackerStage /
-                            (trackerStages.length - 1)) *
-                          100
-                        : 0
-                    }%`,
-                  }}
+                  key={
+                    company.name
+                  }
+                  custom={i}
+                  initial="hidden"
+                  whileInView="visible"
                   viewport={{
                     once: true,
                   }}
-                  transition={{
-                    duration: 1,
-                    ease: "easeOut",
+                  variants={
+                    scaleIn
+                  }
+                  whileHover={{
+                    y: -6,
                   }}
-                />
-              </div>
+                  className="rounded-3xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-xl"
+                >
+                  <div className="flex items-center justify-between">
 
-              {trackerStages.map(
-                (stage, i) => {
-                  const reached =
-                    i <= trackerStage;
-
-                  return (
-                    <div
-                      key={stage.key}
-                      className="relative z-10 flex flex-col items-center gap-2"
-                    >
-                      <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full border-2 text-xs font-semibold transition ${
-                          reached
-                            ? "border-cyan-400 bg-gradient-to-br from-cyan-500 to-blue-600 text-white"
-                            : "border-slate-700 bg-slate-900 text-slate-500"
-                        }`}
-                      >
-                        <stage.icon className="h-4 w-4" />
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 text-sm font-bold text-white">
+                        <Building2 className="h-5 w-5" />
                       </div>
 
-                      <span
-                        className={`text-xs ${
-                          reached
-                            ? "text-slate-200"
-                            : "text-slate-500"
-                        }`}
-                      >
-                        {stage.label}
-                      </span>
+                      <h3 className="text-base font-semibold text-white">
+                        {
+                          company.name
+                        }
+                      </h3>
                     </div>
-                  );
-                }
-              )}
-            </div>
 
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+                    {company.hiring && (
+                      <span className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-medium text-emerald-400">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Hiring
+                      </span>
+                    )}
+                  </div>
 
-              {trackerStages.map(
-                (stage, i) => (
-                  <motion.button
-                    key={stage.key}
-                    onClick={() =>
-                      setTrackerStage(i)
-                    }
-                    whileHover={{
-                      scale: 1.05,
-                    }}
-                    whileTap={{
-                      scale: 0.95,
-                    }}
-                    className={`rounded-xl border px-4 py-2 text-xs font-medium transition ${
-                      trackerStage === i
-                        ? "border-cyan-500/50 bg-cyan-500/10 text-cyan-300"
-                        : "border-slate-700 bg-slate-800/60 text-slate-400"
-                    }`}
-                  >
-                    Mark {stage.label}
-                  </motion.button>
-                )
-              )}
+                  <div className="mt-5 flex items-center justify-between text-xs text-slate-400">
+                    <span>
+                      Open Positions
+                    </span>
 
-              <motion.button
-                onClick={() =>
-                  setTrackerStage(-1)
-                }
-                whileHover={{
-                  scale: 1.05,
-                }}
-                whileTap={{
-                  scale: 0.95,
-                }}
-                className="flex items-center gap-1.5 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2 text-xs font-medium text-red-400"
-              >
-                <XCircle className="h-3.5 w-3.5" />
-                Mark Rejected
-              </motion.button>
-            </div>
+                    <span className="font-semibold text-slate-200">
+                      {
+                        company.openings
+                      }
+                    </span>
+                  </div>
 
-            {trackerStage === -1 && (
-              <p className="mt-4 text-center text-xs text-red-400">
-                This application was marked as rejected. Keep applying — the right match is next.
-              </p>
+                  <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
+                    <span>
+                      Average Stipend
+                    </span>
+
+                    <span className="font-semibold text-cyan-300">
+                      {
+                        company.avgStipend
+                      }
+                    </span>
+                  </div>
+                </motion.div>
+              )
             )}
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -2033,7 +2143,9 @@ export default function InternshipFinder() {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
+            viewport={{
+              once: true,
+            }}
             variants={fadeUp}
             className="mb-14 text-center"
           >
@@ -2047,36 +2159,50 @@ export default function InternshipFinder() {
           </motion.div>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {steps.map((step, i) => (
-              <motion.div
-                key={step.title}
-                custom={i}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={scaleIn}
-                whileHover={{
-                  y: -6,
-                }}
-                className="relative rounded-3xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-xl"
-              >
-                <span className="absolute right-5 top-4 text-4xl font-bold text-slate-800">
-                  {step.number}
-                </span>
+            {steps.map(
+              (step, i) => (
+                <motion.div
+                  key={
+                    step.title
+                  }
+                  custom={i}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{
+                    once: true,
+                  }}
+                  variants={
+                    scaleIn
+                  }
+                  whileHover={{
+                    y: -6,
+                  }}
+                  className="relative rounded-3xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-xl"
+                >
+                  <span className="absolute right-5 top-4 text-4xl font-bold text-slate-800">
+                    {
+                      step.number
+                    }
+                  </span>
 
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white">
-                  <step.icon className="h-6 w-6" />
-                </div>
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white">
+                    <step.icon className="h-6 w-6" />
+                  </div>
 
-                <h3 className="text-base font-semibold text-white">
-                  {step.title}
-                </h3>
+                  <h3 className="text-base font-semibold text-white">
+                    {
+                      step.title
+                    }
+                  </h3>
 
-                <p className="mt-2 text-sm leading-relaxed text-slate-400">
-                  {step.desc}
-                </p>
-              </motion.div>
-            ))}
+                  <p className="mt-2 text-sm leading-relaxed text-slate-400">
+                    {
+                      step.desc
+                    }
+                  </p>
+                </motion.div>
+              )
+            )}
           </div>
         </div>
       </section>
@@ -2091,7 +2217,9 @@ export default function InternshipFinder() {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
+            viewport={{
+              once: true,
+            }}
             variants={fadeUp}
             className="mb-14 text-center"
           >
@@ -2106,14 +2234,23 @@ export default function InternshipFinder() {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {benefits.map(
-              (benefit, i) => (
+              (
+                benefit,
+                i
+              ) => (
                 <motion.div
-                  key={benefit.title}
+                  key={
+                    benefit.title
+                  }
                   custom={i}
                   initial="hidden"
                   whileInView="visible"
-                  viewport={{ once: true }}
-                  variants={fadeUp}
+                  viewport={{
+                    once: true,
+                  }}
+                  variants={
+                    fadeUp
+                  }
                   whileHover={{
                     x: 6,
                   }}
@@ -2125,11 +2262,15 @@ export default function InternshipFinder() {
 
                   <div>
                     <h3 className="text-sm font-semibold text-white">
-                      {benefit.title}
+                      {
+                        benefit.title
+                      }
                     </h3>
 
                     <p className="mt-1 text-xs text-slate-400">
-                      {benefit.desc}
+                      {
+                        benefit.desc
+                      }
                     </p>
                   </div>
                 </motion.div>
@@ -2149,7 +2290,9 @@ export default function InternshipFinder() {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
+            viewport={{
+              once: true,
+            }}
             variants={fadeUp}
             className="mb-12 text-center"
           >
@@ -2163,28 +2306,38 @@ export default function InternshipFinder() {
           </motion.div>
 
           <div className="space-y-4">
-            {faqs.map((item, i) => (
-              <motion.div
-                key={item.q}
-                custom={i}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeUp}
-              >
-                <FAQItem
-                  item={item}
-                  isOpen={openFaq === i}
-                  onClick={() =>
-                    setOpenFaq(
-                      openFaq === i
-                        ? -1
-                        : i
-                    )
+            {faqs.map(
+              (item, i) => (
+                <motion.div
+                  key={item.q}
+                  custom={i}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{
+                    once: true,
+                  }}
+                  variants={
+                    fadeUp
                   }
-                />
-              </motion.div>
-            ))}
+                >
+                  <FAQItem
+                    item={item}
+                    isOpen={
+                      openFaq ===
+                      i
+                    }
+                    onClick={() =>
+                      setOpenFaq(
+                        openFaq ===
+                          i
+                          ? -1
+                          : i
+                      )
+                    }
+                  />
+                </motion.div>
+              )
+            )}
           </div>
         </div>
       </section>
@@ -2197,7 +2350,9 @@ export default function InternshipFinder() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true }}
+          viewport={{
+            once: true,
+          }}
           variants={scaleIn}
           className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-12 text-center backdrop-blur-xl sm:p-16"
         >
