@@ -183,6 +183,7 @@ export const getRoadmapById = async (id) => {
 
 /* ============================================================
    UPDATE ROADMAP STEP PROGRESS
+   (Completion only — never called by the "Start Learning" flow.)
 ============================================================ */
 
 export const updateRoadmapStepProgress = async (
@@ -205,6 +206,75 @@ export const updateRoadmapStepProgress = async (
       "Update Roadmap Progress Error:",
       error.response?.data ||
         error.message
+    );
+
+    throw error;
+  }
+};
+
+/* ============================================================
+   GENERATE STEP LEARNING (AI TUTOR)
+
+   Asks the AI to teach ONE specific roadmap step in depth.
+   This is completely separate from roadmap progress —
+   calling this NEVER changes step completion state.
+
+   Expects:
+   {
+     roadmapId,
+     stepIndex,
+     career,      // display name or id, either is fine
+     level,       // "Beginner" | "Intermediate" | "Advanced"
+     step: {
+       title,
+       description,
+       difficulty,
+       time,
+       topics,    // optional array
+     }
+   }
+
+   Resolves to:
+   {
+     success,
+     message,
+     roadmapId,
+     stepIndex,
+     learningModule: { ...structured AI content }
+   }
+============================================================ */
+
+export const generateStepLearning = async ({
+  roadmapId,
+  stepIndex,
+  career,
+  level,
+  step,
+}) => {
+  if (!roadmapId) {
+    throw new Error(
+      "Please generate or load a roadmap first."
+    );
+  }
+
+  if (stepIndex === undefined || stepIndex === null) {
+    throw new Error("Missing roadmap step.");
+  }
+
+  try {
+    const response = await API.post("/roadmap/learn", {
+      roadmapId,
+      stepIndex,
+      career,
+      level,
+      step,
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Generate Step Learning Error:",
+      error.response?.data || error.message
     );
 
     throw error;

@@ -6,6 +6,7 @@ import {
   generateRoadmap,
   getMyRoadmaps,
   updateRoadmapStepProgress,
+  generateStepLearning,
 } from "../../services/roadmapService";
 
 import {
@@ -46,6 +47,13 @@ import {
   MessageSquare,
   Zap,
   Flag,
+  X,
+  Lightbulb,
+  AlertTriangle,
+  ListChecks,
+  ClipboardList,
+  HelpCircle,
+  ArrowRightCircle,
 } from "lucide-react";
 
 /* ============================================================
@@ -823,6 +831,362 @@ const statusStyles = {
 };
 
 /* ============================================================
+   LEARNING PANEL — renders the AI-generated learning module
+   for a single roadmap step. Pure presentation; all actions
+   are passed in as callbacks so this stays decoupled from
+   progress/completion logic.
+============================================================ */
+
+function LearningPanel({
+  isOpen,
+  isLoading,
+  error,
+  step,
+  content,
+  onClose,
+  onRetry,
+  onCompleteStep,
+  isCompleting,
+  isAlreadyCompleted,
+}) {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* BACKDROP */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-sm"
+          />
+
+          {/* PANEL */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+            className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl border border-slate-800 bg-slate-950 shadow-2xl sm:inset-0 sm:top-10 sm:bottom-10 sm:my-auto sm:h-fit sm:rounded-3xl"
+          >
+            {/* HEADER */}
+            <div className="flex items-center justify-between gap-4 border-b border-slate-800 bg-slate-900/60 px-6 py-4">
+              <div className="min-w-0">
+                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-cyan-300">
+                  <Brain className="h-3.5 w-3.5" />
+                  AI Learning Module
+                </p>
+
+                <h3 className="mt-0.5 truncate text-base font-semibold text-white sm:text-lg">
+                  {step?.title || "Learning Step"}
+                </h3>
+              </div>
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-900 text-slate-400 transition hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* BODY */}
+            <div className="flex-1 overflow-y-auto px-6 py-6">
+              {isLoading && (
+                <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+                  <p className="text-sm text-slate-400">
+                    Your AI tutor is preparing this lesson...
+                  </p>
+                </div>
+              )}
+
+              {!isLoading && error && (
+                <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+                  <AlertTriangle className="h-8 w-8 text-amber-400" />
+                  <p className="max-w-sm text-sm text-slate-400">
+                    {error}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={onRetry}
+                    className="mt-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-xs font-semibold text-cyan-300 transition hover:bg-cyan-500/20"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              )}
+
+              {!isLoading && !error && content && (
+                <div className="space-y-8">
+                  {/* OVERVIEW */}
+                  {content.overview && (
+                    <div>
+                      <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                        <BookOpen className="h-3.5 w-3.5" />
+                        Overview
+                      </p>
+                      <p className="text-sm leading-relaxed text-slate-300">
+                        {content.overview}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* WHY IT MATTERS */}
+                  {content.whyItMatters && (
+                    <div>
+                      <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                        <Lightbulb className="h-3.5 w-3.5" />
+                        Why This Matters
+                      </p>
+                      <p className="text-sm leading-relaxed text-slate-300">
+                        {content.whyItMatters}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* WHAT YOU'LL LEARN */}
+                  {Array.isArray(content.whatYouWillLearn) &&
+                    content.whatYouWillLearn.length > 0 && (
+                      <div>
+                        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                          <ListChecks className="h-3.5 w-3.5" />
+                          What You'll Learn
+                        </p>
+                        <ul className="space-y-1.5">
+                          {content.whatYouWillLearn.map((item, i) => (
+                            <li
+                              key={i}
+                              className="flex items-start gap-2 text-sm text-slate-300"
+                            >
+                              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan-400" />
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                  {/* CORE CONCEPTS */}
+                  {Array.isArray(content.coreConcepts) &&
+                    content.coreConcepts.length > 0 && (
+                      <div>
+                        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                          <Brain className="h-3.5 w-3.5" />
+                          Core Concepts
+                        </p>
+                        <div className="space-y-4">
+                          {content.coreConcepts.map((concept, i) => (
+                            <div
+                              key={i}
+                              className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4"
+                            >
+                              <h4 className="text-sm font-semibold text-white">
+                                {concept.title || `Concept ${i + 1}`}
+                              </h4>
+                              {concept.explanation && (
+                                <p className="mt-1.5 text-sm leading-relaxed text-slate-400">
+                                  {concept.explanation}
+                                </p>
+                              )}
+                              {concept.example && (
+                                <pre className="mt-3 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-3 text-xs text-cyan-200">
+                                  <code>{concept.example}</code>
+                                </pre>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  {/* CODE EXAMPLES */}
+                  {Array.isArray(content.codeExamples) &&
+                    content.codeExamples.length > 0 && (
+                      <div>
+                        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                          <Terminal className="h-3.5 w-3.5" />
+                          Code Examples
+                        </p>
+                        <div className="space-y-3">
+                          {content.codeExamples.map((ex, i) => (
+                            <div key={i}>
+                              {ex.label && (
+                                <p className="mb-1 text-xs text-slate-500">
+                                  {ex.label}
+                                </p>
+                              )}
+                              <pre className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-3 text-xs text-cyan-200">
+                                <code>{ex.code || ex}</code>
+                              </pre>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  {/* COMMON MISTAKES */}
+                  {Array.isArray(content.commonMistakes) &&
+                    content.commonMistakes.length > 0 && (
+                      <div>
+                        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-300">
+                          <AlertTriangle className="h-3.5 w-3.5" />
+                          Common Mistakes
+                        </p>
+                        <ul className="space-y-1.5">
+                          {content.commonMistakes.map((item, i) => (
+                            <li
+                              key={i}
+                              className="flex items-start gap-2 text-sm text-slate-300"
+                            >
+                              <Circle className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                  {/* PRACTICE QUESTIONS */}
+                  {Array.isArray(content.practiceQuestions) &&
+                    content.practiceQuestions.length > 0 && (
+                      <div>
+                        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                          <HelpCircle className="h-3.5 w-3.5" />
+                          Practice Questions
+                        </p>
+                        <ul className="space-y-1.5">
+                          {content.practiceQuestions.map((item, i) => (
+                            <li
+                              key={i}
+                              className="flex items-start gap-2 text-sm text-slate-300"
+                            >
+                              <span className="text-cyan-400">
+                                {i + 1}.
+                              </span>
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                  {/* HANDS-ON TASK */}
+                  {content.handsOnTask && (
+                    <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-4">
+                      <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                        <ClipboardList className="h-3.5 w-3.5" />
+                        Hands-On Task
+                      </p>
+                      <p className="text-sm leading-relaxed text-slate-300">
+                        {content.handsOnTask}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* INTERVIEW QUESTIONS */}
+                  {Array.isArray(content.interviewQuestions) &&
+                    content.interviewQuestions.length > 0 && (
+                      <div>
+                        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                          <Mic className="h-3.5 w-3.5" />
+                          Interview Questions
+                        </p>
+                        <ul className="space-y-1.5">
+                          {content.interviewQuestions.map((item, i) => (
+                            <li
+                              key={i}
+                              className="flex items-start gap-2 text-sm text-slate-300"
+                            >
+                              <span className="text-cyan-400">
+                                {i + 1}.
+                              </span>
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                  {/* KEY TAKEAWAYS */}
+                  {Array.isArray(content.keyTakeaways) &&
+                    content.keyTakeaways.length > 0 && (
+                      <div>
+                        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-300">
+                          <Star className="h-3.5 w-3.5" />
+                          Key Takeaways
+                        </p>
+                        <ul className="space-y-1.5">
+                          {content.keyTakeaways.map((item, i) => (
+                            <li
+                              key={i}
+                              className="flex items-start gap-2 text-sm text-slate-300"
+                            >
+                              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                  {/* NEXT STEP */}
+                  {content.suggestedNextStep && (
+                    <div className="flex items-start gap-2 rounded-2xl border border-slate-800 bg-slate-900/50 p-4 text-sm text-slate-300">
+                      <ArrowRightCircle className="mt-0.5 h-4 w-4 shrink-0 text-cyan-400" />
+                      {content.suggestedNextStep}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* FOOTER ACTIONS */}
+            {!isLoading && !error && content && (
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-800 bg-slate-900/60 px-6 py-4">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-xl border border-slate-700 bg-slate-800/60 px-4 py-2 text-xs font-semibold text-slate-200 transition hover:border-slate-600"
+                >
+                  Continue Later
+                </button>
+
+                <button
+                  type="button"
+                  onClick={onCompleteStep}
+                  disabled={isCompleting || isAlreadyCompleted}
+                  className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2 text-xs font-semibold text-white shadow-lg shadow-cyan-500/20 transition disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isCompleting ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Saving...
+                    </>
+                  ) : isAlreadyCompleted ? (
+                    <>
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Step Completed
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Complete Step
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* ============================================================
    MAIN COMPONENT
 ============================================================ */
 
@@ -888,6 +1252,33 @@ function SkillRoadmap() {
         {}
       )
     );
+
+  /* ==========================================================
+     AI LEARNING PANEL STATE
+     Fully separate from roadmap progress state above.
+     "Start Learning" only ever touches these.
+  ========================================================== */
+
+  const [isLearningPanelOpen, setIsLearningPanelOpen] =
+    useState(false);
+
+  const [isLearningLoading, setIsLearningLoading] =
+    useState(false);
+
+  const [learningError, setLearningError] =
+    useState(null);
+
+  const [learningStep, setLearningStep] =
+    useState(null);
+
+  const [learningStepIndex, setLearningStepIndex] =
+    useState(null);
+
+  const [learningContent, setLearningContent] =
+    useState(null);
+
+  const [isCompletingStep, setIsCompletingStep] =
+    useState(false);
 
   /* ==========================================================
      ACTIVE CAREER
@@ -1314,301 +1705,338 @@ function SkillRoadmap() {
 
   /* ==========================================================
      GENERATE ROADMAP
+     (career + level -> full roadmap. Nothing to do with
+     step-level learning content.)
   ========================================================== */
 
-  const handleGenerateRoadmap =
-    async () => {
-      let progressInterval = null;
+  const handleGenerateRoadmap = async () => {
+    let progressInterval = null;
 
-      try {
-        setIsGenerating(true);
-        setRoadmapReady(false);
-        setGenProgress(10);
+    try {
+      setIsGenerating(true);
+      setGenProgress(0);
 
-        progressInterval =
-          setInterval(() => {
-            setGenProgress(
-              (prev) => {
-                if (prev >= 90) {
-                  if (
-                    progressInterval
-                  ) {
-                    clearInterval(
-                      progressInterval
-                    );
-                  }
-
-                  return 90;
-                }
-
-                return prev + 10;
-              }
-            );
-          }, 150);
-
-        const response =
-          await generateRoadmap(
-            selectedCareer,
-            selectedLevel
-          );
-
-        if (
-          progressInterval
-        ) {
-          clearInterval(
-            progressInterval
-          );
-        }
-
-        console.log(
-          "AI ROADMAP RESPONSE:",
-          response
-        );
-
-        if (
-          response?.success &&
-          response?.roadmap
-        ) {
-          const generatedRoadmap =
-            response.roadmap;
-
-          /*
-           * Find generated roadmap ID.
-           */
-          const roadmapId =
-            generatedRoadmap?._id ||
-            generatedRoadmap?.id ||
-            generatedRoadmap?.roadmapId ||
-            response?.roadmapId ||
-            null;
-
-          /*
-           * New roadmap starts from 0.
-           */
-          const initialProgress =
-            {};
-
-          const generatedSteps =
-            generatedRoadmap
-              ?.roadmapSteps ||
-            [];
-
-          const normalizedSteps =
-            generatedSteps.map((step) => ({
-              ...step,
-              progress: 0,
-              learningUrl:
-                step.learningUrl ||
-                step.resourceUrl ||
-                step.url ||
-                "",
-            }));
-
-          const normalizedRoadmap = {
-            ...generatedRoadmap,
-            roadmapSteps: normalizedSteps,
-          };
-
-          normalizedSteps.forEach(
-            (_, index) => {
-              initialProgress[index] = 0;
+      progressInterval = setInterval(() => {
+        setGenProgress((prev) => {
+          if (prev >= 90) {
+            if (progressInterval) {
+              clearInterval(progressInterval);
             }
-          );
+            return 90;
+          }
 
-          setStepProgress(
-            initialProgress
-          );
+          return prev + 10;
+        });
+      }, 150);
 
-          setRoadmapData(
-            normalizedRoadmap
-          );
+      const response = await generateRoadmap(
+        selectedCareer,
+        selectedLevel
+      );
 
-          setActiveRoadmapId(
-            roadmapId
-          );
-
-          setGenProgress(100);
-          setRoadmapReady(true);
-
-          /*
-           * Update saved roadmaps
-           * locally.
-           */
-          setSavedRoadmaps(
-            (prev) => [
-              ...prev,
-              generatedRoadmap,
-            ]
-          );
-          
-        } else {
-          throw new Error(
-            response?.message ||
-              "Failed to generate roadmap"
-          );
-        }
-      } catch (error) {
-        console.error(
-          "Roadmap generation failed:",
-          error
-        );
-
-        alert(
-          error?.response?.data
-            ?.message ||
-            error?.message ||
-            "Failed to generate roadmap. Please try again."
-        );
-
-        setRoadmapReady(false);
-      } finally {
-        if (
-          progressInterval
-        ) {
-          clearInterval(
-            progressInterval
-          );
-        }
-
-        setIsGenerating(false);
+      if (progressInterval) {
+        clearInterval(progressInterval);
       }
-    };
+
+      console.log("AI ROADMAP RESPONSE:", response);
+
+      if (response?.success && response?.roadmap) {
+        const generatedRoadmap = response.roadmap;
+
+        /*
+         * Find generated roadmap ID.
+         */
+        const roadmapId =
+          generatedRoadmap?._id ||
+          generatedRoadmap?.id ||
+          generatedRoadmap?.roadmapId ||
+          response?.roadmapId ||
+          null;
+
+        /*
+         * New roadmap starts from 0.
+         */
+        const initialProgress = {};
+
+        const generatedSteps =
+          generatedRoadmap?.roadmapSteps || [];
+
+        const normalizedSteps = generatedSteps.map((step) => ({
+          ...step,
+          progress: 0,
+          learningUrl:
+            step.learningUrl ||
+            step.resourceUrl ||
+            step.url ||
+            "",
+        }));
+
+        const normalizedRoadmap = {
+          ...generatedRoadmap,
+          roadmapSteps: normalizedSteps,
+        };
+
+        normalizedSteps.forEach((_, index) => {
+          initialProgress[index] = 0;
+        });
+
+        setStepProgress(initialProgress);
+        setRoadmapData(normalizedRoadmap);
+        setActiveRoadmapId(roadmapId);
+        setGenProgress(100);
+        setRoadmapReady(true);
+
+        /*
+         * Update saved roadmaps locally.
+         */
+        setSavedRoadmaps((prev) => [...prev, generatedRoadmap]);
+      } else {
+        throw new Error(
+          response?.message || "Failed to generate roadmap"
+        );
+      }
+    } catch (error) {
+      console.error("Roadmap generation failed:", error);
+
+      alert(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to generate roadmap. Please try again."
+      );
+
+      setRoadmapReady(false);
+    } finally {
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
+
+      setIsGenerating(false);
+    }
+  };
 
   /* ==========================================================
-     UPDATE STEP PROGRESS
+     START LEARNING
      
-     This saves progress to backend.
+     Opens the AI tutor panel for ONE specific roadmap step.
+     Does NOT touch progress/completion state in any way.
   ========================================================== */
 
-  const toggleStepProgress =
-    async (index) => {
+  const handleStartLearning = async (step, index) => {
+    if (!activeRoadmapId) {
+      alert("Please generate or load a roadmap first.");
+      return;
+    }
+
+    setLearningStep(step);
+    setLearningStepIndex(index);
+    setIsLearningPanelOpen(true);
+    setIsLearningLoading(true);
+    setLearningError(null);
+    setLearningContent(null);
+
+    try {
+      const response = await generateStepLearning({
+        roadmapId: activeRoadmapId,
+        stepIndex: index,
+        career: displayCareerName,
+        level: selectedLevel,
+        step: {
+          title: step?.title,
+          description: step?.description,
+          difficulty: step?.difficulty,
+          time: step?.time,
+          topics: step?.topics || step?.skills || [],
+        },
+      });
+
+      console.log("STEP LEARNING RESPONSE:", response);
+
+      const module =
+        response?.learningModule ||
+        response?.data?.learningModule ||
+        response?.data ||
+        response;
+
+      if (!module || typeof module !== "object") {
+        throw new Error(
+          response?.message ||
+            "AI did not return a valid learning module."
+        );
+      }
+
+      setLearningContent(module);
+    } catch (error) {
+      console.error("Failed to generate step learning:", error);
+
+      setLearningError(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to load the AI learning module. Please try again."
+      );
+    } finally {
+      setIsLearningLoading(false);
+    }
+  };
+
+  const handleRetryLearning = () => {
+    if (learningStep && learningStepIndex !== null) {
+      handleStartLearning(learningStep, learningStepIndex);
+    }
+  };
+
+  const handleCloseLearningPanel = () => {
+    setIsLearningPanelOpen(false);
+    setLearningError(null);
+    // Keep learningStep/content around briefly for exit animation;
+    // reset happens the next time Start Learning is clicked.
+  };
+
+  /* ==========================================================
+     UPDATE STEP PROGRESS (COMPLETION ONLY)
+     
+     This saves progress to backend. Only ever triggered
+     explicitly by the user via "Complete Step" — never by
+     Start Learning.
+  ========================================================== */
+
+  const toggleStepProgress = async (index) => {
+    if (!activeRoadmapId) {
+      console.warn("No active roadmap found.");
+      alert("Please generate or load a roadmap first.");
+      return false;
+    }
+
+    const currentProgress = Number(stepProgress[index] ?? 0);
+    const nextProgress = currentProgress >= 100 ? 0 : 100;
+
+    /*
+     * Optimistic UI update.
+     */
+    setStepProgress((prev) => ({
+      ...prev,
+      [index]: nextProgress,
+    }));
+
+    try {
+      const response = await updateRoadmapStepProgress(
+        activeRoadmapId,
+        index,
+        nextProgress
+      );
+
+      console.log("ROADMAP STEP UPDATED:", response);
+
+      /*
+       * Backend may return updated roadmap.
+       */
+      const updatedRoadmap =
+        response?.roadmap ||
+        response?.data?.roadmap ||
+        (response?.data?.roadmapSteps ? response.data : null);
+
+      if (updatedRoadmap?.roadmapSteps) {
+        setRoadmapData(updatedRoadmap);
+
+        const syncedProgress = {};
+
+        updatedRoadmap.roadmapSteps.forEach((step, stepIndex) => {
+          let progress = Number(
+            step?.progress ?? step?.completion ?? 0
+          );
+
+          if (step?.completed === true) {
+            progress = 100;
+          }
+
+          syncedProgress[stepIndex] = Math.min(
+            100,
+            Math.max(0, progress)
+          );
+        });
+
+        setStepProgress(syncedProgress);
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Failed to update roadmap step:", error);
+
+      /*
+       * Rollback optimistic update if backend request failed.
+       */
+      setStepProgress((prev) => ({
+        ...prev,
+        [index]: currentProgress,
+      }));
+
+      alert(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to save roadmap progress."
+      );
+
+      return false;
+    }
+  };
+
+  /*
+   * Explicit "Complete Step" handler used by the learning panel.
+   * Only marks complete (does not un-toggle) — separate concern
+   * from the inline timeline toggle above.
+   */
+  const handleCompleteStep = async () => {
+    if (learningStepIndex === null) {
+      return;
+    }
+
+    const alreadyComplete =
+      Number(stepProgress[learningStepIndex] ?? 0) >= 100;
+
+    if (alreadyComplete) {
+      return;
+    }
+
+    setIsCompletingStep(true);
+
+    try {
       if (!activeRoadmapId) {
-        console.warn(
-          "No active roadmap found."
-        );
-
-        alert(
-          "Please generate or load a roadmap first."
-        );
-
+        alert("Please generate or load a roadmap first.");
         return;
       }
 
-      const currentProgress =
-        Number(
-          stepProgress[index] ?? 0
-        );
-
-      const nextProgress =
-        currentProgress >= 100
-          ? 0
-          : 100;
-
-      /*
-       * Optimistic UI update.
-       */
-      setStepProgress(
-        (prev) => ({
-          ...prev,
-          [index]:
-            nextProgress,
-        })
+      const response = await updateRoadmapStepProgress(
+        activeRoadmapId,
+        learningStepIndex,
+        100
       );
 
-      try {
-        const response =
-          await updateRoadmapStepProgress(
-            activeRoadmapId,
-            index,
-            nextProgress
-          );
+      console.log("STEP MARKED COMPLETE:", response);
 
-        console.log(
-          "ROADMAP STEP UPDATED:",
-          response
-        );
+      setStepProgress((prev) => ({
+        ...prev,
+        [learningStepIndex]: 100,
+      }));
 
-        /*
-         * Backend may return updated roadmap.
-         */
-        const updatedRoadmap =
-          response?.roadmap ||
-          response?.data?.roadmap ||
-          (
-            response?.data?.roadmapSteps
-              ? response.data
-              : null
-          );
+      const updatedRoadmap =
+        response?.roadmap ||
+        response?.data?.roadmap ||
+        (response?.data?.roadmapSteps ? response.data : null);
 
-        if (
-          updatedRoadmap
-            ?.roadmapSteps
-        ) {
-          setRoadmapData(
-            updatedRoadmap
-          );
-
-          const syncedProgress =
-            {};
-
-          updatedRoadmap.roadmapSteps.forEach(
-            (step, stepIndex) => {
-              let progress =
-                Number(
-                  step?.progress ??
-                    step?.completion ??
-                    0
-                );
-
-              if (
-                step?.completed ===
-                true
-              ) {
-                progress = 100;
-              }
-
-              syncedProgress[
-                stepIndex
-              ] = Math.min(
-                100,
-                Math.max(
-                  0,
-                  progress
-                )
-              );
-            }
-          );
-
-          setStepProgress(
-            syncedProgress
-          );
-        }
-      } catch (error) {
-        console.error(
-          "Failed to update roadmap step:",
-          error
-        );
-
-        /*
-         * Rollback optimistic update
-         * if backend request failed.
-         */
-        setStepProgress(
-          (prev) => ({
-            ...prev,
-            [index]:
-              currentProgress,
-          })
-        );
-
-        alert(
-          error?.response?.data
-            ?.message ||
-            error?.message ||
-            "Failed to save roadmap progress."
-        );
+      if (updatedRoadmap?.roadmapSteps) {
+        setRoadmapData(updatedRoadmap);
       }
-    };
+    } catch (error) {
+      console.error("Failed to mark step complete:", error);
+
+      alert(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to save your progress. Please try again."
+      );
+    } finally {
+      setIsCompletingStep(false);
+    }
+  };
 
   /* ==========================================================
      PLACEMENT CHECKLIST
@@ -1630,6 +2058,10 @@ function SkillRoadmap() {
     Object.values(
       checklist
     ).filter(Boolean).length;
+
+  const isLearningStepCompleted =
+    learningStepIndex !== null &&
+    Number(stepProgress[learningStepIndex] ?? 0) >= 100;
 
   /* ============================================================
      RENDER
@@ -2204,6 +2636,10 @@ function SkillRoadmap() {
                           i
                         );
 
+                      const isThisStepLoading =
+                        isLearningLoading &&
+                        learningStepIndex === i;
+
                       return (
                         <motion.div
                           key={`${step.title}-${i}`}
@@ -2288,14 +2724,43 @@ function SkillRoadmap() {
                                 {step.progress}% complete
                               </span>
 
-                              <button
-                                type="button"
-                                onClick={() => handleStartLearning(step, i)}
-                                disabled={!activeRoadmapId}
-                                className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-[11px] font-semibold text-cyan-300 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-50"
-                              >
-                                Start Learning
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleStartLearning(step, i)
+                                  }
+                                  disabled={
+                                    !activeRoadmapId ||
+                                    isThisStepLoading
+                                  }
+                                  className="flex items-center gap-1.5 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-[11px] font-semibold text-cyan-300 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                  {isThisStepLoading ? (
+                                    <>
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                      Loading...
+                                    </>
+                                  ) : (
+                                    "Start Learning"
+                                  )}
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => toggleStepProgress(i)}
+                                  disabled={!activeRoadmapId}
+                                  className={`rounded-xl border px-3 py-1.5 text-[11px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                                    step.progress >= 100
+                                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20"
+                                      : "border-slate-700 bg-slate-800/60 text-slate-300 hover:border-slate-600"
+                                  }`}
+                                >
+                                  {step.progress >= 100
+                                    ? "Completed"
+                                    : "Mark Complete"}
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </motion.div>
@@ -2308,6 +2773,23 @@ function SkillRoadmap() {
           </motion.section>
         )}
       </AnimatePresence>
+
+      {/* ======================================================
+          AI LEARNING PANEL
+      ====================================================== */}
+
+      <LearningPanel
+        isOpen={isLearningPanelOpen}
+        isLoading={isLearningLoading}
+        error={learningError}
+        step={learningStep}
+        content={learningContent}
+        onClose={handleCloseLearningPanel}
+        onRetry={handleRetryLearning}
+        onCompleteStep={handleCompleteStep}
+        isCompleting={isCompletingStep}
+        isAlreadyCompleted={isLearningStepCompleted}
+      />
 
       {/* ======================================================
           6. WEEKLY PLAN
@@ -2953,6 +3435,6 @@ function SkillRoadmap() {
       </section>
     </div>
   );
-} 
+}
 
 export default SkillRoadmap;

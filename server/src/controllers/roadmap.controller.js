@@ -1,4 +1,15 @@
+import Groq from "groq-sdk";
 import Roadmap from "../models/Roadmap.js";
+
+// ============================================================
+// GROQ CLIENT
+// Used only for the AI step-tutor endpoint (generateStepLearning).
+// Roadmap generation itself uses the static template data below.
+// ============================================================
+
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
 
 // ============================================================
 // ALLOWED CAREERS
@@ -1862,6 +1873,282 @@ export const updateRoadmapStepProgress = async (
       success: false,
       message:
         "Failed to update roadmap progress",
+      error: error.message,
+    });
+  }
+};
+
+// ============================================================
+// AI STEP-LEVEL LEARNING TUTOR
+// POST /api/roadmap/learn
+//
+// Generates a structured, beginner-friendly learning module
+// for ONE specific roadmap step. This is completely separate
+// from roadmap generation and from step completion:
+//   - It does NOT touch roadmap.roadmapSteps[index].progress
+//   - It does NOT touch roadmap.roadmapSteps[index].status
+//   - It is never called by "Complete Step" / progress toggling
+// ============================================================
+
+/*
+ * Builds the AI prompt for a single roadmap step.
+ * Kept outside the handler so it's easy to tune independently.
+ */
+const buildLearningPrompt = ({ careerName, level, step }) => {
+  const topicsLine =
+    Array.isArray(step.topics) && step.topics.length
+      ? `- Related Topics: ${step.topics.join(", ")}\n`
+      : "";
+
+  return `
+You are an expert personal learning tutor inside "CampusHub AI", a platform that helps beginner students follow a step-by-step career roadmap toward their goal career.
+
+The student is currently on ONE SPECIFIC STEP of a larger roadmap. Your job is to teach ONLY this step, in depth. Do NOT generate a new roadmap. Do NOT jump ahead to unrelated or advanced topics outside this step. Do NOT summarize the whole career path — stay scoped to this one step.
+
+STUDENT CONTEXT
+- Career Path: ${careerName}
+- Skill Level: ${level}
+- Current Roadmap Step: ${step.title}
+- Step Description: ${step.description || "Not provided"}
+- Step Difficulty: ${step.difficulty || "General"}
+- Estimated Time: ${step.time || "Flexible"}
+${topicsLine}
+LANGUAGE RULES
+- The student's own questions or context may arrive in Hindi, Hinglish, or English. Understand all of these.
+- Your ENTIRE generated response content must be written in English only, unless the student explicitly asked for a different language.
+
+TEACHING RULES
+- Teach like a patient, encouraging personal tutor for a "${level}" student.
+- Use simple, clear language. Explain from the basics first, then build up. Avoid unnecessary jargon.
+- Stay strictly scoped to "${step.title}" — do not teach unrelated topics.
+- If this is a programming/technical topic, include real, runnable code examples.
+- If this is a non-programming topic (design, research, communication, etc.), replace code examples with concrete practical exercises instead, and you may return an empty array for codeExamples.
+
+Respond with ONLY a single valid JSON object — no markdown code fences, no commentary before or after — matching EXACTLY this shape:
+
+{
+  "title": string,
+  "overview": string,
+  "whyItMatters": string,
+  "whatYouWillLearn": string[],
+  "coreConcepts": [
+    { "title": string, "explanation": string, "example": string }
+  ],
+  "codeExamples": [
+    { "label": string, "code": string }
+  ],
+  "commonMistakes": string[],
+  "practiceQuestions": string[],
+  "handsOnTask": string,
+  "interviewQuestions": string[],
+  "keyTakeaways": string[],
+  "suggestedNextStep": string
+}
+
+Return ONLY the JSON object described above.
+`.trim();
+};
+
+export const generateStepLearning = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const body = req.body || {};
+
+    const { roadmapId, stepIndex, career, level, step } = body;
+
+    // --------------------------------------------------------
+    // VALIDATE ROADMAP ID
+    // --------------------------------------------------------
+
+    if (!roadmapId) {
+      return res.status(400).json({
+        success: false,
+        message: "roadmapId is required",
+      });
+    }
+
+    // --------------------------------------------------------
+    // VALIDATE STEP INDEX
+    // --------------------------------------------------------
+
+    if (
+      stepIndex === undefined ||
+      stepIndex === null ||
+      Number.isNaN(Number(stepIndex))
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "stepIndex is required",
+      });
+    }
+
+    const index = Number(stepIndex);
+
+    // --------------------------------------------------------
+    // LOAD ROADMAP (SCOPED TO THIS USER)
+    // --------------------------------------------------------
+
+    const roadmap = await Roadmap.findOne({
+      _id: roadmapId,
+      user: userId,
+    });
+
+    if (!roadmap) {
+      return res.status(404).json({
+        success: false,
+        message: "Roadmap not found",
+      });
+    }
+
+    // --------------------------------------------------------
+    // VALIDATE STEP EXISTS
+    // --------------------------------------------------------
+
+    if (
+      !roadmap.roadmapSteps ||
+      index < 0 ||
+      index >= roadmap.roadmapSteps.length
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid roadmap step",
+      });
+    }
+
+    const savedStep = roadmap.roadmapSteps[index];
+
+    // --------------------------------------------------------
+    // RESOLVE STEP DETAILS
+    // Prefer whatever the frontend sent for this step, fall
+    // back to what's actually saved on the roadmap so the
+    // AI always has accurate context even if the frontend
+    // sends a partial object.
+    // --------------------------------------------------------
+
+    const resolvedStep = {
+      title: step?.title || savedStep.title,
+      description: step?.description || savedStep.description,
+      difficulty: step?.difficulty || savedStep.difficulty,
+      time: step?.time || savedStep.time,
+      topics: Array.isArray(step?.topics) ? step.topics : [],
+    };
+
+    const careerName =
+      careerNames[roadmap.career] || career || roadmap.career;
+
+    const skillLevel = level || roadmap.level;
+
+    // --------------------------------------------------------
+    // BUILD PROMPT
+    // --------------------------------------------------------
+
+    const prompt = buildLearningPrompt({
+      careerName,
+      level: skillLevel,
+      step: resolvedStep,
+    });
+
+    // --------------------------------------------------------
+    // CALL AI (GROQ)
+    // NOTE: verify this model string matches the one used in
+    // assistant.controller.js's chatWithAI for consistency.
+    // --------------------------------------------------------
+
+    let aiRawContent = "";
+
+    try {
+      const completion = await groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a precise JSON API. You always return a single valid JSON object and nothing else — no markdown fences, no commentary.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.6,
+        max_tokens: 3000,
+        response_format: { type: "json_object" },
+      });
+
+      aiRawContent = completion?.choices?.[0]?.message?.content || "";
+    } catch (aiError) {
+      console.error("Groq Step Learning Error:", aiError);
+
+      return res.status(502).json({
+        success: false,
+        message:
+          "The AI tutor is temporarily unavailable. Please try again in a moment.",
+      });
+    }
+
+    // --------------------------------------------------------
+    // PARSE AI RESPONSE
+    // Defensive cleanup in case the model wraps JSON in
+    // markdown fences despite instructions.
+    // --------------------------------------------------------
+
+    const cleaned = aiRawContent
+      .trim()
+      .replace(/^```json/i, "")
+      .replace(/^```/, "")
+      .replace(/```$/, "")
+      .trim();
+
+    let learningModule;
+
+    try {
+      learningModule = JSON.parse(cleaned);
+    } catch (parseError) {
+      console.error(
+        "Failed to parse AI learning module:",
+        parseError,
+        "RAW:",
+        aiRawContent
+      );
+
+      return res.status(502).json({
+        success: false,
+        message:
+          "The AI tutor returned an unexpected response. Please try again.",
+      });
+    }
+
+    // --------------------------------------------------------
+    // RESPONSE
+    // Note: intentionally NOT saved to the roadmap — this is
+    // learning content, not progress. Progress only changes
+    // via updateRoadmapStepProgress ("Complete Step").
+    // --------------------------------------------------------
+
+    return res.status(200).json({
+      success: true,
+      message: "Learning module generated successfully",
+      roadmapId: roadmap._id,
+      stepIndex: index,
+      learningModule,
+    });
+  } catch (error) {
+    console.error("\n=================================");
+    console.error("GENERATE STEP LEARNING ERROR");
+    console.error(error);
+    console.error("=================================\n");
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to generate learning module",
       error: error.message,
     });
   }
