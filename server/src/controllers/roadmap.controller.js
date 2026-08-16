@@ -1,2165 +1,1862 @@
-import Groq from "groq-sdk";
-import Roadmap from "../models/Roadmap.js";
+import React, { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
-// ============================================================
-// GROQ CLIENT
-// Used only for the AI step-tutor endpoint (generateStepLearning).
-// Roadmap generation itself uses the static template data below.
-// ============================================================
+import {
+  generateRoadmap,
+  getMyRoadmaps,
+  updateRoadmapStepProgress,
+  generateStepLearning,
+} from "../../services/roadmapService";
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+import {
+  Sparkles,
+  Rocket,
+  ArrowRight,
+  Code2,
+  Server,
+  Layers,
+  Brain,
+  BarChart3,
+  Shield,
+  Cloud,
+  GitBranch,
+  Smartphone,
+  PenTool,
+  Database,
+  CheckCircle2,
+  Circle,
+  ChevronDown,
+  Wand2,
+  Loader2,
+  Clock,
+  BookOpen,
+  FileText,
+  Target,
+  TrendingUp,
+  Mic,
+  Terminal,
+  Briefcase,
+  FileCheck2,
+  MessageSquare,
+  X,
+  Lightbulb,
+  AlertTriangle,
+  ListChecks,
+  ClipboardList,
+  HelpCircle,
+  ArrowRightCircle,
+  Github,
+  Linkedin,
+  Users,
+} from "lucide-react";
 
-// ============================================================
-// ALLOWED CAREERS
-// ============================================================
+/* ============================================================
+   ANIMATION VARIANTS
+============================================================ */
 
-const allowedCareers = [
-  "frontend",
-  "backend",
-  "fullstack",
-  "ai",
-  "ml",
-  "data",
-  "cyber",
-  "cloud",
-  "devops",
-  "android",
-  "uiux",
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: (i = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, delay: i * 0.06, ease: "easeOut" },
+  }),
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: (i = 0) => ({
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.5, delay: i * 0.06, ease: "easeOut" },
+  }),
+};
+
+/* ============================================================
+   STATIC DATA
+============================================================ */
+
+const CAREERS = [
+  {
+    id: "frontend",
+    name: "Frontend Developer",
+    description: "Build user interfaces and interactive web experiences.",
+    icon: Code2,
+  },
+  {
+    id: "backend",
+    name: "Backend Developer",
+    description: "Build servers, APIs and the logic that powers applications.",
+    icon: Server,
+  },
+  {
+    id: "fullstack",
+    name: "Full Stack Developer",
+    description: "Work across the entire application, from database to UI.",
+    icon: Layers,
+  },
+  {
+    id: "ai",
+    name: "AI Engineer",
+    description: "Design and build intelligent, AI-powered systems.",
+    icon: Brain,
+  },
+  {
+    id: "ml",
+    name: "Machine Learning Engineer",
+    description: "Build models that learn patterns from data.",
+    icon: BarChart3,
+  },
+  {
+    id: "data",
+    name: "Data Scientist",
+    description: "Turn raw data into insights that drive decisions.",
+    icon: Database,
+  },
+  {
+    id: "cyber",
+    name: "Cyber Security Specialist",
+    description: "Protect systems, networks and data from threats.",
+    icon: Shield,
+  },
+  {
+    id: "cloud",
+    name: "Cloud Engineer",
+    description: "Design and manage scalable cloud infrastructure.",
+    icon: Cloud,
+  },
+  {
+    id: "devops",
+    name: "DevOps Engineer",
+    description: "Automate and streamline software delivery pipelines.",
+    icon: GitBranch,
+  },
+  {
+    id: "android",
+    name: "Android Developer",
+    description: "Build native mobile applications for Android.",
+    icon: Smartphone,
+  },
+  {
+    id: "uiux",
+    name: "UI/UX Designer",
+    description: "Design intuitive, user-centered digital experiences.",
+    icon: PenTool,
+  },
 ];
 
-// ============================================================
-// ALLOWED LEVELS
-// ============================================================
-
-const allowedLevels = [
-  "Beginner",
-  "Intermediate",
-  "Advanced",
+const SKILL_LEVELS = [
+  { id: "Beginner", desc: "Starting from scratch, little to no experience." },
+  { id: "Intermediate", desc: "Comfortable with basics, ready to build real projects." },
+  { id: "Advanced", desc: "Strong fundamentals, targeting job-ready mastery." },
 ];
 
-// ============================================================
-// CAREER NAMES
-// ============================================================
+const STEP_ICONS = [
+  FileText,
+  PenTool,
+  Code2,
+  GitBranch,
+  Layers,
+  Server,
+  Terminal,
+  Database,
+  Briefcase,
+  Cloud,
+  Mic,
+  BookOpen,
+];
 
-const careerNames = {
-  frontend: "Frontend Developer",
-  backend: "Backend Developer",
-  fullstack: "Full Stack Developer",
-  ai: "AI Engineer",
-  ml: "Machine Learning Engineer",
-  data: "Data Scientist",
-  cyber: "Cyber Security Specialist",
-  cloud: "Cloud Engineer",
-  devops: "DevOps Engineer",
-  android: "Android Developer",
-  uiux: "UI/UX Designer",
+const getStepIcon = (index) => STEP_ICONS[index % STEP_ICONS.length];
+
+const PLACEMENT_CHECKLIST = [
+  { label: "Resume Ready", icon: FileCheck2 },
+  { label: "GitHub Portfolio", icon: Github },
+  { label: "Projects Completed", icon: Briefcase },
+  { label: "LinkedIn Profile", icon: Linkedin },
+  { label: "Interview Practice", icon: Mic },
+  { label: "DSA / Technical Preparation", icon: Terminal },
+  { label: "Communication Skills", icon: MessageSquare },
+  { label: "Mock Interview", icon: Users },
+];
+
+const FAQS = [
+  {
+    q: "How does the AI generate my roadmap?",
+    a: "It combines your selected career path and current skill level to sequence topics in the order they build on each other, with realistic timeframes for each stage.",
+  },
+  {
+    q: "Can I change my career path later?",
+    a: "Yes. You can select a different career or skill level anytime and generate a fresh roadmap tailored to that path.",
+  },
+  {
+    q: 'What happens when I click "Learn This Step"?',
+    a: "An AI tutor generates a focused learning module for that exact step — overview, core concepts, examples, practice questions and a hands-on task — so you can actually learn the topic, not just check it off.",
+  },
+  {
+    q: "Does starting a lesson mark the step as complete?",
+    a: 'No. Opening a lesson only generates learning content. A step only becomes "completed" when you explicitly click Complete Step inside the learning panel.',
+  },
+  {
+    q: "Is the roadmap free to use?",
+    a: "Yes, the AI Skill Roadmap and the AI learning tutor are both free to use as part of CampusHub AI.",
+  },
+];
+
+/* ============================================================
+   STATUS STYLES
+============================================================ */
+
+const statusStyles = {
+  completed: {
+    text: "text-emerald-400",
+    border: "border-emerald-500/30",
+    bg: "bg-emerald-500/10",
+    bar: "from-emerald-400 to-emerald-500",
+    label: "Completed",
+  },
+  "in-progress": {
+    text: "text-cyan-300",
+    border: "border-cyan-500/30",
+    bg: "bg-cyan-500/10",
+    bar: "from-cyan-400 to-blue-500",
+    label: "In Progress",
+  },
+  pending: {
+    text: "text-slate-400",
+    border: "border-slate-700",
+    bg: "bg-slate-800/40",
+    bar: "from-slate-600 to-slate-500",
+    label: "Pending",
+  },
 };
 
-// ============================================================
-// NORMALIZE CAREER
-// ============================================================
-
-const normalizeCareer = (career) => {
-  if (!career) return null;
-
-  // If frontend sends object
-  if (typeof career === "object") {
-    career =
-      career.id ||
-      career.value ||
-      career.careerId ||
-      career.career ||
-      career.name ||
-      career.title;
-  }
-
-  if (!career) return null;
-
-  const value = String(career)
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
-
-  const careerMap = {
-    // Frontend
-    frontend: "frontend",
-    "frontend developer": "frontend",
-    "front end developer": "frontend",
-
-    // Backend
-    backend: "backend",
-    "backend developer": "backend",
-    "back end developer": "backend",
-
-    // Full Stack
-    fullstack: "fullstack",
-    "full stack": "fullstack",
-    "fullstack developer": "fullstack",
-    "full stack developer": "fullstack",
-
-    // AI
-    ai: "ai",
-    "ai engineer": "ai",
-    "artificial intelligence": "ai",
-    "artificial intelligence engineer": "ai",
-
-    // ML
-    ml: "ml",
-    "machine learning": "ml",
-    "machine learning engineer": "ml",
-
-    // Data
-    data: "data",
-    "data science": "data",
-    "data scientist": "data",
-
-    // Cyber
-    cyber: "cyber",
-    cybersecurity: "cyber",
-    "cyber security": "cyber",
-    "cyber security specialist": "cyber",
-
-    // Cloud
-    cloud: "cloud",
-    "cloud engineer": "cloud",
-    "cloud computing": "cloud",
-
-    // DevOps
-    devops: "devops",
-    "devops engineer": "devops",
-
-    // Android
-    android: "android",
-    "android developer": "android",
-
-    // UI/UX
-    uiux: "uiux",
-    "ui/ux": "uiux",
-    "ui ux": "uiux",
-    "ui/ux designer": "uiux",
-    "ui ux designer": "uiux",
-    "uiux designer": "uiux",
-  };
-
-  return careerMap[value] || null;
-};
-
-// ============================================================
-// NORMALIZE LEVEL
-// ============================================================
-
-const normalizeLevel = (level) => {
-  if (!level) return null;
-
-  const value = String(level)
-    .trim()
-    .toLowerCase();
-
-  const levelMap = {
-    beginner: "Beginner",
-    intermediate: "Intermediate",
-    advanced: "Advanced",
-  };
-
-  return levelMap[value] || null;
-};
-
-// ============================================================
-// GENERATE ROADMAP
-// ============================================================
-
-export const generateRoadmap = async (req, res) => {
-  try {
-    const userId = req.user?._id;
-
-    const body = req.body || {};
-
-    console.log("\n=================================");
-    console.log("ROADMAP GENERATION REQUEST");
-    console.log("BODY:", JSON.stringify(body, null, 2));
-    console.log("USER:", userId);
-    console.log("=================================\n");
-
-    // --------------------------------------------------------
-    // AUTH
-    // --------------------------------------------------------
-
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
-
-    // --------------------------------------------------------
-    // GET CAREER
-    // --------------------------------------------------------
-
-    let careerInput =
-      body.careerId ||
-      body.career ||
-      body.careerPath ||
-      body.selectedCareer;
-
-    // --------------------------------------------------------
-    // GET LEVEL
-    // --------------------------------------------------------
-
-    let levelInput =
-      body.level ||
-      body.skillLevel ||
-      body.skill_level ||
-      body.selectedLevel;
-
-    console.log("Career input:", careerInput);
-    console.log("Level input:", levelInput);
-
-    // --------------------------------------------------------
-    // CAREER REQUIRED
-    // --------------------------------------------------------
-
-    if (!careerInput) {
-      return res.status(400).json({
-        success: false,
-        message: "Career is required",
-        receivedBody: body,
-      });
-    }
-
-    // --------------------------------------------------------
-    // NORMALIZE CAREER
-    // --------------------------------------------------------
-
-    const normalizedCareer =
-      normalizeCareer(careerInput);
-
-    console.log(
-      "Normalized career:",
-      normalizedCareer
-    );
-
-    if (!normalizedCareer) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid career path",
-        receivedCareer: careerInput,
-        allowedCareers,
-      });
-    }
-
-    // --------------------------------------------------------
-    // LEVEL REQUIRED
-    // --------------------------------------------------------
-
-    if (!levelInput) {
-      return res.status(400).json({
-        success: false,
-        message: "Skill level is required",
-        receivedBody: body,
-      });
-    }
-
-    // --------------------------------------------------------
-    // NORMALIZE LEVEL
-    // --------------------------------------------------------
-
-    const normalizedLevel =
-      normalizeLevel(levelInput);
-
-    console.log(
-      "Normalized level:",
-      normalizedLevel
-    );
-
-    if (!normalizedLevel) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid skill level",
-        receivedLevel: levelInput,
-        allowedLevels,
-      });
-    }
-
-    // --------------------------------------------------------
-    // CAREER NAME
-    // --------------------------------------------------------
-
-    const careerName =
-      careerNames[normalizedCareer];
-
-    // --------------------------------------------------------
-    // CREATE ROADMAP
-    // --------------------------------------------------------
-
-    const roadmapSteps = createRoadmap(
-      normalizedCareer,
-      normalizedLevel
-    );
-
-    const weeklyPlan = createWeeklyPlan(
-      normalizedCareer,
-      normalizedLevel
-    );
-
-    const projects = createProjects(
-      normalizedCareer
-    );
-
-    const skillAnalysis =
-      createSkillAnalysis(
-        normalizedCareer,
-        normalizedLevel
-      );
-
-    const interviewPreparation =
-      createInterviewPreparation(
-        normalizedCareer
-      );
-
-    // --------------------------------------------------------
-    // SAVE / UPDATE
-    // --------------------------------------------------------
-
-    const roadmap =
-      await Roadmap.findOneAndUpdate(
-        {
-          user: userId,
-          career: normalizedCareer,
-          level: normalizedLevel,
-        },
-        {
-          user: userId,
-          career: normalizedCareer,
-          level: normalizedLevel,
-          roadmapSteps,
-          weeklyPlan,
-          projects,
-          skillAnalysis,
-          interviewPreparation,
-        },
-        {
-          new: true,
-          upsert: true,
-          setDefaultsOnInsert: true,
-        }
-      );
-
-    // --------------------------------------------------------
-    // RESPONSE
-    // --------------------------------------------------------
-
-    return res.status(200).json({
-      success: true,
-      message: "Roadmap generated successfully",
-
-      roadmap: {
-        id: roadmap._id,
-        career: careerName,
-        careerId: normalizedCareer,
-        level: roadmap.level,
-        roadmapSteps: roadmap.roadmapSteps,
-        weeklyPlan: roadmap.weeklyPlan,
-        projects: roadmap.projects,
-        skillAnalysis: roadmap.skillAnalysis,
-        interviewPreparation:
-          roadmap.interviewPreparation,
-      },
-    });
-  } catch (error) {
-    console.error("\n=================================");
-    console.error("GENERATE ROADMAP ERROR");
-    console.error(error);
-    console.error("=================================\n");
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to generate roadmap",
-      error: error.message,
-    });
-  }
-};
-
-// ============================================================
-// GET USER ROADMAPS
-// ============================================================
-
-export const getMyRoadmaps = async (req, res) => {
-  try {
-    const userId = req.user?._id;
-
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
-
-    const roadmaps = await Roadmap.find({
-      user: userId,
-    }).sort({
-      createdAt: -1,
-    });
-
-    return res.status(200).json({
-      success: true,
-      count: roadmaps.length,
-      roadmaps,
-    });
-  } catch (error) {
-    console.error(
-      "Get Roadmaps Error:",
-      error
-    );
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch roadmaps",
-      error: error.message,
-    });
-  }
-};
-
-// ============================================================
-// GET SINGLE ROADMAP
-// ============================================================
-
-export const getRoadmapById = async (req, res) => {
-  try {
-    const userId = req.user?._id;
-
-    const { id } = req.params;
-
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
-
-    const roadmap =
-      await Roadmap.findOne({
-        _id: id,
-        user: userId,
-      });
-
-    if (!roadmap) {
-      return res.status(404).json({
-        success: false,
-        message: "Roadmap not found",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      roadmap,
-    });
-  } catch (error) {
-    console.error(
-      "Get Roadmap Error:",
-      error
-    );
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch roadmap",
-      error: error.message,
-    });
-  }
-};
-
-// ============================================================
-// ROADMAP DATA
-// ============================================================
-
-const roadmapData = {
-
-  // ========================================================
-  // FRONTEND
-  // ========================================================
-
-  frontend: [
-    {
-      title: "HTML & Semantic Web",
-      difficulty: "Beginner",
-      time: "1 Week",
-      description:
-        "Master semantic HTML, forms, accessibility, SEO-friendly structure and modern web standards.",
-    },
-    {
-      title: "CSS & Responsive Design",
-      difficulty: "Beginner",
-      time: "2 Weeks",
-      description:
-        "Learn Flexbox, Grid, responsive layouts, animations, positioning and mobile-first design.",
-    },
-    {
-      title: "JavaScript Core",
-      difficulty: "Beginner",
-      time: "3 Weeks",
-      description:
-        "Master variables, functions, arrays, objects, DOM, ES6+, promises, async/await and events.",
-    },
-    {
-      title: "Git & GitHub",
-      difficulty: "Beginner",
-      time: "1 Week",
-      description:
-        "Learn Git workflow, branches, pull requests, merge conflicts and professional collaboration.",
-    },
-    {
-      title: "React.js",
-      difficulty: "Intermediate",
-      time: "3 Weeks",
-      description:
-        "Learn components, props, state, hooks, routing, forms, API integration and reusable components.",
-    },
-    {
-      title: "Advanced React",
-      difficulty: "Advanced",
-      time: "3 Weeks",
-      description:
-        "Learn performance optimization, advanced hooks, state architecture, lazy loading and production patterns.",
-    },
-    {
-      title: "Frontend Projects",
-      difficulty: "Advanced",
-      time: "4 Weeks",
-      description:
-        "Build portfolio-quality applications with authentication, APIs, responsive UI and real-world features.",
-    },
-    {
-      title: "Deployment & Interview",
-      difficulty: "Advanced",
-      time: "2 Weeks",
-      description:
-        "Deploy applications and prepare JavaScript, React, browser and frontend interview questions.",
-    },
-  ],
-
-  // ========================================================
-  // BACKEND
-  // ========================================================
-
-  backend: [
-    {
-      title: "Programming & JavaScript Fundamentals",
-      difficulty: "Beginner",
-      time: "2 Weeks",
-      description:
-        "Build strong programming logic with JavaScript, functions, objects, arrays, modules and error handling.",
-    },
-    {
-      title: "Node.js",
-      difficulty: "Beginner",
-      time: "2 Weeks",
-      description:
-        "Understand Node.js runtime, npm, modules, event loop, asynchronous programming and file systems.",
-    },
-    {
-      title: "Express.js & REST APIs",
-      difficulty: "Intermediate",
-      time: "2 Weeks",
-      description:
-        "Build professional REST APIs using routes, controllers, middleware, validation and error handling.",
-    },
-    {
-      title: "MongoDB & Mongoose",
-      difficulty: "Intermediate",
-      time: "2 Weeks",
-      description:
-        "Learn database design, schemas, CRUD, relationships, indexes, aggregation and Mongoose.",
-    },
-    {
-      title: "Authentication & Authorization",
-      difficulty: "Intermediate",
-      time: "2 Weeks",
-      description:
-        "Implement JWT authentication, password hashing, roles, permissions and protected APIs.",
-    },
-    {
-      title: "Backend Architecture",
-      difficulty: "Advanced",
-      time: "3 Weeks",
-      description:
-        "Learn MVC architecture, services, controllers, validation, security, logging and scalable backend design.",
-    },
-    {
-      title: "Production Backend Projects",
-      difficulty: "Advanced",
-      time: "4 Weeks",
-      description:
-        "Build complete backend systems involving authentication, databases, APIs and real-time features.",
-    },
-    {
-      title: "Deployment & Backend Interviews",
-      difficulty: "Advanced",
-      time: "2 Weeks",
-      description:
-        "Deploy APIs and prepare Node.js, Express, MongoDB, REST API, JWT and backend interview questions.",
-    },
-  ],
-
-  // ========================================================
-  // FULL STACK
-  // ========================================================
-
-  fullstack: [
-    {
-      title: "Web Fundamentals",
-      difficulty: "Beginner",
-      time: "2 Weeks",
-      description:
-        "Master HTML, CSS, responsive design and browser fundamentals before moving into application development.",
-    },
-    {
-      title: "JavaScript Mastery",
-      difficulty: "Beginner",
-      time: "3 Weeks",
-      description:
-        "Learn modern JavaScript, ES6+, DOM, asynchronous programming, promises, modules and APIs.",
-    },
-    {
-      title: "React Frontend Development",
-      difficulty: "Intermediate",
-      time: "3 Weeks",
-      description:
-        "Build modern interfaces using React, hooks, routing, forms, state management and API integration.",
-    },
-    {
-      title: "Node.js & Express",
-      difficulty: "Intermediate",
-      time: "3 Weeks",
-      description:
-        "Create REST APIs using Node.js and Express with routing, middleware, validation and error handling.",
-    },
-    {
-      title: "MongoDB & Authentication",
-      difficulty: "Intermediate",
-      time: "3 Weeks",
-      description:
-        "Design databases and implement JWT authentication, authorization, password security and user roles.",
-    },
-    {
-      title: "Full Stack Architecture",
-      difficulty: "Advanced",
-      time: "3 Weeks",
-      description:
-        "Connect frontend and backend systems using scalable architecture, API patterns and secure data flow.",
-    },
-    {
-      title: "Production Full Stack Project",
-      difficulty: "Advanced",
-      time: "4 Weeks",
-      description:
-        "Build a complete production-style application from database to frontend and deployment.",
-    },
-    {
-      title: "Deployment & Full Stack Interviews",
-      difficulty: "Advanced",
-      time: "2 Weeks",
-      description:
-        "Deploy the complete application and prepare JavaScript, React, Node.js, MongoDB and system questions.",
-    },
-  ],
-
-  // ========================================================
-  // AI
-  // ========================================================
-
-  ai: [
-    {
-      title: "Python Programming",
-      difficulty: "Beginner",
-      time: "2 Weeks",
-      description:
-        "Build strong Python fundamentals including functions, OOP, collections, modules and error handling.",
-    },
-    {
-      title: "Mathematics for AI",
-      difficulty: "Beginner",
-      time: "2 Weeks",
-      description:
-        "Learn the linear algebra, probability, statistics and calculus concepts required for AI.",
-    },
-    {
-      title: "Data Processing",
-      difficulty: "Intermediate",
-      time: "2 Weeks",
-      description:
-        "Use NumPy and Pandas to clean, transform, analyze and prepare datasets for AI systems.",
-    },
-    {
-      title: "Machine Learning Foundations",
-      difficulty: "Intermediate",
-      time: "4 Weeks",
-      description:
-        "Learn supervised and unsupervised learning, feature engineering, evaluation and model selection.",
-    },
-    {
-      title: "Deep Learning",
-      difficulty: "Advanced",
-      time: "4 Weeks",
-      description:
-        "Learn neural networks, CNNs, RNNs, optimization and deep learning workflows.",
-    },
-    {
-      title: "Generative AI & LLMs",
-      difficulty: "Advanced",
-      time: "3 Weeks",
-      description:
-        "Learn transformers, embeddings, prompt engineering, RAG and LLM application development.",
-    },
-    {
-      title: "AI Application Development",
-      difficulty: "Advanced",
-      time: "4 Weeks",
-      description:
-        "Build practical AI applications and integrate trained models into real software systems.",
-    },
-    {
-      title: "AI Portfolio & Interviews",
-      difficulty: "Advanced",
-      time: "2 Weeks",
-      description:
-        "Build AI projects and prepare machine learning, deep learning and AI engineering interviews.",
-    },
-  ],
-
-  // ========================================================
-  // ML
-  // ========================================================
-
-  ml: [
-    {
-      title: "Python for Machine Learning",
-      difficulty: "Beginner",
-      time: "2 Weeks",
-      description:
-        "Master Python, NumPy, Pandas and programming techniques required for machine learning.",
-    },
-    {
-      title: "Statistics & Probability",
-      difficulty: "Beginner",
-      time: "3 Weeks",
-      description:
-        "Learn distributions, probability, hypothesis testing, correlation and statistical reasoning.",
-    },
-    {
-      title: "Data Preprocessing",
-      difficulty: "Intermediate",
-      time: "2 Weeks",
-      description:
-        "Handle missing values, outliers, encoding, scaling and feature engineering.",
-    },
-    {
-      title: "Supervised Learning",
-      difficulty: "Intermediate",
-      time: "3 Weeks",
-      description:
-        "Master regression, classification, decision trees, ensembles and model evaluation.",
-    },
-    {
-      title: "Unsupervised Learning",
-      difficulty: "Advanced",
-      time: "2 Weeks",
-      description:
-        "Learn clustering, dimensionality reduction and pattern discovery techniques.",
-    },
-    {
-      title: "Deep Learning",
-      difficulty: "Advanced",
-      time: "4 Weeks",
-      description:
-        "Learn neural networks, CNNs, sequence models and deep learning optimization.",
-    },
-    {
-      title: "End-to-End ML Projects",
-      difficulty: "Advanced",
-      time: "4 Weeks",
-      description:
-        "Build complete ML systems from dataset collection and training to evaluation and deployment.",
-    },
-    {
-      title: "ML Interview Preparation",
-      difficulty: "Advanced",
-      time: "2 Weeks",
-      description:
-        "Prepare statistics, algorithms, model evaluation, ML system and practical coding interviews.",
-    },
-  ],
-
-  // ========================================================
-  // DATA SCIENCE
-  // ========================================================
-
-  data: [
-    {
-      title: "Python for Data Science",
-      difficulty: "Beginner",
-      time: "2 Weeks",
-      description:
-        "Learn Python, NumPy, Pandas and programming techniques used for data analysis.",
-    },
-    {
-      title: "Statistics & Probability",
-      difficulty: "Beginner",
-      time: "3 Weeks",
-      description:
-        "Build statistical thinking using distributions, probability, hypothesis testing and sampling.",
-    },
-    {
-      title: "Data Cleaning & EDA",
-      difficulty: "Intermediate",
-      time: "3 Weeks",
-      description:
-        "Clean messy datasets and perform exploratory analysis to identify useful patterns.",
-    },
-    {
-      title: "Data Visualization",
-      difficulty: "Intermediate",
-      time: "2 Weeks",
-      description:
-        "Create meaningful visualizations and dashboards using Matplotlib, Seaborn and visualization principles.",
-    },
-    {
-      title: "Machine Learning",
-      difficulty: "Advanced",
-      time: "4 Weeks",
-      description:
-        "Apply regression, classification, clustering and model evaluation to real datasets.",
-    },
-    {
-      title: "SQL & Data Analysis",
-      difficulty: "Intermediate",
-      time: "3 Weeks",
-      description:
-        "Master SQL queries, joins, aggregations, subqueries and analytical data workflows.",
-    },
-    {
-      title: "Data Science Projects",
-      difficulty: "Advanced",
-      time: "4 Weeks",
-      description:
-        "Complete end-to-end data science projects using real-world datasets.",
-    },
-    {
-      title: "Data Science Interviews",
-      difficulty: "Advanced",
-      time: "2 Weeks",
-      description:
-        "Prepare statistics, SQL, Python, machine learning and case-study interviews.",
-    },
-  ],
-
-  // ========================================================
-  // CYBER SECURITY
-  // ========================================================
-
-  cyber: [
-    {
-      title: "Networking Fundamentals",
-      difficulty: "Beginner",
-      time: "3 Weeks",
-      description:
-        "Learn TCP/IP, DNS, HTTP, ports, protocols, routing and network architecture.",
-    },
-    {
-      title: "Linux & System Fundamentals",
-      difficulty: "Beginner",
-      time: "2 Weeks",
-      description:
-        "Learn Linux commands, permissions, processes, filesystems and system administration.",
-    },
-    {
-      title: "Cyber Security Fundamentals",
-      difficulty: "Intermediate",
-      time: "3 Weeks",
-      description:
-        "Understand CIA triad, threats, vulnerabilities, risk management and security controls.",
-    },
-    {
-      title: "Web Application Security",
-      difficulty: "Intermediate",
-      time: "3 Weeks",
-      description:
-        "Study common web vulnerabilities, secure authentication and defensive development practices.",
-    },
-    {
-      title: "Ethical Hacking",
-      difficulty: "Advanced",
-      time: "4 Weeks",
-      description:
-        "Learn authorized security testing methodology, reconnaissance, vulnerability assessment and reporting.",
-    },
-    {
-      title: "Security Tools & Monitoring",
-      difficulty: "Advanced",
-      time: "3 Weeks",
-      description:
-        "Work with security monitoring, logs, vulnerability scanners and incident investigation workflows.",
-    },
-    {
-      title: "Security Projects",
-      difficulty: "Advanced",
-      time: "4 Weeks",
-      description:
-        "Build defensive security projects and document security assessments professionally.",
-    },
-    {
-      title: "Cyber Security Interviews",
-      difficulty: "Advanced",
-      time: "2 Weeks",
-      description:
-        "Prepare networking, Linux, security concepts, web security and scenario-based interviews.",
-    },
-  ],
-
-  // ========================================================
-  // CLOUD
-  // ========================================================
-
-  cloud: [
-    {
-      title: "Linux Fundamentals",
-      difficulty: "Beginner",
-      time: "2 Weeks",
-      description:
-        "Learn Linux commands, permissions, processes, services and shell fundamentals.",
-    },
-    {
-      title: "Networking Fundamentals",
-      difficulty: "Beginner",
-      time: "3 Weeks",
-      description:
-        "Understand IP addressing, DNS, HTTP, routing, firewalls and cloud networking concepts.",
-    },
-    {
-      title: "Cloud Fundamentals",
-      difficulty: "Intermediate",
-      time: "2 Weeks",
-      description:
-        "Understand IaaS, PaaS, SaaS, regions, availability zones, storage and compute services.",
-    },
-    {
-      title: "AWS / Azure Services",
-      difficulty: "Intermediate",
-      time: "4 Weeks",
-      description:
-        "Learn compute, storage, databases, networking, IAM and monitoring using a major cloud platform.",
-    },
-    {
-      title: "Cloud Security",
-      difficulty: "Advanced",
-      time: "2 Weeks",
-      description:
-        "Implement IAM, least privilege, encryption, network security and secure cloud architecture.",
-    },
-    {
-      title: "Cloud Architecture",
-      difficulty: "Advanced",
-      time: "3 Weeks",
-      description:
-        "Design scalable, reliable and cost-aware cloud systems.",
-    },
-    {
-      title: "Cloud Projects",
-      difficulty: "Advanced",
-      time: "4 Weeks",
-      description:
-        "Deploy real applications using cloud infrastructure, databases, networking and monitoring.",
-    },
-    {
-      title: "Cloud Certification & Interviews",
-      difficulty: "Advanced",
-      time: "2 Weeks",
-      description:
-        "Prepare cloud architecture, networking, security and scenario-based interviews.",
-    },
-  ],
-
-  // ========================================================
-  // DEVOPS
-  // ========================================================
-
-  devops: [
-    {
-      title: "Linux & Shell",
-      difficulty: "Beginner",
-      time: "2 Weeks",
-      description:
-        "Master Linux administration, processes, permissions, services and shell scripting.",
-    },
-    {
-      title: "Git & GitHub",
-      difficulty: "Beginner",
-      time: "1 Week",
-      description:
-        "Learn professional Git workflows, branching, pull requests and collaboration.",
-    },
-    {
-      title: "Docker",
-      difficulty: "Intermediate",
-      time: "2 Weeks",
-      description:
-        "Containerize applications, create images, manage containers and use Docker Compose.",
-    },
-    {
-      title: "CI/CD",
-      difficulty: "Intermediate",
-      time: "3 Weeks",
-      description:
-        "Build automated pipelines for testing, building and deploying applications.",
-    },
-    {
-      title: "Cloud Infrastructure",
-      difficulty: "Advanced",
-      time: "3 Weeks",
-      description:
-        "Deploy applications on cloud platforms and understand scalable infrastructure.",
-    },
-    {
-      title: "Kubernetes",
-      difficulty: "Advanced",
-      time: "4 Weeks",
-      description:
-        "Learn containers orchestration, pods, deployments, services, scaling and cluster concepts.",
-    },
-    {
-      title: "Infrastructure as Code",
-      difficulty: "Advanced",
-      time: "3 Weeks",
-      description:
-        "Automate infrastructure using configuration and infrastructure-as-code practices.",
-    },
-    {
-      title: "DevOps Projects & Interviews",
-      difficulty: "Advanced",
-      time: "3 Weeks",
-      description:
-        "Build production-style CI/CD systems and prepare DevOps interviews.",
-    },
-  ],
-
-  // ========================================================
-  // ANDROID
-  // ========================================================
-
-  android: [
-    {
-      title: "Kotlin Fundamentals",
-      difficulty: "Beginner",
-      time: "3 Weeks",
-      description:
-        "Learn Kotlin syntax, functions, classes, collections, null safety and object-oriented programming.",
-    },
-    {
-      title: "Android Studio & UI",
-      difficulty: "Beginner",
-      time: "2 Weeks",
-      description:
-        "Learn Android Studio, project structure, layouts, resources and modern UI development.",
-    },
-    {
-      title: "Android Components",
-      difficulty: "Intermediate",
-      time: "3 Weeks",
-      description:
-        "Understand activities, fragments, lifecycle, intents, navigation and app architecture.",
-    },
-    {
-      title: "Jetpack Compose",
-      difficulty: "Intermediate",
-      time: "3 Weeks",
-      description:
-        "Build modern Android interfaces using declarative UI and Compose.",
-    },
-    {
-      title: "APIs & Local Storage",
-      difficulty: "Intermediate",
-      time: "3 Weeks",
-      description:
-        "Connect applications with REST APIs and implement local data storage.",
-    },
-    {
-      title: "Android Architecture",
-      difficulty: "Advanced",
-      time: "3 Weeks",
-      description:
-        "Learn MVVM, repositories, ViewModel, dependency management and scalable architecture.",
-    },
-    {
-      title: "Production Android App",
-      difficulty: "Advanced",
-      time: "4 Weeks",
-      description:
-        "Build a complete production-style Android application with authentication and APIs.",
-    },
-    {
-      title: "Publishing & Interviews",
-      difficulty: "Advanced",
-      time: "2 Weeks",
-      description:
-        "Prepare Android interviews and learn app release and deployment workflows.",
-    },
-  ],
-
-  // ========================================================
-  // UI UX
-  // ========================================================
-
-  uiux: [
-    {
-      title: "Design Fundamentals",
-      difficulty: "Beginner",
-      time: "2 Weeks",
-      description:
-        "Learn typography, color theory, spacing, hierarchy, composition and visual balance.",
-    },
-    {
-      title: "UX Research",
-      difficulty: "Beginner",
-      time: "2 Weeks",
-      description:
-        "Learn user research, interviews, personas, user journeys and problem identification.",
-    },
-    {
-      title: "Wireframing",
-      difficulty: "Intermediate",
-      time: "2 Weeks",
-      description:
-        "Create low and high fidelity wireframes focused on user flows and usability.",
-    },
-    {
-      title: "Figma",
-      difficulty: "Intermediate",
-      time: "3 Weeks",
-      description:
-        "Master Figma components, auto layout, variants, prototypes and design systems.",
-    },
-    {
-      title: "Design Systems",
-      difficulty: "Advanced",
-      time: "2 Weeks",
-      description:
-        "Create reusable components, tokens, patterns and scalable product design systems.",
-    },
-    {
-      title: "Prototyping & Usability",
-      difficulty: "Advanced",
-      time: "3 Weeks",
-      description:
-        "Build interactive prototypes and validate designs through usability testing.",
-    },
-    {
-      title: "Portfolio Projects",
-      difficulty: "Advanced",
-      time: "4 Weeks",
-      description:
-        "Create complete case studies covering research, wireframes, UI, prototype and final solution.",
-    },
-    {
-      title: "UI/UX Interview Preparation",
-      difficulty: "Advanced",
-      time: "2 Weeks",
-      description:
-        "Prepare design challenges, portfolio presentation and UX problem-solving interviews.",
-    },
-  ],
-};
-
-// ============================================================
-// CREATE ROADMAP
-// ============================================================
-
-const createRoadmap = (career, level) => {
-  const baseSteps =
-    roadmapData[career] || [];
-
-  return baseSteps.map((step, index) => {
-    let status = "pending";
-    let progress = 0;
-
-    if (level === "Beginner") {
-      if (index === 0) {
-        status = "in-progress";
-        progress = 35;
-      }
-    }
-
-    if (level === "Intermediate") {
-      if (index < 2) {
-        status = "completed";
-        progress = 100;
-      } else if (index === 2) {
-        status = "in-progress";
-        progress = 45;
-      }
-    }
-
-    if (level === "Advanced") {
-      if (index < 4) {
-        status = "completed";
-        progress = 100;
-      } else if (index === 4) {
-        status = "in-progress";
-        progress = 55;
-      }
-    }
-
-    return {
-      ...step,
-      stepNumber: index + 1,
-      status,
-      progress,
-    };
-  });
-};
-
-// ============================================================
-// WEEKLY PLAN
-// ============================================================
-
-const createWeeklyPlan = (
-  career,
-  level
-) => {
-  const plans = {
-
-    frontend: [
-      ["HTML, CSS", "Build responsive landing page"],
-      ["JavaScript", "Build DOM-based application"],
-      ["React", "Build React dashboard"],
-      ["API Integration", "Connect real API"],
-      ["State Management", "Build complex UI"],
-      ["Performance", "Optimize React application"],
-      ["Portfolio", "Build portfolio project"],
-      ["Deployment", "Deploy final project"],
-    ],
-
-    backend: [
-      ["Node.js", "Build basic server"],
-      ["Express", "Create REST API"],
-      ["MongoDB", "Design database"],
-      ["Authentication", "Implement JWT auth"],
-      ["Authorization", "Implement roles"],
-      ["Security", "Secure APIs"],
-      ["Backend Project", "Build complete API"],
-      ["Deployment", "Deploy backend"],
-    ],
-
-    fullstack: [
-      ["HTML/CSS", "Build responsive UI"],
-      ["JavaScript", "Build interactive frontend"],
-      ["React", "Build React application"],
-      ["Node/Express", "Create REST API"],
-      ["MongoDB", "Connect database"],
-      ["JWT", "Implement authentication"],
-      ["Full Stack Project", "Connect complete stack"],
-      ["Deployment", "Deploy full application"],
-    ],
-
-    ai: [
-      ["Python", "Build Python mini project"],
-      ["NumPy/Pandas", "Analyze dataset"],
-      ["Statistics", "Perform statistical analysis"],
-      ["Machine Learning", "Train ML model"],
-      ["Deep Learning", "Build neural network"],
-      ["LLM", "Build AI application"],
-      ["RAG", "Build knowledge-based AI"],
-      ["AI Project", "Deploy AI application"],
-    ],
-
-    ml: [
-      ["Python", "Build data processing script"],
-      ["Statistics", "Analyze dataset"],
-      ["Preprocessing", "Clean real dataset"],
-      ["Regression", "Build prediction model"],
-      ["Classification", "Build classifier"],
-      ["Clustering", "Perform segmentation"],
-      ["Deep Learning", "Train neural network"],
-      ["ML Project", "Deploy ML model"],
-    ],
-
-    data: [
-      ["Python", "Practice Pandas"],
-      ["SQL", "Solve analytical queries"],
-      ["Statistics", "Analyze business data"],
-      ["EDA", "Explore real dataset"],
-      ["Visualization", "Create dashboard"],
-      ["Machine Learning", "Build prediction model"],
-      ["Case Study", "Solve business problem"],
-      ["Portfolio", "Publish data project"],
-    ],
-
-    cyber: [
-      ["Networking", "Analyze network traffic"],
-      ["Linux", "Practice Linux administration"],
-      ["Security Basics", "Perform security assessment"],
-      ["Web Security", "Study web vulnerabilities"],
-      ["Monitoring", "Analyze security logs"],
-      ["Ethical Hacking", "Perform authorized lab testing"],
-      ["Security Project", "Create security report"],
-      ["Interview", "Practice security scenarios"],
-    ],
-
-    cloud: [
-      ["Linux", "Deploy Linux server"],
-      ["Networking", "Configure cloud networking"],
-      ["Cloud Basics", "Deploy first cloud service"],
-      ["Compute", "Deploy application"],
-      ["Storage", "Design storage solution"],
-      ["Database", "Deploy cloud database"],
-      ["Security", "Configure IAM"],
-      ["Architecture", "Build cloud project"],
-    ],
-
-    devops: [
-      ["Linux", "Automate shell task"],
-      ["Git", "Create Git workflow"],
-      ["Docker", "Containerize application"],
-      ["Docker Compose", "Run multi-container app"],
-      ["CI/CD", "Create pipeline"],
-      ["Cloud", "Deploy application"],
-      ["Kubernetes", "Deploy containerized app"],
-      ["DevOps Project", "Build CI/CD system"],
-    ],
-
-    android: [
-      ["Kotlin", "Build Kotlin application"],
-      ["Android Studio", "Create Android app"],
-      ["UI", "Build app screens"],
-      ["Navigation", "Implement app navigation"],
-      ["API", "Connect REST API"],
-      ["Storage", "Implement local storage"],
-      ["Architecture", "Build MVVM application"],
-      ["Final App", "Publish production app"],
-    ],
-
-    uiux: [
-      ["Design Basics", "Create visual style guide"],
-      ["UX Research", "Create user persona"],
-      ["User Flow", "Design complete user journey"],
-      ["Wireframes", "Create low-fidelity wireframes"],
-      ["Figma", "Create high-fidelity UI"],
-      ["Prototype", "Build interactive prototype"],
-      ["Usability", "Test design with users"],
-      ["Case Study", "Publish portfolio case study"],
-    ],
-  };
-
-  const selected =
-    plans[career] ||
-    plans.fullstack;
-
-  const hoursByLevel = {
-    Beginner: [8, 8, 10, 10, 10, 12, 12, 12],
-    Intermediate: [10, 10, 12, 12, 14, 14, 15, 15],
-    Advanced: [12, 12, 14, 15, 16, 16, 18, 18],
-  };
-
-  return selected.map(
-    ([topic, assignment], index) => ({
-      week: `Week ${index + 1}`,
-      topics: [topic],
-      assignment,
-      miniProject:
-        `${careerNames[career]} - ${topic} Project`,
-      hours:
-        hoursByLevel[level][index],
-    })
+/* ============================================================
+   HELPERS
+============================================================ */
+
+const getRoadmapId = (roadmap) =>
+  roadmap?.id || roadmap?._id || roadmap?.roadmapId || null;
+
+/* ============================================================
+   SHARED UI
+============================================================ */
+
+function GlowBackground() {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <motion.div
+        className="absolute -top-40 left-1/4 h-96 w-96 rounded-full bg-cyan-500/20 blur-[120px]"
+        animate={{ opacity: [0.5, 0.8, 0.5] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute top-1/3 -right-20 h-96 w-96 rounded-full bg-blue-600/20 blur-[130px]"
+        animate={{ opacity: [0.4, 0.7, 0.4] }}
+        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+      />
+      <div className="absolute bottom-0 left-10 h-72 w-72 rounded-full bg-indigo-500/10 blur-[100px]" />
+    </div>
   );
-};
-
-// ============================================================
-// PROJECTS
-// ============================================================
-
-const projectData = {
-
-  frontend: [
-    ["Responsive Portfolio", "Beginner", ["HTML", "CSS", "JavaScript"], "1 Week"],
-    ["Weather Dashboard", "Beginner", ["JavaScript", "REST API"], "1 Week"],
-    ["React Task Manager", "Intermediate", ["React", "Hooks", "API"], "2 Weeks"],
-    ["E-Commerce Frontend", "Advanced", ["React", "State Management", "API"], "4 Weeks"],
-  ],
-
-  backend: [
-    ["REST API", "Beginner", ["Node.js", "Express"], "1 Week"],
-    ["Authentication API", "Intermediate", ["Node.js", "JWT", "MongoDB"], "2 Weeks"],
-    ["Task Manager API", "Intermediate", ["Express", "MongoDB", "JWT"], "2 Weeks"],
-    ["Realtime Chat Backend", "Advanced", ["Node.js", "Socket.IO", "MongoDB"], "4 Weeks"],
-  ],
-
-  fullstack: [
-    ["Portfolio Website", "Beginner", ["React", "CSS"], "1 Week"],
-    ["Authentication System", "Intermediate", ["React", "Node.js", "JWT"], "2 Weeks"],
-    ["Task Management SaaS", "Advanced", ["React", "Express", "MongoDB"], "3 Weeks"],
-    ["Full Stack E-Commerce", "Advanced", ["React", "Node.js", "MongoDB", "JWT"], "5 Weeks"],
-  ],
-
-  ai: [
-    ["AI Chatbot", "Beginner", ["Python", "API"], "1 Week"],
-    ["Recommendation System", "Intermediate", ["Python", "Pandas", "ML"], "2 Weeks"],
-    ["Image Classification", "Advanced", ["Python", "CNN", "Deep Learning"], "3 Weeks"],
-    ["RAG AI Assistant", "Advanced", ["Python", "LLM", "Embeddings"], "4 Weeks"],
-  ],
-
-  ml: [
-    ["House Price Prediction", "Beginner", ["Python", "Regression"], "1 Week"],
-    ["Customer Churn Prediction", "Intermediate", ["Pandas", "Scikit-learn"], "2 Weeks"],
-    ["Recommendation Engine", "Advanced", ["Python", "ML"], "3 Weeks"],
-    ["End-to-End ML Platform", "Advanced", ["ML", "API", "Deployment"], "4 Weeks"],
-  ],
-
-  data: [
-    ["Sales Data Analysis", "Beginner", ["Python", "Pandas"], "1 Week"],
-    ["SQL Analytics Dashboard", "Intermediate", ["SQL", "Python"], "2 Weeks"],
-    ["Customer Segmentation", "Advanced", ["Python", "Clustering"], "3 Weeks"],
-    ["Business Intelligence Case Study", "Advanced", ["SQL", "Python", "Visualization"], "4 Weeks"],
-  ],
-
-  cyber: [
-    ["Network Analysis Lab", "Beginner", ["Networking", "Linux"], "1 Week"],
-    ["Security Assessment", "Intermediate", ["Security", "Linux"], "2 Weeks"],
-    ["Web Security Lab", "Advanced", ["Web Security", "OWASP"], "3 Weeks"],
-    ["SOC Monitoring Project", "Advanced", ["Logs", "Monitoring", "Security"], "4 Weeks"],
-  ],
-
-  cloud: [
-    ["Cloud Static Website", "Beginner", ["Cloud Storage", "DNS"], "1 Week"],
-    ["Cloud API Deployment", "Intermediate", ["Compute", "API"], "2 Weeks"],
-    ["Scalable Web Architecture", "Advanced", ["Cloud", "Networking"], "3 Weeks"],
-    ["Production Cloud System", "Advanced", ["Cloud", "Security", "Database"], "4 Weeks"],
-  ],
-
-  devops: [
-    ["Dockerized App", "Beginner", ["Docker"], "1 Week"],
-    ["CI/CD Pipeline", "Intermediate", ["GitHub Actions", "Docker"], "2 Weeks"],
-    ["Kubernetes Deployment", "Advanced", ["Kubernetes", "Docker"], "3 Weeks"],
-    ["Production DevOps Platform", "Advanced", ["CI/CD", "Cloud", "Kubernetes"], "4 Weeks"],
-  ],
-
-  android: [
-    ["Calculator App", "Beginner", ["Kotlin", "Android"], "1 Week"],
-    ["Weather App", "Intermediate", ["Kotlin", "REST API"], "2 Weeks"],
-    ["Expense Manager", "Advanced", ["Kotlin", "Room", "MVVM"], "3 Weeks"],
-    ["Production Android App", "Advanced", ["Kotlin", "API", "MVVM"], "4 Weeks"],
-  ],
-
-  uiux: [
-    ["Mobile App Redesign", "Beginner", ["Figma", "UI"], "1 Week"],
-    ["Food Delivery UX", "Intermediate", ["UX Research", "Figma"], "2 Weeks"],
-    ["FinTech Product Design", "Advanced", ["Figma", "Design System"], "3 Weeks"],
-    ["Complete Product Case Study", "Advanced", ["Research", "UI", "Prototype"], "4 Weeks"],
-  ],
-};
-
-// ============================================================
-// CREATE PROJECTS
-// ============================================================
-
-const createProjects = (career) => {
-  const projects =
-    projectData[career] ||
-    projectData.fullstack;
-
-  return projects.map(
-    ([name, difficulty, skills, time]) => ({
-      name,
-      difficulty,
-      skills,
-      time,
-    })
-  );
-};
-
-// ============================================================
-// SKILL ANALYSIS
-// ============================================================
-
-const createSkillAnalysis = (
-  career,
-  level
-) => {
-  const scores = {
-    Beginner: {
-      currentSkills: 25,
-      missingSkills: 75,
-      industryReadiness: 20,
-      interviewReadiness: 15,
-      confidenceScore: 30,
-    },
-
-    Intermediate: {
-      currentSkills: 55,
-      missingSkills: 45,
-      industryReadiness: 55,
-      interviewReadiness: 45,
-      confidenceScore: 60,
-    },
-
-    Advanced: {
-      currentSkills: 82,
-      missingSkills: 18,
-      industryReadiness: 85,
-      interviewReadiness: 78,
-      confidenceScore: 88,
-    },
-  };
-
-  return {
-    ...scores[level],
-    career: careerNames[career],
-  };
-};
-
-// ============================================================
-// INTERVIEW PREPARATION
-// ============================================================
-
-const interviewData = {
-
-  frontend: [
-    "HTML semantic elements",
-    "CSS Flexbox and Grid",
-    "JavaScript fundamentals",
-    "Closures and asynchronous JavaScript",
-    "React hooks",
-    "State management",
-    "Browser rendering",
-    "Frontend performance",
-    "REST APIs",
-    "Frontend coding problems",
-  ],
-
-  backend: [
-    "Node.js event loop",
-    "Express middleware",
-    "REST API design",
-    "MongoDB schema design",
-    "Indexes and aggregation",
-    "JWT authentication",
-    "Authorization",
-    "API security",
-    "Caching",
-    "Backend system design",
-  ],
-
-  fullstack: [
-    "JavaScript fundamentals",
-    "React architecture",
-    "Node.js event loop",
-    "REST API design",
-    "MongoDB",
-    "JWT authentication",
-    "Frontend-backend communication",
-    "Security",
-    "Deployment",
-    "Full stack system design",
-  ],
-
-  ai: [
-    "Python",
-    "Linear algebra",
-    "Statistics",
-    "Machine learning",
-    "Neural networks",
-    "Transformers",
-    "LLMs",
-    "Embeddings",
-    "RAG",
-    "AI system design",
-  ],
-
-  ml: [
-    "Probability",
-    "Statistics",
-    "Regression",
-    "Classification",
-    "Feature engineering",
-    "Model evaluation",
-    "Overfitting",
-    "Clustering",
-    "Deep learning",
-    "ML system design",
-  ],
-
-  data: [
-    "Python",
-    "Pandas",
-    "SQL",
-    "Statistics",
-    "EDA",
-    "Data visualization",
-    "Hypothesis testing",
-    "Machine learning",
-    "Business case studies",
-    "Data interpretation",
-  ],
-
-  cyber: [
-    "Networking",
-    "TCP/IP",
-    "Linux",
-    "Authentication",
-    "Web security",
-    "OWASP concepts",
-    "Threat modeling",
-    "Incident response",
-    "Security monitoring",
-    "Security scenarios",
-  ],
-
-  cloud: [
-    "Cloud fundamentals",
-    "Networking",
-    "IAM",
-    "Compute",
-    "Storage",
-    "Databases",
-    "Cloud security",
-    "Scalability",
-    "Availability",
-    "Cloud architecture",
-  ],
-
-  devops: [
-    "Linux",
-    "Git",
-    "Docker",
-    "CI/CD",
-    "Cloud",
-    "Kubernetes",
-    "Infrastructure",
-    "Monitoring",
-    "Deployment strategies",
-    "DevOps architecture",
-  ],
-
-  android: [
-    "Kotlin",
-    "Android lifecycle",
-    "Activities",
-    "Jetpack Compose",
-    "Navigation",
-    "REST APIs",
-    "Local storage",
-    "MVVM",
-    "Performance",
-    "Android architecture",
-  ],
-
-  uiux: [
-    "UX research",
-    "Personas",
-    "User journeys",
-    "Wireframing",
-    "Typography",
-    "Color theory",
-    "Figma",
-    "Design systems",
-    "Usability testing",
-    "Design case studies",
-  ],
-};
-
-// ============================================================
-// CREATE INTERVIEW PREPARATION
-// ============================================================
-
-const createInterviewPreparation = (
-  career
-) => {
-  return {
-    focus: careerNames[career],
-    topics:
-      interviewData[career] ||
-      interviewData.fullstack,
-    mockInterviews: 5,
-    codingChallenges: 10,
-    portfolioReview: true,
-  };
-};
-
-// ============================================================
-// UPDATE ROADMAP STEP PROGRESS
-// PATCH /api/roadmap/:id/progress
-// ============================================================
-
-export const updateRoadmapStepProgress = async (
-  req,
-  res
-) => {
-  try {
-    const userId = req.user?._id;
-    const { id } = req.params;
-
-    const {
-      stepIndex,
-      progress,
-    } = req.body;
-
-    // --------------------------------------------------------
-    // AUTH CHECK
-    // --------------------------------------------------------
-
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
-
-    // --------------------------------------------------------
-    // VALIDATE STEP INDEX
-    // --------------------------------------------------------
-
-    if (
-      stepIndex === undefined ||
-      stepIndex === null ||
-      Number.isNaN(Number(stepIndex))
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Step index is required",
-      });
-    }
-
-    const index = Number(stepIndex);
-
-    // --------------------------------------------------------
-    // VALIDATE PROGRESS
-    // --------------------------------------------------------
-
-    const numericProgress = Number(progress);
-
-    if (
-      Number.isNaN(numericProgress) ||
-      numericProgress < 0 ||
-      numericProgress > 100
-    ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Progress must be a number between 0 and 100",
-      });
-    }
-
-    // --------------------------------------------------------
-    // FIND USER ROADMAP
-    // --------------------------------------------------------
-
-    const roadmap =
-      await Roadmap.findOne({
-        _id: id,
-        user: userId,
-      });
-
-    if (!roadmap) {
-      return res.status(404).json({
-        success: false,
-        message: "Roadmap not found",
-      });
-    }
-
-    // --------------------------------------------------------
-    // VALIDATE STEP
-    // --------------------------------------------------------
-
-    if (
-      !roadmap.roadmapSteps ||
-      index < 0 ||
-      index >= roadmap.roadmapSteps.length
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid roadmap step",
-      });
-    }
-
-    // --------------------------------------------------------
-    // UPDATE STEP
-    // --------------------------------------------------------
-
-    roadmap.roadmapSteps[index].progress =
-      numericProgress;
-
-    roadmap.roadmapSteps[index].status =
-      numericProgress === 100
-        ? "completed"
-        : numericProgress > 0
-        ? "in-progress"
-        : "pending";
-
-    await roadmap.save();
-
-    // --------------------------------------------------------
-    // CALCULATE OVERALL PROGRESS
-    // --------------------------------------------------------
-
-    const steps = roadmap.roadmapSteps;
-
-    const totalProgress = steps.reduce(
-      (total, step) =>
-        total + Number(step.progress || 0),
-      0
-    );
-
-    const overallProgress =
-      steps.length > 0
-        ? Math.round(
-            totalProgress / steps.length
-          )
-        : 0;
-
-    // --------------------------------------------------------
-    // FIND NEXT STEP
-    // --------------------------------------------------------
-
-    let nextStep =
-      steps.find(
-        (step) =>
-          step.status === "in-progress"
-      ) || null;
-
-    if (!nextStep) {
-      nextStep =
-        steps.find(
-          (step) =>
-            step.status === "pending"
-        ) || null;
-    }
-
-    // --------------------------------------------------------
-    // RESPONSE
-    // --------------------------------------------------------
-
-    return res.status(200).json({
-      success: true,
-      message: "Roadmap progress updated successfully",
-
-      roadmap: {
-        id: roadmap._id,
-        career: roadmap.career,
-        level: roadmap.level,
-
-        roadmapSteps:
-          roadmap.roadmapSteps,
-
-        progress:
-          overallProgress,
-
-        completedSteps:
-          steps.filter(
-            (step) =>
-              step.status === "completed"
-          ).length,
-
-        totalSteps:
-          steps.length,
-
-        nextStep,
-      },
-    });
-  } catch (error) {
-    console.error(
-      "Update Roadmap Progress Error:",
-      error
-    );
-
-    return res.status(500).json({
-      success: false,
-      message:
-        "Failed to update roadmap progress",
-      error: error.message,
-    });
-  }
-};
-
-// ============================================================
-// AI STEP-LEVEL LEARNING TUTOR
-// POST /api/roadmap/:id/steps/:stepIndex/learn
-//
-// Generates a structured, beginner-friendly learning module
-// for ONE specific roadmap step. This is completely separate
-// from roadmap generation and from step completion:
-//   - It does NOT touch roadmap.roadmapSteps[index].progress
-//   - It does NOT touch roadmap.roadmapSteps[index].status
-//   - It is never called by "Complete Step" / progress toggling
-//
-// IMPORTANT: roadmapId and stepIndex come from the URL
-// (req.params.id, req.params.stepIndex) — matching the route
-// defined in roadmap.routes.js. career/level/step are OPTIONAL
-// context sent in the body by the frontend; if omitted, they
-// fall back to whatever is already saved on the roadmap.
-// ============================================================
-
-/*
- * Builds the AI prompt for a single roadmap step.
- * Kept outside the handler so it's easy to tune independently.
- */
-const buildLearningPrompt = ({ careerName, level, step }) => {
-  const topicsLine =
-    Array.isArray(step.topics) && step.topics.length
-      ? `- Related Topics: ${step.topics.join(", ")}\n`
-      : "";
-
-  return `
-You are an expert personal learning tutor inside "CampusHub AI", a platform that helps beginner students follow a step-by-step career roadmap toward their goal career.
-
-The student is currently on ONE SPECIFIC STEP of a larger roadmap. Your job is to teach ONLY this step, in depth. Do NOT generate a new roadmap. Do NOT jump ahead to unrelated or advanced topics outside this step. Do NOT summarize the whole career path — stay scoped to this one step.
-
-STUDENT CONTEXT
-- Career Path: ${careerName}
-- Skill Level: ${level}
-- Current Roadmap Step: ${step.title}
-- Step Description: ${step.description || "Not provided"}
-- Step Difficulty: ${step.difficulty || "General"}
-- Estimated Time: ${step.time || "Flexible"}
-${topicsLine}
-LANGUAGE RULES
-- The student's own questions or context may arrive in Hindi, Hinglish, or English. Understand all of these.
-- Your ENTIRE generated response content must be written in English only, unless the student explicitly asked for a different language.
-
-TEACHING RULES
-- Teach like a patient, encouraging personal tutor for a "${level}" student.
-- Use simple, clear language. Explain from the basics first, then build up. Avoid unnecessary jargon.
-- Stay strictly scoped to "${step.title}" — do not teach unrelated topics.
-- If this is a programming/technical topic, include real, runnable code examples.
-- If this is a non-programming topic (design, research, communication, etc.), replace code examples with concrete practical exercises instead, and you may return an empty array for codeExamples.
-
-Respond with ONLY a single valid JSON object — no markdown code fences, no commentary before or after — matching EXACTLY this shape:
-
-{
-  "title": string,
-  "overview": string,
-  "whyItMatters": string,
-  "whatYouWillLearn": string[],
-  "coreConcepts": [
-    { "title": string, "explanation": string, "example": string }
-  ],
-  "codeExamples": [
-    { "label": string, "code": string }
-  ],
-  "commonMistakes": string[],
-  "practiceQuestions": string[],
-  "handsOnTask": string,
-  "interviewQuestions": string[],
-  "keyTakeaways": string[],
-  "suggestedNextStep": string
 }
 
-Return ONLY the JSON object described above.
-`.trim();
-};
+function SectionBadge({ children }) {
+  return (
+    <span className="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900/60 px-4 py-1.5 text-xs font-medium text-cyan-300 backdrop-blur-md">
+      <Sparkles className="h-3.5 w-3.5" />
+      {children}
+    </span>
+  );
+}
 
-export const generateStepLearning = async (req, res) => {
-  try {
-    const userId = req.user?._id;
+function SectionHeading({ badge, title, subtitle }) {
+  return (
+    <motion.div
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true }}
+      variants={fadeUp}
+      className="mb-14 text-center"
+    >
+      <SectionBadge>{badge}</SectionBadge>
+      <h2 className="mx-auto mt-4 max-w-2xl text-3xl font-bold text-white sm:text-4xl">
+        {title}
+      </h2>
+      {subtitle && (
+        <p className="mx-auto mt-3 max-w-xl text-slate-400">{subtitle}</p>
+      )}
+    </motion.div>
+  );
+}
 
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
+function CircularProgress({ value = 0, size = 120, label, sublabel }) {
+  const safeValue = Math.min(100, Math.max(0, Number(value) || 0));
+  const radius = (size - 16) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (safeValue / 100) * circumference;
 
-    // --------------------------------------------------------
-    // ROADMAP ID + STEP INDEX COME FROM THE URL
-    // Route: /:id/steps/:stepIndex/learn
-    // --------------------------------------------------------
+  return (
+    <div
+      className="relative flex flex-col items-center justify-center"
+      style={{ width: size, height: size }}
+    >
+      <svg className="h-full w-full -rotate-90" viewBox={`0 0 ${size} ${size}`}>
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="#1e293b"
+          strokeWidth="10"
+          fill="none"
+        />
+        <motion.circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="url(#roadmapGradient)"
+          strokeWidth="10"
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          initial={{ strokeDashoffset: circumference }}
+          whileInView={{ strokeDashoffset: offset }}
+          viewport={{ once: true }}
+          transition={{ duration: 1.4, ease: "easeOut" }}
+        />
+        <defs>
+          <linearGradient id="roadmapGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#22d3ee" />
+            <stop offset="100%" stopColor="#3b82f6" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div className="absolute flex flex-col items-center">
+        <span className="text-2xl font-bold text-white">{safeValue}%</span>
+        {sublabel && <span className="text-[10px] text-slate-500">{sublabel}</span>}
+      </div>
+      {label && <span className="mt-2 text-xs text-slate-400">{label}</span>}
+    </div>
+  );
+}
 
-    const { id: roadmapId, stepIndex } = req.params;
+function FAQItem({ item, isOpen, onClick }) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/50 backdrop-blur-md">
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex w-full items-center justify-between gap-4 px-6 py-4 text-left"
+      >
+        <span className="text-sm font-medium text-white sm:text-base">{item.q}</span>
+        <motion.span
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <ChevronDown className="h-5 w-5 shrink-0 text-cyan-400" />
+        </motion.span>
+      </button>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <p className="px-6 pb-5 text-sm leading-relaxed text-slate-400">{item.a}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
-    if (!roadmapId) {
-      return res.status(400).json({
-        success: false,
-        message: "Roadmap id is required in the URL",
-      });
-    }
+/* ============================================================
+   AI LEARNING PANEL
+============================================================ */
 
-    if (
-      stepIndex === undefined ||
-      stepIndex === null ||
-      Number.isNaN(Number(stepIndex))
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "A valid step index is required in the URL",
-      });
-    }
+function LearningPanel({
+  isOpen,
+  isLoading,
+  error,
+  stepInfo,
+  content,
+  onClose,
+  onRetry,
+  onCompleteStep,
+  isCompleting,
+  isCompleted,
+}) {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-sm"
+          />
 
-    const index = Number(stepIndex);
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+            className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl border border-slate-800 bg-slate-950 shadow-2xl sm:inset-0 sm:top-10 sm:bottom-10 sm:my-auto sm:h-fit sm:rounded-3xl"
+          >
+            <div className="flex items-center justify-between gap-4 border-b border-slate-800 bg-slate-900/60 px-6 py-4">
+              <div className="min-w-0">
+                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-cyan-300">
+                  <Brain className="h-3.5 w-3.5" />
+                  AI Learning Tutor
+                </p>
+                <h3 className="mt-0.5 truncate text-base font-semibold text-white sm:text-lg">
+                  {stepInfo?.title || "Learning Step"}
+                </h3>
+                {stepInfo && (
+                  <div className="mt-1 flex flex-wrap gap-3 text-[11px] text-slate-500">
+                    <span className="flex items-center gap-1">
+                      <Target className="h-3 w-3 text-cyan-400" />
+                      {stepInfo.difficulty || "General"}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3 text-cyan-400" />
+                      {stepInfo.time || "Flexible"}
+                    </span>
+                  </div>
+                )}
+              </div>
 
-    // --------------------------------------------------------
-    // OPTIONAL CONTEXT FROM THE BODY
-    // (career / level / step details the frontend may send;
-    // all optional — we always fall back to the saved roadmap)
-    // --------------------------------------------------------
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-900 text-slate-400 transition hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
 
-    const body = req.body || {};
-    const { career, level, step } = body;
+            <div className="flex-1 overflow-y-auto px-6 py-6">
+              {isLoading && (
+                <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+                  <p className="text-sm text-slate-400">
+                    AI is preparing your learning module...
+                  </p>
+                </div>
+              )}
 
-    // --------------------------------------------------------
-    // LOAD ROADMAP (SCOPED TO THIS USER)
-    // --------------------------------------------------------
+              {!isLoading && error && (
+                <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+                  <AlertTriangle className="h-8 w-8 text-amber-400" />
+                  <p className="max-w-sm text-sm text-slate-400">{error}</p>
+                  <div className="mt-2 flex gap-3">
+                    <button
+                      type="button"
+                      onClick={onRetry}
+                      className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-xs font-semibold text-cyan-300 transition hover:bg-cyan-500/20"
+                    >
+                      Retry
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="rounded-xl border border-slate-700 bg-slate-800/60 px-4 py-2 text-xs font-semibold text-slate-200 transition hover:border-slate-600"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              )}
 
-    const roadmap = await Roadmap.findOne({
-      _id: roadmapId,
-      user: userId,
+              {!isLoading && !error && content && (
+                <div className="space-y-8">
+                  {content.overview && (
+                    <div>
+                      <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                        <BookOpen className="h-3.5 w-3.5" />
+                        Overview
+                      </p>
+                      <p className="text-sm leading-relaxed text-slate-300">
+                        {content.overview}
+                      </p>
+                    </div>
+                  )}
+
+                  {content.whyItMatters && (
+                    <div>
+                      <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                        <Lightbulb className="h-3.5 w-3.5" />
+                        Why This Matters
+                      </p>
+                      <p className="text-sm leading-relaxed text-slate-300">
+                        {content.whyItMatters}
+                      </p>
+                    </div>
+                  )}
+
+                  {Array.isArray(content.whatYouWillLearn) &&
+                    content.whatYouWillLearn.length > 0 && (
+                      <div>
+                        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                          <ListChecks className="h-3.5 w-3.5" />
+                          What You'll Learn
+                        </p>
+                        <ul className="space-y-1.5">
+                          {content.whatYouWillLearn.map((item, i) => (
+                            <li
+                              key={i}
+                              className="flex items-start gap-2 text-sm text-slate-300"
+                            >
+                              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan-400" />
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                  {Array.isArray(content.coreConcepts) &&
+                    content.coreConcepts.length > 0 && (
+                      <div>
+                        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                          <Brain className="h-3.5 w-3.5" />
+                          Core Concepts
+                        </p>
+                        <div className="space-y-4">
+                          {content.coreConcepts.map((concept, i) => (
+                            <div
+                              key={i}
+                              className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4"
+                            >
+                              <h4 className="text-sm font-semibold text-white">
+                                {concept?.title || `Concept ${i + 1}`}
+                              </h4>
+                              {concept?.explanation && (
+                                <p className="mt-1.5 text-sm leading-relaxed text-slate-400">
+                                  {concept.explanation}
+                                </p>
+                              )}
+                              {concept?.example && (
+                                <pre className="mt-3 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-3 text-xs text-cyan-200">
+                                  <code>{concept.example}</code>
+                                </pre>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  {Array.isArray(content.codeExamples) &&
+                    content.codeExamples.length > 0 && (
+                      <div>
+                        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                          <Terminal className="h-3.5 w-3.5" />
+                          Code Examples
+                        </p>
+                        <div className="space-y-3">
+                          {content.codeExamples.map((ex, i) => (
+                            <div key={i}>
+                              {ex?.label && (
+                                <p className="mb-1 text-xs text-slate-500">{ex.label}</p>
+                              )}
+                              <pre className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-3 text-xs text-cyan-200">
+                                <code>{typeof ex === "string" ? ex : ex?.code || ""}</code>
+                              </pre>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  {Array.isArray(content.commonMistakes) &&
+                    content.commonMistakes.length > 0 && (
+                      <div>
+                        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-300">
+                          <AlertTriangle className="h-3.5 w-3.5" />
+                          Common Mistakes
+                        </p>
+                        <ul className="space-y-1.5">
+                          {content.commonMistakes.map((item, i) => (
+                            <li
+                              key={i}
+                              className="flex items-start gap-2 text-sm text-slate-300"
+                            >
+                              <Circle className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                  {Array.isArray(content.practiceQuestions) &&
+                    content.practiceQuestions.length > 0 && (
+                      <div>
+                        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                          <HelpCircle className="h-3.5 w-3.5" />
+                          Practice Questions
+                        </p>
+                        <ul className="space-y-1.5">
+                          {content.practiceQuestions.map((item, i) => (
+                            <li
+                              key={i}
+                              className="flex items-start gap-2 text-sm text-slate-300"
+                            >
+                              <span className="text-cyan-400">{i + 1}.</span>
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                  {content.handsOnTask && (
+                    <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-4">
+                      <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                        <ClipboardList className="h-3.5 w-3.5" />
+                        Hands-On Task
+                      </p>
+                      <p className="text-sm leading-relaxed text-slate-300">
+                        {content.handsOnTask}
+                      </p>
+                    </div>
+                  )}
+
+                  {Array.isArray(content.interviewQuestions) &&
+                    content.interviewQuestions.length > 0 && (
+                      <div>
+                        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                          <Mic className="h-3.5 w-3.5" />
+                          Interview Questions
+                        </p>
+                        <ul className="space-y-1.5">
+                          {content.interviewQuestions.map((item, i) => (
+                            <li
+                              key={i}
+                              className="flex items-start gap-2 text-sm text-slate-300"
+                            >
+                              <span className="text-cyan-400">{i + 1}.</span>
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                  {Array.isArray(content.keyTakeaways) &&
+                    content.keyTakeaways.length > 0 && (
+                      <div>
+                        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-300">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Key Takeaways
+                        </p>
+                        <ul className="space-y-1.5">
+                          {content.keyTakeaways.map((item, i) => (
+                            <li
+                              key={i}
+                              className="flex items-start gap-2 text-sm text-slate-300"
+                            >
+                              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                  {content.suggestedNextStep && (
+                    <div className="flex items-start gap-2 rounded-2xl border border-slate-800 bg-slate-900/50 p-4 text-sm text-slate-300">
+                      <ArrowRightCircle className="mt-0.5 h-4 w-4 shrink-0 text-cyan-400" />
+                      {content.suggestedNextStep}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {!isLoading && !error && content && (
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-800 bg-slate-900/60 px-6 py-4">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-xl border border-slate-700 bg-slate-800/60 px-4 py-2 text-xs font-semibold text-slate-200 transition hover:border-slate-600"
+                >
+                  Continue Later
+                </button>
+
+                <button
+                  type="button"
+                  onClick={onCompleteStep}
+                  disabled={isCompleting || isCompleted}
+                  className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2 text-xs font-semibold text-white shadow-lg shadow-cyan-500/20 transition disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isCompleting ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Saving...
+                    </>
+                  ) : isCompleted ? (
+                    <>
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Step Completed
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Complete Step
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* ============================================================
+   MAIN COMPONENT
+============================================================ */
+
+function SkillRoadmap() {
+  const [selectedCareer, setSelectedCareer] = useState("fullstack");
+  const [selectedLevel, setSelectedLevel] = useState("Beginner");
+
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoadingRoadmap, setIsLoadingRoadmap] = useState(true);
+  const [genProgress, setGenProgress] = useState(0);
+
+  const [roadmapReady, setRoadmapReady] = useState(false);
+  const [roadmapData, setRoadmapData] = useState(null);
+  const [roadmapError, setRoadmapError] = useState(null);
+
+  const [stepProgress, setStepProgress] = useState({});
+
+  const [learningStepIndex, setLearningStepIndex] = useState(null);
+  const [learningContent, setLearningContent] = useState(null);
+  const [isLearning, setIsLearning] = useState(false);
+  const [learningError, setLearningError] = useState(null);
+  const [isCompletingStep, setIsCompletingStep] = useState(false);
+
+  const [openFaq, setOpenFaq] = useState(0);
+
+  const [checklist, setChecklist] = useState(
+    PLACEMENT_CHECKLIST.reduce(
+      (acc, item, i) => ({ ...acc, [item.label]: i < 2 }),
+      {}
+    )
+  );
+
+  /* ==========================================================
+     APPLY ROADMAP (shared by load + generate)
+  ========================================================== */
+
+  const applyRoadmapData = (roadmap) => {
+    if (!roadmap) return;
+
+    const steps = Array.isArray(roadmap.roadmapSteps) ? roadmap.roadmapSteps : [];
+
+    const initialProgress = {};
+    steps.forEach((step, index) => {
+      const value = Number(step?.progress);
+      initialProgress[index] = Number.isFinite(value)
+        ? Math.min(100, Math.max(0, value))
+        : 0;
     });
 
-    if (!roadmap) {
-      return res.status(404).json({
-        success: false,
-        message: "Roadmap not found",
-      });
-    }
+    setRoadmapData(roadmap);
+    setStepProgress(initialProgress);
+    setRoadmapReady(true);
 
-    // --------------------------------------------------------
-    // VALIDATE STEP EXISTS
-    // --------------------------------------------------------
+    const careerMatch = CAREERS.find(
+      (c) =>
+        c.id === roadmap.careerId ||
+        c.id === roadmap.career ||
+        c.name === roadmap.career
+    );
+    if (careerMatch) setSelectedCareer(careerMatch.id);
 
-    if (
-      !roadmap.roadmapSteps ||
-      index < 0 ||
-      index >= roadmap.roadmapSteps.length
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid roadmap step",
-      });
-    }
+    const levelMatch = SKILL_LEVELS.find((l) => l.id === roadmap.level);
+    if (levelMatch) setSelectedLevel(levelMatch.id);
+  };
 
-    const savedStep = roadmap.roadmapSteps[index];
+  /* ==========================================================
+     LOAD SAVED ROADMAP ON MOUNT
+  ========================================================== */
 
-    // --------------------------------------------------------
-    // RESOLVE STEP DETAILS
-    // Prefer whatever the frontend sent for this step, fall
-    // back to what's actually saved on the roadmap so the
-    // AI always has accurate context even if the frontend
-    // sends a partial object (or nothing at all).
-    // --------------------------------------------------------
+  useEffect(() => {
+    let isMounted = true;
 
-    const resolvedStep = {
-      title: step?.title || savedStep.title,
-      description: step?.description || savedStep.description,
-      difficulty: step?.difficulty || savedStep.difficulty,
-      time: step?.time || savedStep.time,
-      topics: Array.isArray(step?.topics) ? step.topics : [],
+    const loadSavedRoadmap = async () => {
+      try {
+        setIsLoadingRoadmap(true);
+        setRoadmapError(null);
+
+        const response = await getMyRoadmaps();
+
+        const roadmaps = Array.isArray(response?.roadmaps)
+          ? response.roadmaps
+          : Array.isArray(response?.data?.roadmaps)
+          ? response.data.roadmaps
+          : Array.isArray(response?.data)
+          ? response.data
+          : Array.isArray(response)
+          ? response
+          : [];
+
+        if (!isMounted) return;
+
+        if (!roadmaps.length) {
+          setRoadmapReady(false);
+          setRoadmapData(null);
+          setStepProgress({});
+          return;
+        }
+
+        const latest = [...roadmaps].sort((a, b) => {
+          const dateA = new Date(a?.createdAt || 0).getTime();
+          const dateB = new Date(b?.createdAt || 0).getTime();
+          return dateB - dateA;
+        })[0];
+
+        applyRoadmapData(latest);
+      } catch (error) {
+        console.error("Load Roadmap Error:", error);
+        if (isMounted) {
+          setRoadmapError(
+            error?.response?.data?.message ||
+              error?.message ||
+              "Failed to load your saved roadmap."
+          );
+        }
+      } finally {
+        if (isMounted) setIsLoadingRoadmap(false);
+      }
     };
 
-    const careerName =
-      careerNames[roadmap.career] || career || roadmap.career;
+    loadSavedRoadmap();
 
-    const skillLevel = level || roadmap.level;
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    // --------------------------------------------------------
-    // BUILD PROMPT
-    // --------------------------------------------------------
+  /* ==========================================================
+     GENERATE ROADMAP
+  ========================================================== */
 
-    const prompt = buildLearningPrompt({
-      careerName,
-      level: skillLevel,
-      step: resolvedStep,
-    });
+  const handleGenerateRoadmap = async () => {
+    if (isGenerating) return;
 
-    // --------------------------------------------------------
-    // CALL AI (GROQ)
-    // NOTE: verify this model string matches the one used in
-    // assistant.controller.js's chatWithAI for consistency.
-    // --------------------------------------------------------
-
-    let aiRawContent = "";
+    let progressTimer = null;
 
     try {
-      const completion = await groq.chat.completions.create({
-        model: "llama-3.3-70b-versatile",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a precise JSON API. You always return a single valid JSON object and nothing else — no markdown fences, no commentary.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.6,
-        max_tokens: 3000,
-        response_format: { type: "json_object" },
-      });
+      setIsGenerating(true);
+      setRoadmapError(null);
+      setGenProgress(0);
 
-      aiRawContent = completion?.choices?.[0]?.message?.content || "";
-    } catch (aiError) {
-      console.error("Groq Step Learning Error:", aiError);
+      progressTimer = setInterval(() => {
+        setGenProgress((prev) => (prev >= 90 ? 90 : prev + 10));
+      }, 150);
 
-      return res.status(502).json({
-        success: false,
-        message:
-          "The AI tutor is temporarily unavailable. Please try again in a moment.",
-      });
+      const response = await generateRoadmap(selectedCareer, selectedLevel);
+
+      const roadmap =
+        response?.roadmap || response?.data?.roadmap || response?.data || response;
+
+      if (!roadmap || !Array.isArray(roadmap.roadmapSteps)) {
+        throw new Error(response?.message || "Failed to generate roadmap.");
+      }
+
+      applyRoadmapData(roadmap);
+      setGenProgress(100);
+    } catch (error) {
+      console.error("Generate Roadmap Error:", error);
+      setRoadmapError(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to generate roadmap. Please try again."
+      );
+    } finally {
+      if (progressTimer) clearInterval(progressTimer);
+      setIsGenerating(false);
     }
+  };
 
-    // --------------------------------------------------------
-    // PARSE AI RESPONSE
-    // Defensive cleanup in case the model wraps JSON in
-    // markdown fences despite instructions.
-    // --------------------------------------------------------
+  /* ==========================================================
+     DERIVED DATA
+  ========================================================== */
 
-    const cleaned = aiRawContent
-      .trim()
-      .replace(/^```json/i, "")
-      .replace(/^```/, "")
-      .replace(/```$/, "")
-      .trim();
+  const activeRoadmapId = useMemo(() => getRoadmapId(roadmapData), [roadmapData]);
 
-    let learningModule;
+  const activeCareer = useMemo(
+    () => CAREERS.find((c) => c.id === selectedCareer) || CAREERS[0],
+    [selectedCareer]
+  );
 
-    try {
-      learningModule = JSON.parse(cleaned);
-    } catch (parseError) {
-      console.error(
-        "Failed to parse AI learning module:",
-        parseError,
-        "RAW:",
-        aiRawContent
+  const displayCareerName = roadmapData?.career || activeCareer.name;
+
+  const displaySteps = useMemo(() => {
+    if (!roadmapData?.roadmapSteps?.length) return [];
+
+    return roadmapData.roadmapSteps.map((step, index) => {
+      const progress = Math.min(
+        100,
+        Math.max(0, Number(stepProgress[index] ?? step?.progress ?? 0))
       );
 
-      return res.status(502).json({
-        success: false,
-        message:
-          "The AI tutor returned an unexpected response. Please try again.",
-      });
+      const status =
+        progress >= 100 ? "completed" : progress > 0 ? "in-progress" : "pending";
+
+      return {
+        ...step,
+        stepNumber: step?.stepNumber || index + 1,
+        progress,
+        status,
+      };
+    });
+  }, [roadmapData, stepProgress]);
+
+  const overallProgress = useMemo(() => {
+    if (!displaySteps.length) return 0;
+    const total = displaySteps.reduce((sum, s) => sum + Number(s.progress || 0), 0);
+    return Math.round(total / displaySteps.length);
+  }, [displaySteps]);
+
+  const completedStepsCount = useMemo(
+    () => displaySteps.filter((s) => s.progress >= 100).length,
+    [displaySteps]
+  );
+
+  const nextStep = useMemo(() => {
+    return (
+      displaySteps.find((s) => s.status === "in-progress") ||
+      displaySteps.find((s) => s.status === "pending") ||
+      null
+    );
+  }, [displaySteps]);
+
+  const weeklyPlan = Array.isArray(roadmapData?.weeklyPlan) ? roadmapData.weeklyPlan : [];
+  const projects = Array.isArray(roadmapData?.projects) ? roadmapData.projects : [];
+  const skillAnalysisRaw = roadmapData?.skillAnalysis || null;
+  const interviewPrep = roadmapData?.interviewPreparation || null;
+
+  const skillAnalysisItems = useMemo(() => {
+    if (!skillAnalysisRaw) return [];
+    return [
+      { label: "Current Skills", value: Number(skillAnalysisRaw.currentSkills) || 0, icon: Code2 },
+      { label: "Missing Skills", value: Number(skillAnalysisRaw.missingSkills) || 0, icon: Target },
+      {
+        label: "Industry Readiness",
+        value: Number(skillAnalysisRaw.industryReadiness) || 0,
+        icon: TrendingUp,
+      },
+      {
+        label: "Interview Readiness",
+        value: Number(skillAnalysisRaw.interviewReadiness) || 0,
+        icon: Mic,
+      },
+    ];
+  }, [skillAnalysisRaw]);
+
+  const confidenceScore = Number(skillAnalysisRaw?.confidenceScore) || 0;
+
+  const learningStepInfo =
+    learningStepIndex !== null && displaySteps[learningStepIndex]
+      ? displaySteps[learningStepIndex]
+      : null;
+
+  const isLearningStepCompleted =
+    learningStepIndex !== null &&
+    Number(stepProgress[learningStepIndex] ?? 0) >= 100;
+
+  /* ==========================================================
+     AI LEARNING TUTOR
+  ========================================================== */
+
+  const handleStartLearning = async (index) => {
+    if (!activeRoadmapId) {
+      setLearningError("Please generate or load a roadmap first.");
+      return;
     }
 
-    // --------------------------------------------------------
-    // RESPONSE
-    // Note: intentionally NOT saved to the roadmap — this is
-    // learning content, not progress. Progress only changes
-    // via updateRoadmapStepProgress ("Complete Step").
-    // --------------------------------------------------------
+    setLearningStepIndex(index);
+    setIsLearning(true);
+    setLearningError(null);
+    setLearningContent(null);
 
-    return res.status(200).json({
-      success: true,
-      message: "Learning module generated successfully",
-      roadmapId: roadmap._id,
-      stepIndex: index,
-      learningModule,
-    });
-  } catch (error) {
-    console.error("\n=================================");
-    console.error("GENERATE STEP LEARNING ERROR");
-    console.error(error);
-    console.error("=================================\n");
+    try {
+      const response = await generateStepLearning(activeRoadmapId, index);
 
-    return res.status(500).json({
-      success: false,
-      message: "Failed to generate learning module",
-      error: error.message,
-    });
-  }
-};
+      const module =
+        response?.learningModule ||
+        response?.data?.learningModule ||
+        response?.data ||
+        response;
+
+      if (!module || typeof module !== "object") {
+        throw new Error(response?.message || "AI did not return a valid learning module.");
+      }
+
+      setLearningContent(module);
+    } catch (error) {
+      console.error("Generate Step Learning Error:", error);
+      setLearningError(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to load the AI learning module. Please try again."
+      );
+    } finally {
+      setIsLearning(false);
+    }
+  };
+
+  const handleRetryLearning = () => {
+    if (learningStepIndex !== null) {
+      handleStartLearning(learningStepIndex);
+    }
+  };
+
+  const handleCloseLearningPanel = () => {
+    setLearningStepIndex(null);
+    setLearningContent(null);
+    setLearningError(null);
+    setIsLearning(false);
+  };
+
+  const handleCompleteStep = async () => {
+    if (learningStepIndex === null || !activeRoadmapId) return;
+
+    const alreadyComplete = Number(stepProgress[learningStepIndex] ?? 0) >= 100;
+    if (alreadyComplete) return;
+
+    setIsCompletingStep(true);
+
+    try {
+      const response = await updateRoadmapStepProgress(
+        activeRoadmapId,
+        learningStepIndex,
+        100
+      );
+
+      const updatedRoadmap =
+        response?.roadmap ||
+        response?.data?.roadmap ||
+        (Array.isArray(response?.data?.roadmapSteps) ? response.data : null);
+
+      setStepProgress((prev) => ({ ...prev, [learningStepIndex]: 100 }));
+
+      if (updatedRoadmap?.roadmapSteps) {
+        setRoadmapData((prev) =>
+          prev ? { ...prev, roadmapSteps: updatedRoadmap.roadmapSteps } : prev
+        );
+      }
+    } catch (error) {
+      console.error("Complete Step Error:", error);
+      setLearningError(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to save your progress. Please try again."
+      );
+    } finally {
+      setIsCompletingStep(false);
+    }
+  };
+
+  /* ==========================================================
+     PLACEMENT CHECKLIST
+  ========================================================== */
+
+  const toggleChecklist = (label) => {
+    setChecklist((prev) => ({ ...prev, [label]: !prev[label] }));
+  };
+
+  const completedChecklistCount = Object.values(checklist).filter(Boolean).length;
+
+  /* ============================================================
+     RENDER
+  ============================================================ */
+
+  return (
+    <div className="relative min-h-screen w-full overflow-x-hidden bg-slate-950 text-slate-100">
+      {/* ======================================================
+          1. HERO
+      ====================================================== */}
+
+      <section className="relative overflow-hidden px-6 pb-20 pt-28 sm:px-10 lg:px-20">
+        <GlowBackground />
+
+        <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 lg:grid-cols-2">
+          <motion.div initial="hidden" animate="visible" variants={fadeUp}>
+            <SectionBadge>AI Skill Roadmap</SectionBadge>
+
+            <h1 className="mt-6 text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
+              Your Personalized{" "}
+              <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-300 bg-clip-text text-transparent">
+                AI Skill Roadmap
+              </span>
+            </h1>
+
+            <p className="mt-6 max-w-xl text-base text-slate-400 sm:text-lg">
+              Choose a career path and your current skill level, and CampusHub AI
+              builds a structured, step-by-step roadmap — plus an AI tutor for every
+              step along the way.
+            </p>
+
+            <div className="mt-8 flex flex-wrap gap-4">
+              <motion.a
+                href="#career"
+                whileHover={{ scale: 1.04, boxShadow: "0 0 30px rgba(34,211,238,0.35)" }}
+                whileTap={{ scale: 0.97 }}
+                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20"
+              >
+                Start Your Roadmap
+                <ArrowRight className="h-4 w-4" />
+              </motion.a>
+            </div>
+          </motion.div>
+
+          <div className="relative flex h-72 items-center justify-center sm:h-96">
+            <motion.div
+              className="absolute h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl"
+              animate={{ scale: [1, 1.15, 1] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6 }}
+              className="relative z-10 flex h-40 w-40 items-center justify-center rounded-full border border-cyan-500/30 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 backdrop-blur-xl"
+            >
+              <Rocket className="h-14 w-14 text-cyan-300" />
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ======================================================
+          2. CAREER SELECTION
+      ====================================================== */}
+
+      <section id="career" className="relative px-6 py-20 sm:px-10 lg:px-20">
+        <div className="mx-auto max-w-7xl">
+          <SectionHeading
+            badge="Career Path"
+            title="Choose Your Career"
+            subtitle="Select the path you want your roadmap built around."
+          />
+
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {CAREERS.map((career, i) => {
+              const isSelected = selectedCareer === career.id;
+              const Icon = career.icon;
+
+              return (
+                <motion.button
+                  key={career.id}
+                  type="button"
+                  custom={i}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  variants={scaleIn}
+                  onClick={() => setSelectedCareer(career.id)}
+                  whileHover={{ y: -4 }}
+                  whileTap={{ scale: 0.97 }}
+                  className={`flex flex-col items-center gap-2 rounded-2xl border p-5 text-center backdrop-blur-xl transition ${
+                    isSelected
+                      ? "border-cyan-400/60 bg-cyan-500/10 shadow-lg shadow-cyan-500/20"
+                      : "border-slate-800 bg-slate-900/50 hover:border-slate-700"
+                  }`}
+                >
+                  <div
+                    className={`flex h-12 w-12 items-center justify-center rounded-2xl transition ${
+                      isSelected
+                        ? "bg-gradient-to-br from-cyan-500 to-blue-600 text-white"
+                        : "bg-slate-800/70 text-cyan-400"
+                    }`}
+                  >
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <span
+                    className={`text-xs font-medium ${
+                      isSelected ? "text-cyan-300" : "text-slate-300"
+                    }`}
+                  >
+                    {career.name}
+                  </span>
+                  <span className="text-[10px] leading-snug text-slate-500">
+                    {career.description}
+                  </span>
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ======================================================
+          3. SKILL LEVEL
+      ====================================================== */}
+
+      <section className="relative px-6 py-20 sm:px-10 lg:px-20">
+        <div className="mx-auto max-w-4xl">
+          <SectionHeading badge="Skill Level" title="Where are you starting from?" />
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {SKILL_LEVELS.map((level, i) => {
+              const isSelected = selectedLevel === level.id;
+
+              return (
+                <motion.button
+                  key={level.id}
+                  type="button"
+                  custom={i}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  variants={fadeUp}
+                  onClick={() => setSelectedLevel(level.id)}
+                  whileHover={{ y: -4 }}
+                  className={`flex flex-col items-start gap-2 rounded-2xl border p-5 text-left backdrop-blur-xl transition ${
+                    isSelected
+                      ? "border-cyan-400/60 bg-cyan-500/10 shadow-lg shadow-cyan-500/20"
+                      : "border-slate-800 bg-slate-900/50 hover:border-slate-700"
+                  }`}
+                >
+                  <div className="flex w-full items-center justify-between">
+                    <span
+                      className={`text-sm font-semibold ${
+                        isSelected ? "text-cyan-300" : "text-white"
+                      }`}
+                    >
+                      {level.id}
+                    </span>
+                    {isSelected ? (
+                      <CheckCircle2 className="h-4 w-4 text-cyan-400" />
+                    ) : (
+                      <Circle className="h-4 w-4 text-slate-600" />
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400">{level.desc}</p>
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ======================================================
+          4. GENERATE ROADMAP
+      ====================================================== */}
+
+      <section className="relative px-6 py-12 sm:px-10 lg:px-20">
+        <div className="mx-auto max-w-3xl text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeUp}
+            className="rounded-3xl border border-slate-800 bg-slate-900/50 p-10 backdrop-blur-xl"
+          >
+            <p className="text-sm text-slate-400">
+              {isLoadingRoadmap
+                ? "Checking for a saved roadmap..."
+                : (
+                  <>
+                    Generating a roadmap for{" "}
+                    <span className="font-semibold text-cyan-300">{activeCareer.name}</span>{" "}
+                    · <span className="font-semibold text-cyan-300">{selectedLevel}</span>
+                  </>
+                )}
+            </p>
+
+            <motion.button
+              type="button"
+              onClick={handleGenerateRoadmap}
+              disabled={isGenerating || isLoadingRoadmap}
+              whileHover={{ scale: isGenerating ? 1 : 1.03 }}
+              whileTap={{ scale: isGenerating ? 1 : 0.97 }}
+              className="mx-auto mt-6 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 disabled:opacity-70"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  AI is Thinking...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="h-4 w-4" />
+                  {roadmapReady ? "Regenerate Roadmap" : "Generate AI Roadmap"}
+                </>
+              )}
+            </motion.button>
+
+            <AnimatePresence>
+              {isGenerating && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-6 overflow-hidden"
+                >
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                    <motion.div
+                      className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-600"
+                      style={{ width: `${genProgress}%` }}
+                    />
+                  </div>
+                  <p className="mt-1 text-right text-[11px] text-slate-500">{genProgress}%</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {roadmapError && (
+              <p className="mt-4 text-xs text-amber-400">{roadmapError}</p>
+            )}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ======================================================
+          5. ROADMAP STEPS + OVERALL PROGRESS
+      ====================================================== */}
+
+      <AnimatePresence>
+        {roadmapReady && displaySteps.length > 0 && (
+          <motion.section
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.5 }}
+            className="relative px-6 py-10 sm:px-10 lg:px-20"
+          >
+            <div className="mx-auto max-w-4xl">
+              <SectionHeading
+                badge="Your Roadmap"
+                title={`${displayCareerName} Roadmap`}
+                subtitle="Follow each stage in order — every step builds on the last."
+              />
+
+              {/* 6. OVERALL PROGRESS */}
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-10 rounded-3xl border border-cyan-500/20 bg-cyan-500/5 p-6 backdrop-blur-xl"
+              >
+                <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-cyan-300">
+                      Overall Progress
+                    </p>
+                    <div className="mt-2 flex items-end gap-3">
+                      <span className="text-4xl font-bold text-white">{overallProgress}%</span>
+                      <span className="mb-1 text-xs text-slate-500">
+                        {completedStepsCount}/{displaySteps.length} steps completed
+                      </span>
+                    </div>
+                    {nextStep && (
+                      <p className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">
+                        <ArrowRightCircle className="h-3.5 w-3.5 text-cyan-400" />
+                        Next up: {nextStep.title}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="w-full sm:max-w-xs">
+                    <div className="h-3 overflow-hidden rounded-full bg-slate-800">
+                      <motion.div
+                        className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-600"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${overallProgress}%` }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* TIMELINE */}
+              <div className="relative">
+                <div className="absolute bottom-0 left-6 top-0 w-px bg-slate-800 sm:left-7" />
+
+                <div className="space-y-6">
+                  {displaySteps.map((step, i) => {
+                    const style = statusStyles[step.status] || statusStyles.pending;
+                    const StepIcon = getStepIcon(i);
+                    const isThisStepLoading = isLearning && learningStepIndex === i;
+
+                    return (
+                      <motion.div
+                        key={`${step.title}-${i}`}
+                        custom={i}
+                        initial="hidden"
+                        whileInView="visible"
+                        viewport={{ once: true }}
+                        variants={fadeUp}
+                        className="relative flex gap-4 sm:gap-5"
+                      >
+                        <div
+                          className={`relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border sm:h-14 sm:w-14 ${style.border} ${style.bg}`}
+                        >
+                          <StepIcon className={`h-5 w-5 sm:h-6 sm:w-6 ${style.text}`} />
+                        </div>
+
+                        <div className="flex-1 rounded-2xl border border-slate-800 bg-slate-900/50 p-5 backdrop-blur-xl">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <h4 className="text-sm font-semibold text-white sm:text-base">
+                              {step.stepNumber}. {step.title}
+                            </h4>
+                            <span
+                              className={`rounded-full border px-2.5 py-0.5 text-[10px] font-medium ${style.border} ${style.bg} ${style.text}`}
+                            >
+                              {style.label}
+                            </span>
+                          </div>
+
+                          <p className="mt-2 text-xs text-slate-400 sm:text-sm">
+                            {step.description}
+                          </p>
+
+                          <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-slate-500">
+                            <span className="flex items-center gap-1">
+                              <Target className="h-3 w-3 text-cyan-400" />
+                              {step.difficulty || "General"}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3 text-cyan-400" />
+                              {step.time || "Flexible"}
+                            </span>
+                          </div>
+
+                          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+                            <motion.div
+                              className={`h-full rounded-full bg-gradient-to-r ${style.bar}`}
+                              initial={{ width: 0 }}
+                              animate={{ width: `${step.progress}%` }}
+                              transition={{ duration: 0.7, ease: "easeOut" }}
+                            />
+                          </div>
+
+                          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                            <span className="text-[11px] text-slate-500">
+                              {step.progress}% complete
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={() => handleStartLearning(i)}
+                              disabled={!activeRoadmapId || isThisStepLoading}
+                              className="flex items-center gap-1.5 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-[11px] font-semibold text-cyan-300 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {isThisStepLoading ? (
+                                <>
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                  Loading...
+                                </>
+                              ) : step.progress >= 100 ? (
+                                "Review Step"
+                              ) : (
+                                "Learn This Step"
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
+
+      {/* AI LEARNING PANEL */}
+      <LearningPanel
+        isOpen={learningStepIndex !== null}
+        isLoading={isLearning}
+        error={learningError}
+        stepInfo={learningStepInfo}
+        content={learningContent}
+        onClose={handleCloseLearningPanel}
+        onRetry={handleRetryLearning}
+        onCompleteStep={handleCompleteStep}
+        isCompleting={isCompletingStep}
+        isCompleted={isLearningStepCompleted}
+      />
+
+      {/* ======================================================
+          7. WEEKLY PLAN
+      ====================================================== */}
+
+      {roadmapReady && weeklyPlan.length > 0 && (
+        <section className="relative px-6 py-20 sm:px-10 lg:px-20">
+          <div className="mx-auto max-w-7xl">
+            <SectionHeading
+              badge="Weekly Plan"
+              title="Your Learning Plan, Mapped Out"
+              subtitle="A structured week-by-week breakdown to keep you consistent."
+            />
+
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {weeklyPlan.map((week, i) => (
+                <motion.div
+                  key={`${week.week}-${i}`}
+                  custom={i}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  variants={fadeUp}
+                  whileHover={{ y: -6 }}
+                  className="flex flex-col rounded-3xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-xl"
+                >
+                  <span className="w-fit rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-300">
+                    {week.week}
+                  </span>
+
+                  <div className="mt-4">
+                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      Topics
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(Array.isArray(week.topics) ? week.topics : []).map((topic) => (
+                        <span
+                          key={topic}
+                          className="rounded-full border border-slate-700 bg-slate-800/60 px-2 py-0.5 text-[11px] text-slate-300"
+                        >
+                          {topic}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      Assignment
+                    </p>
+                    <p className="text-xs text-slate-400">{week.assignment}</p>
+                  </div>
+
+                  <div className="mt-4">
+                    <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      Mini Project
+                    </p>
+                    <p className="text-xs text-slate-400">{week.miniProject}</p>
+                  </div>
+
+                  <div className="mt-5 flex items-center gap-1.5 text-xs text-cyan-300">
+                    <Clock className="h-3.5 w-3.5" />
+                    {week.hours} hrs / week
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ======================================================
+          8. PROJECTS
+      ====================================================== */}
+
+      {roadmapReady && projects.length > 0 && (
+        <section className="relative px-6 py-20 sm:px-10 lg:px-20">
+          <div className="mx-auto max-w-7xl">
+            <SectionHeading
+              badge="Projects"
+              title="Recommended Projects"
+              subtitle="Build these to turn your roadmap into a real portfolio."
+            />
+
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {projects.map((project, i) => (
+                <motion.div
+                  key={`${project.name}-${i}`}
+                  custom={i}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  variants={fadeUp}
+                  whileHover={{ y: -6 }}
+                  className="flex flex-col rounded-3xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-xl transition"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-sm font-semibold text-white sm:text-base">
+                      {project.name}
+                    </h3>
+                    <span
+                      className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-medium ${
+                        project.difficulty === "Beginner"
+                          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                          : project.difficulty === "Intermediate"
+                          ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-300"
+                          : "border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-300"
+                      }`}
+                    >
+                      {project.difficulty}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-1.5">
+                    {(Array.isArray(project.skills) ? project.skills : []).map((skill) => (
+                      <span
+                        key={skill}
+                        className="rounded-full border border-slate-700 bg-slate-800/60 px-2 py-0.5 text-[11px] text-slate-300"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="mt-5 flex items-center gap-1.5 text-xs text-slate-400">
+                    <Clock className="h-3.5 w-3.5 text-cyan-400" />
+                    {project.time}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ======================================================
+          9 & 10. SKILL ANALYSIS + CONFIDENCE SCORE
+      ====================================================== */}
+
+      {roadmapReady && skillAnalysisRaw && (
+        <section className="relative px-6 py-20 sm:px-10 lg:px-20">
+          <GlowBackground />
+
+          <div className="relative mx-auto max-w-7xl">
+            <SectionHeading
+              badge="Skill Analysis"
+              title="AI Skill Analysis"
+              subtitle="A snapshot of where you stand right now."
+            />
+
+            <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+              {skillAnalysisItems.map((item, i) => (
+                <motion.div
+                  key={item.label}
+                  custom={i}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  variants={scaleIn}
+                  className="flex flex-col items-center rounded-3xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-xl"
+                >
+                  <CircularProgress value={item.value} size={110} />
+                  <span className="mt-3 flex items-center gap-1.5 text-center text-xs text-slate-400">
+                    <item.icon className="h-3.5 w-3.5 text-cyan-400" />
+                    {item.label}
+                  </span>
+                </motion.div>
+              ))}
+            </div>
+
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fadeUp}
+              className="mx-auto mt-10 flex max-w-md flex-col items-center rounded-3xl border border-cyan-500/20 bg-cyan-500/5 p-8 text-center backdrop-blur-xl"
+            >
+              <p className="text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                Confidence Score
+              </p>
+              <CircularProgress
+                value={confidenceScore}
+                size={140}
+                sublabel={
+                  confidenceScore >= 70
+                    ? "Confident"
+                    : confidenceScore >= 40
+                    ? "Building"
+                    : "Getting Started"
+                }
+              />
+              <p className="mt-3 text-xs text-slate-400">
+                Keep following your roadmap to raise your interview readiness.
+              </p>
+            </motion.div>
+          </div>
+        </section>
+      )}
+
+      {/* ======================================================
+          11. PLACEMENT READINESS
+      ====================================================== */}
+
+      <section className="relative px-6 py-20 sm:px-10 lg:px-20">
+        <div className="mx-auto max-w-4xl">
+          <SectionHeading
+            badge="Placement Readiness"
+            title="Are you placement ready?"
+            subtitle={`${completedChecklistCount} of ${PLACEMENT_CHECKLIST.length} completed — tap to update.`}
+          />
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {PLACEMENT_CHECKLIST.map((item, i) => {
+              const done = checklist[item.label];
+              const Icon = item.icon;
+
+              return (
+                <motion.button
+                  key={item.label}
+                  type="button"
+                  custom={i}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  variants={fadeUp}
+                  onClick={() => toggleChecklist(item.label)}
+                  whileHover={{ x: 4 }}
+                  className={`flex items-center gap-3 rounded-2xl border p-4 text-left backdrop-blur-xl transition ${
+                    done
+                      ? "border-emerald-500/30 bg-emerald-500/10"
+                      : "border-slate-800 bg-slate-900/50"
+                  }`}
+                >
+                  <div
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                      done
+                        ? "bg-gradient-to-br from-emerald-400 to-emerald-500 text-white"
+                        : "bg-slate-800 text-slate-500"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <span
+                    className={`text-sm font-medium ${
+                      done ? "text-emerald-300" : "text-slate-300"
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                  {done ? (
+                    <CheckCircle2 className="ml-auto h-4 w-4 text-emerald-400" />
+                  ) : (
+                    <Circle className="ml-auto h-4 w-4 text-slate-600" />
+                  )}
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ======================================================
+          12. INTERVIEW PREPARATION
+      ====================================================== */}
+
+      {roadmapReady && interviewPrep && (
+        <section className="relative px-6 py-20 sm:px-10 lg:px-20">
+          <div className="mx-auto max-w-5xl">
+            <SectionHeading
+              badge="Interview Prep"
+              title="Interview Preparation"
+              subtitle={`Focused on ${interviewPrep.focus || displayCareerName}.`}
+            />
+
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+              <motion.div
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                variants={fadeUp}
+                className="rounded-3xl border border-slate-800 bg-slate-900/50 p-6 text-center backdrop-blur-xl"
+              >
+                <Mic className="mx-auto h-6 w-6 text-cyan-400" />
+                <p className="mt-3 text-2xl font-bold text-white">
+                  {interviewPrep.mockInterviews ?? 0}
+                </p>
+                <p className="mt-1 text-xs text-slate-400">Mock Interviews</p>
+              </motion.div>
+
+              <motion.div
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                variants={fadeUp}
+                custom={1}
+                className="rounded-3xl border border-slate-800 bg-slate-900/50 p-6 text-center backdrop-blur-xl"
+              >
+                <Terminal className="mx-auto h-6 w-6 text-cyan-400" />
+                <p className="mt-3 text-2xl font-bold text-white">
+                  {interviewPrep.codingChallenges ?? 0}
+                </p>
+                <p className="mt-1 text-xs text-slate-400">Coding Challenges</p>
+              </motion.div>
+
+              <motion.div
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                variants={fadeUp}
+                custom={2}
+                className="rounded-3xl border border-slate-800 bg-slate-900/50 p-6 text-center backdrop-blur-xl"
+              >
+                <Briefcase className="mx-auto h-6 w-6 text-cyan-400" />
+                <p className="mt-3 text-2xl font-bold text-white">
+                  {interviewPrep.portfolioReview ? "Included" : "Not Included"}
+                </p>
+                <p className="mt-1 text-xs text-slate-400">Portfolio Review</p>
+              </motion.div>
+            </div>
+
+            {Array.isArray(interviewPrep.topics) && interviewPrep.topics.length > 0 && (
+              <div className="mt-6 flex flex-wrap justify-center gap-2">
+                {interviewPrep.topics.map((topic) => (
+                  <span
+                    key={topic}
+                    className="rounded-full border border-slate-700 bg-slate-800/60 px-3 py-1 text-xs text-slate-300"
+                  >
+                    {topic}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* ======================================================
+          13. FAQ
+      ====================================================== */}
+
+      <section className="relative px-6 py-20 sm:px-10 lg:px-20">
+        <div className="mx-auto max-w-3xl">
+          <SectionHeading badge="FAQ" title="Frequently asked questions" />
+
+          <div className="space-y-4">
+            {FAQS.map((item, i) => (
+              <motion.div
+                key={item.q}
+                custom={i}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                variants={fadeUp}
+              >
+                <FAQItem
+                  item={item}
+                  isOpen={openFaq === i}
+                  onClick={() => setOpenFaq(openFaq === i ? -1 : i)}
+                />
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+export default SkillRoadmap;
