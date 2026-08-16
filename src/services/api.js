@@ -588,6 +588,74 @@ export const getAboutData = async () => {
 };
 
 // ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+// Get logged-in user's notifications
+export const getNotifications = async () => {
+  try {
+    const { data } = await api.get("/notifications");
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to fetch notifications"
+    );
+  }
+};
+
+
+// Mark one notification as read
+export const markNotificationRead = async (id) => {
+  try {
+    const { data } = await api.patch(
+      `/notifications/${id}/read`
+    );
+
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to mark notification as read"
+    );
+  }
+};
+
+
+// Mark all notifications as read
+export const markAllNotificationsRead = async () => {
+  try {
+    const { data } = await api.patch(
+      "/notifications/read-all"
+    );
+
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to mark all notifications as read"
+    );
+  }
+};
+
+
+// Delete notification
+export const deleteNotification = async (id) => {
+  try {
+    const { data } = await api.delete(
+      `/notifications/${id}`
+    );
+
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to delete notification"
+    );
+  }
+};
+
+// ============================================================
 // DEFAULT EXPORT
 // ============================================================
 

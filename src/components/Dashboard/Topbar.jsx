@@ -1,7 +1,13 @@
 // src/components/Dashboard/Topbar.jsx
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import {
+  getNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+} from "../../services/api";
 
 import {
   Search,
@@ -22,30 +28,43 @@ import {
 
 
 // ======================================================
-// NOTIFICATIONS
-// Temporary frontend data
-// Later this will come from backend
+// NOTIFICATION TIME FORMATTER
 // ======================================================
 
-const initialNotifications = [
-  {
-    id: 1,
-    title: "Complete your profile",
-    message:
-      "Add your academic details to improve your CampusHub AI experience.",
-    time: "Today",
-    unread: true,
-  },
+const formatNotificationTime = (date) => {
+  if (!date) return "";
 
-  {
-    id: 2,
-    title: "Keep your learning streak alive",
-    message:
-      "Spend some time learning today and keep building your consistency.",
-    time: "Today",
-    unread: true,
-  },
-];
+  const notificationDate = new Date(date);
+  const now = new Date();
+
+  const diff = Math.floor(
+    (now - notificationDate) / 1000
+  );
+
+  if (diff < 60) {
+    return "Just now";
+  }
+
+  if (diff < 3600) {
+    return `${Math.floor(diff / 60)}m ago`;
+  }
+
+  if (diff < 86400) {
+    return `${Math.floor(diff / 3600)}h ago`;
+  }
+
+  if (diff < 172800) {
+    return "Yesterday";
+  }
+
+  return notificationDate.toLocaleDateString(
+    "en-IN",
+    {
+      day: "numeric",
+      month: "short",
+    }
+  );
+};
 
 
 // ======================================================
@@ -57,9 +76,9 @@ function Topbar({ user }) {
   const navigate = useNavigate();
 
 
-  // ------------------------------------------
+  // ======================================================
   // UI STATES
-  // ------------------------------------------
+  // ======================================================
 
   const [dropdownOpen, setDropdownOpen] =
     useState(false);
@@ -68,12 +87,18 @@ function Topbar({ user }) {
     useState(false);
 
   const [notifications, setNotifications] =
-    useState(initialNotifications);
+    useState([]);
+
+  const [unreadCount, setUnreadCount] =
+    useState(0);
+
+  const [notificationLoading, setNotificationLoading] =
+    useState(false);
 
 
-  // ------------------------------------------
+  // ======================================================
   // CURRENT TIME GREETING
-  // ------------------------------------------
+  // ======================================================
 
   const getGreeting = () => {
 
@@ -98,9 +123,9 @@ function Topbar({ user }) {
   const greeting = getGreeting();
 
 
-  // ------------------------------------------
+  // ======================================================
   // USER
-  // ------------------------------------------
+  // ======================================================
 
   const firstName =
     user?.name?.split(" ")[0] || "Student";
@@ -109,19 +134,63 @@ function Topbar({ user }) {
     user?.name?.charAt(0)?.toUpperCase() || "U";
 
 
-  // ------------------------------------------
-  // UNREAD NOTIFICATIONS
-  // ------------------------------------------
+  // ======================================================
+  // LOAD NOTIFICATIONS
+  // ======================================================
 
-  const unreadCount =
-    notifications.filter(
-      (notification) => notification.unread
-    ).length;
+  const loadNotifications = async () => {
+
+    try {
+
+      setNotificationLoading(true);
+
+      const response =
+        await getNotifications();
+
+      if (response?.success) {
+
+        setNotifications(
+          response.notifications || []
+        );
+
+        setUnreadCount(
+          response.unreadCount || 0
+        );
+
+      }
+
+    } catch (error) {
+
+      console.error(
+        "Failed to load notifications:",
+        error
+      );
+
+    } finally {
+
+      setNotificationLoading(false);
+
+    }
+
+  };
 
 
-  // ------------------------------------------
+  // ======================================================
+  // LOAD NOTIFICATIONS WHEN USER IS AVAILABLE
+  // ======================================================
+
+  useEffect(() => {
+
+    if (user) {
+      loadNotifications();
+    }
+
+  }, [user]);
+
+
+  // ======================================================
   // LOGOUT
-  // ------------------------------------------
+  // ======================================================
 
   const handleLogout = () => {
 
@@ -133,41 +202,113 @@ function Topbar({ user }) {
   };
 
 
-  // ------------------------------------------
-  // MARK ALL READ
-  // ------------------------------------------
+  // ======================================================
+  // MARK ALL NOTIFICATIONS AS READ
+  // ======================================================
 
-  const markAllRead = () => {
+  const markAllRead = async () => {
 
-    setNotifications((current) =>
-      current.map((notification) => ({
-        ...notification,
-        unread: false,
-      }))
-    );
+    try {
 
-  };
+      const response =
+        await markAllNotificationsRead();
 
+      if (response?.success) {
 
-  // ------------------------------------------
-  // OPEN NOTIFICATION
-  // ------------------------------------------
-
-  const handleNotificationClick = (id) => {
-
-    setNotifications((current) =>
-      current.map((notification) =>
-        notification.id === id
-          ? {
+        setNotifications((current) =>
+          current.map(
+            (notification) => ({
               ...notification,
-              unread: false,
-            }
-          : notification
-      )
-    );
+              isRead: true,
+            })
+          )
+        );
+
+        setUnreadCount(0);
+
+      }
+
+    } catch (error) {
+
+      console.error(
+        "Failed to mark all notifications:",
+        error
+      );
+
+    }
 
   };
 
+
+  // ======================================================
+  // HANDLE NOTIFICATION CLICK
+  // ======================================================
+
+  const handleNotificationClick =
+    async (notification) => {
+
+      try {
+
+        // ------------------------------------------
+        // Mark notification as read
+        // ------------------------------------------
+
+        if (!notification.isRead) {
+
+          const response =
+            await markNotificationRead(
+              notification._id
+            );
+
+          if (response?.success) {
+
+            setNotifications((current) =>
+              current.map((item) =>
+                item._id === notification._id
+                  ? {
+                      ...item,
+                      isRead: true,
+                    }
+                  : item
+              )
+            );
+
+            setUnreadCount((count) =>
+              Math.max(0, count - 1)
+            );
+
+          }
+
+        }
+
+
+        // ------------------------------------------
+        // Navigate if notification has a link
+        // ------------------------------------------
+
+        if (notification.link) {
+
+          setNotificationOpen(false);
+
+          navigate(notification.link);
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          "Failed to handle notification:",
+          error
+        );
+
+      }
+
+    };
+
+
+  // ======================================================
+  // RETURN
+  // ======================================================
 
   return (
 
@@ -233,7 +374,6 @@ function Topbar({ user }) {
         </p>
 
       </div>
-
 
 
       {/* ==================================================
@@ -303,7 +443,6 @@ function Topbar({ user }) {
         </div>
 
 
-
         {/* ==================================================
             HOME
         ================================================== */}
@@ -336,7 +475,6 @@ function Topbar({ user }) {
         </button>
 
 
-
         {/* ==================================================
             NOTIFICATIONS
         ================================================== */}
@@ -345,13 +483,17 @@ function Topbar({ user }) {
 
           <button
             type="button"
-            onClick={() => {
+            onClick={async () => {
 
-              setNotificationOpen(
-                (open) => !open
-              );
+              const nextState =
+                !notificationOpen;
 
+              setNotificationOpen(nextState);
               setDropdownOpen(false);
+
+              if (nextState) {
+                await loadNotifications();
+              }
 
             }}
             aria-label="Notifications"
@@ -375,38 +517,44 @@ function Topbar({ user }) {
             "
           >
 
-            <Bell size={18} />
+            <Bell
+              size={18}
+              className={
+                unreadCount > 0
+                  ? "text-cyan-400"
+                  : ""
+              }
+            />
 
 
-            {/* Unread indicator */}
+            {/* ==================================================
+                UNREAD INDICATOR
+            ================================================== */}
 
             {unreadCount > 0 && (
 
-              <>
-
-                <span
-                  className="
-                    absolute
-                    right-2
-                    top-2
-                    h-2
-                    w-2
-                    rounded-full
-                    bg-cyan-400
-                    shadow-lg
-                    shadow-cyan-400/50
-                  "
-                />
-
-              </>
+              <span
+                className="
+                  absolute
+                  right-2
+                  top-2
+                  h-2
+                  w-2
+                  rounded-full
+                  bg-cyan-400
+                  shadow-lg
+                  shadow-cyan-400/50
+                "
+              />
 
             )}
 
           </button>
 
 
-
-          {/* Notification Dropdown */}
+          {/* ==================================================
+              NOTIFICATION DROPDOWN
+          ================================================== */}
 
           <AnimatePresence>
 
@@ -454,7 +602,9 @@ function Topbar({ user }) {
               >
 
 
-                {/* Notification Header */}
+                {/* ==================================================
+                    NOTIFICATION HEADER
+                ================================================== */}
 
                 <div
                   className="
@@ -475,15 +625,19 @@ function Topbar({ user }) {
                     </h3>
 
                     <p className="mt-0.5 text-[11px] text-gray-600">
-                      {unreadCount > 0
+
+                      {notificationLoading
+                        ? "Checking for updates..."
+                        : unreadCount > 0
                         ? `${unreadCount} unread`
                         : "You're all caught up"}
+
                     </p>
 
                   </div>
 
 
-                  {unreadCount > 0 && (
+                  {unreadCount > 0 && !notificationLoading && (
 
                     <button
                       type="button"
@@ -511,8 +665,9 @@ function Topbar({ user }) {
                 </div>
 
 
-
-                {/* Notification List */}
+                {/* ==================================================
+                    NOTIFICATION LIST
+                ================================================== */}
 
                 <div
                   className="
@@ -521,20 +676,59 @@ function Topbar({ user }) {
                   "
                 >
 
-                  {notifications.length > 0 ? (
+                  {/* ==================================================
+                      LOADING
+                  ================================================== */}
+
+                  {notificationLoading ? (
+
+                    <div
+                      className="
+                        px-6
+                        py-10
+                        text-center
+                      "
+                    >
+
+                      <div
+                        className="
+                          mx-auto
+                          h-7
+                          w-7
+                          animate-spin
+                          rounded-full
+                          border-2
+                          border-slate-700
+                          border-t-cyan-400
+                        "
+                      />
+
+                      <p
+                        className="
+                          mt-3
+                          text-xs
+                          text-gray-500
+                        "
+                      >
+                        Loading notifications...
+                      </p>
+
+                    </div>
+
+                  ) : notifications.length > 0 ? (
 
                     notifications.map(
                       (notification) => (
 
                         <button
-                          key={notification.id}
+                          key={notification._id}
                           type="button"
                           onClick={() =>
                             handleNotificationClick(
-                              notification.id
+                              notification
                             )
                           }
-                          className="
+                          className={`
                             flex
                             w-full
                             gap-3
@@ -546,10 +740,18 @@ function Topbar({ user }) {
                             transition
                             duration-200
                             hover:bg-slate-800/50
-                          "
+                            ${
+                              !notification.isRead
+                                ? "bg-cyan-500/[0.03]"
+                                : ""
+                            }
+                          `}
                         >
 
-                          {/* Icon */}
+
+                          {/* ==================================================
+                              NOTIFICATION ICON
+                          ================================================== */}
 
                           <div
                             className="
@@ -571,7 +773,9 @@ function Topbar({ user }) {
                           </div>
 
 
-                          {/* Content */}
+                          {/* ==================================================
+                              NOTIFICATION CONTENT
+                          ================================================== */}
 
                           <div className="min-w-0 flex-1">
 
@@ -588,7 +792,7 @@ function Topbar({ user }) {
                                 className={`
                                   text-sm
                                   ${
-                                    notification.unread
+                                    !notification.isRead
                                       ? "font-semibold text-white"
                                       : "font-medium text-gray-400"
                                   }
@@ -598,7 +802,9 @@ function Topbar({ user }) {
                               </p>
 
 
-                              {notification.unread && (
+                              {/* Unread dot */}
+
+                              {!notification.isRead && (
 
                                 <span
                                   className="
@@ -635,7 +841,9 @@ function Topbar({ user }) {
                                 text-gray-600
                               "
                             >
-                              {notification.time}
+                              {formatNotificationTime(
+                                notification.createdAt
+                              )}
                             </p>
 
                           </div>
@@ -646,6 +854,10 @@ function Topbar({ user }) {
                     )
 
                   ) : (
+
+                    /* ==================================================
+                       EMPTY STATE
+                    ================================================== */
 
                     <div
                       className="
@@ -660,11 +872,24 @@ function Topbar({ user }) {
                         className="mx-auto text-gray-700"
                       />
 
-                      <p className="mt-3 text-sm font-medium">
+                      <p
+                        className="
+                          mt-3
+                          text-sm
+                          font-medium
+                          text-gray-400
+                        "
+                      >
                         You're all caught up
                       </p>
 
-                      <p className="mt-1 text-xs text-gray-600">
+                      <p
+                        className="
+                          mt-1
+                          text-xs
+                          text-gray-600
+                        "
+                      >
                         No new notifications.
                       </p>
 
@@ -675,8 +900,9 @@ function Topbar({ user }) {
                 </div>
 
 
-
-                {/* Notification Footer */}
+                {/* ==================================================
+                    NOTIFICATION FOOTER
+                ================================================== */}
 
                 <button
                   type="button"
@@ -712,7 +938,6 @@ function Topbar({ user }) {
           </AnimatePresence>
 
         </div>
-
 
 
         {/* ==================================================
@@ -785,8 +1010,9 @@ function Topbar({ user }) {
           </button>
 
 
-
-          {/* User Dropdown */}
+          {/* ==================================================
+              USER DROPDOWN
+          ================================================== */}
 
           <AnimatePresence>
 
@@ -833,7 +1059,9 @@ function Topbar({ user }) {
               >
 
 
-                {/* User Info */}
+                {/* ==================================================
+                    USER INFO
+                ================================================== */}
 
                 <div
                   className="
@@ -844,25 +1072,42 @@ function Topbar({ user }) {
                   "
                 >
 
-                  <p className="truncate text-sm font-semibold text-white">
+                  <p
+                    className="
+                      truncate
+                      text-sm
+                      font-semibold
+                      text-white
+                    "
+                  >
                     {user?.name || "Student"}
                   </p>
 
-                  <p className="truncate text-xs text-gray-500">
+                  <p
+                    className="
+                      truncate
+                      text-xs
+                      text-gray-500
+                    "
+                  >
                     {user?.email || ""}
                   </p>
 
                 </div>
 
 
-
-                {/* Profile */}
+                {/* ==================================================
+                    PROFILE
+                ================================================== */}
 
                 <button
                   type="button"
                   onClick={() => {
+
                     setDropdownOpen(false);
+
                     navigate("/profile");
+
                   }}
                   className="
                     flex
@@ -886,14 +1131,18 @@ function Topbar({ user }) {
                 </button>
 
 
-
-                {/* Settings */}
+                {/* ==================================================
+                    SETTINGS
+                ================================================== */}
 
                 <button
                   type="button"
                   onClick={() => {
+
                     setDropdownOpen(false);
+
                     navigate("/settings");
+
                   }}
                   className="
                     flex
@@ -917,8 +1166,9 @@ function Topbar({ user }) {
                 </button>
 
 
-
-                {/* Logout */}
+                {/* ==================================================
+                    LOGOUT
+                ================================================== */}
 
                 <button
                   type="button"
