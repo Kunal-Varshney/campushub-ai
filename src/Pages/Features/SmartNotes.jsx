@@ -125,6 +125,8 @@ function SmartNotes() {
   const [inputText, setInputText] = useState("");
   const [subject, setSubject] = useState("Computer Science");
   const [difficulty, setDifficulty] = useState("Intermediate");
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [uploadMessage, setUploadMessage] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
   const [generatedNotes, setGeneratedNotes] = useState(null);
@@ -169,6 +171,81 @@ function SmartNotes() {
   }, [navigate]);
 
   // ============================================================
+  // FILE UPLOAD
+  // ============================================================
+
+  const handleFileUpload = (event) => {
+  const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "text/plain",
+    ];
+
+    const allowedExtensions = [".pdf", ".doc", ".docx", ".txt"];
+
+    const fileName = file.name.toLowerCase();
+
+    const isValidType =
+      allowedTypes.includes(file.type) ||
+      allowedExtensions.some((extension) =>
+        fileName.endsWith(extension)
+      );
+
+    if (!isValidType) {
+      alert("Please upload a PDF, DOC, DOCX or TXT file.");
+      event.target.value = "";
+      return;
+    }
+
+    // Maximum file size: 10 MB
+    if (file.size > 10 * 1024 * 1024) {
+      alert("File size must be less than 10 MB.");
+      event.target.value = "";
+      return;
+    }
+
+    setUploadedFile(file);
+    setUploadMessage("");
+
+    // TXT files can be read directly in the browser.
+    if (file.type === "text/plain" || fileName.endsWith(".txt")) {
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        const text = e.target?.result;
+
+        if (typeof text === "string" && text.trim()) {
+          setInputText(text.trim());
+
+          setUploadMessage(
+            "TXT file loaded successfully. You can generate notes now."
+          );
+        }
+      };
+
+      reader.onerror = () => {
+        setUploadMessage("Unable to read this file.");
+      };
+
+      reader.readAsText(file);
+    } else {
+      setUploadMessage(
+        `${file.name} selected successfully. PDF/DOC/DOCX processing requires backend file extraction.`
+      );
+    }
+
+    // Allow selecting the same file again
+    event.target.value = "";
+  };
+
+
+
+  // ============================================================
   // GENERATE NOTES
   // ============================================================
 
@@ -197,15 +274,6 @@ function SmartNotes() {
 
       const note = response.data.note;
 
-      // ========================================================
-      // IMPORTANT
-      // Backend structure:
-      //
-      // note.answer.introduction
-      // note.answer.sections[]
-      //
-      // ========================================================
-
       const answer = note.answer || {};
 
       const sections = Array.isArray(answer.sections)
@@ -226,25 +294,16 @@ function SmartNotes() {
 
       setGeneratedNotes({
         title: note.title || "Generated Notes",
-
         subject: note.subject || subject,
-
         difficulty,
-
         introduction: answer.introduction || "",
-
         sections,
-
         keyPoints,
-
         keywords,
-
         examTips,
       });
 
-      // Refresh saved notes
       fetchNotes();
-
     } catch (error) {
       console.log(
         "NOTE ERROR:",
@@ -298,17 +357,17 @@ function SmartNotes() {
           duration: 0.35,
           delay: index * 0.05,
         }}
-        className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/70"
+        className="min-w-0 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/70"
       >
         {/* SECTION HEADER */}
 
-        <div className="border-b border-slate-800 bg-slate-800/50 px-5 py-4">
-          <div className="flex items-start gap-3">
+        <div className="border-b border-slate-800 bg-slate-800/50 px-4 py-4 sm:px-5">
+          <div className="flex min-w-0 items-start gap-3">
             <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-600/20 text-sm font-bold text-blue-400">
               {index + 1}
             </div>
 
-            <h3 className="text-lg font-bold text-white">
+            <h3 className="min-w-0 break-words text-base font-bold leading-6 text-white sm:text-lg">
               {heading}
             </h3>
           </div>
@@ -316,13 +375,13 @@ function SmartNotes() {
 
         {/* SECTION BODY */}
 
-        <div className="space-y-6 p-5">
+        <div className="space-y-6 p-4 sm:p-5">
 
           {/* CONTENT */}
 
           {content && (
-            <div>
-              <p className="whitespace-pre-line text-[15px] leading-8 text-gray-300">
+            <div className="min-w-0">
+              <p className="whitespace-pre-line break-words text-sm leading-7 text-gray-300 sm:text-[15px] sm:leading-8">
                 {content}
               </p>
             </div>
@@ -331,9 +390,12 @@ function SmartNotes() {
           {/* POINTS */}
 
           {points.length > 0 && (
-            <div>
-              <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-blue-400">
-                <ListChecks size={17} />
+            <div className="min-w-0">
+              <h4 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-blue-400 sm:text-sm">
+                <ListChecks
+                  size={17}
+                  className="shrink-0"
+                />
                 Important Points
               </h4>
 
@@ -341,14 +403,14 @@ function SmartNotes() {
                 {points.map((point, pointIndex) => (
                   <div
                     key={pointIndex}
-                    className="flex items-start gap-3"
+                    className="flex min-w-0 items-start gap-3"
                   >
                     <CheckCircle2
                       size={17}
                       className="mt-1 shrink-0 text-blue-400"
                     />
 
-                    <p className="leading-7 text-gray-300">
+                    <p className="min-w-0 break-words text-sm leading-7 text-gray-300 sm:text-base">
                       {point}
                     </p>
                   </div>
@@ -360,9 +422,12 @@ function SmartNotes() {
           {/* EXAMPLES */}
 
           {examples.length > 0 && (
-            <div>
-              <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-cyan-400">
-                <Code2 size={17} />
+            <div className="min-w-0">
+              <h4 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-cyan-400 sm:text-sm">
+                <Code2
+                  size={17}
+                  className="shrink-0"
+                />
                 Examples
               </h4>
 
@@ -370,9 +435,9 @@ function SmartNotes() {
                 {examples.map((example, exampleIndex) => (
                   <div
                     key={exampleIndex}
-                    className="rounded-xl border border-cyan-500/20 bg-slate-950 p-4"
+                    className="min-w-0 overflow-hidden rounded-xl border border-cyan-500/20 bg-slate-950 p-3 sm:p-4"
                   >
-                    <p className="whitespace-pre-line text-sm leading-7 text-gray-300">
+                    <p className="whitespace-pre-line break-words text-sm leading-7 text-gray-300">
                       {example}
                     </p>
                   </div>
@@ -380,7 +445,6 @@ function SmartNotes() {
               </div>
             </div>
           )}
-
         </div>
       </motion.div>
     );
@@ -391,7 +455,7 @@ function SmartNotes() {
   // ============================================================
 
   return (
-    <div className="relative w-full overflow-hidden bg-slate-950 text-white">
+    <div className="relative w-full min-w-0 overflow-hidden bg-slate-950 text-white">
 
       {/* ====================================================== */}
       {/* BACKGROUND GRID */}
@@ -403,13 +467,13 @@ function SmartNotes() {
       {/* HERO */}
       {/* ====================================================== */}
 
-      <section className="relative overflow-hidden px-6 pb-20 pt-28 sm:pt-32">
+      <section className="relative overflow-hidden px-4 pb-16 pt-24 sm:px-6 sm:pb-20 sm:pt-32">
 
         <div className="pointer-events-none absolute -left-24 -top-24 h-80 w-80 rounded-full bg-blue-600/20 blur-[110px]" />
 
         <div className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-cyan-500/20 blur-[110px]" />
 
-        <div className="relative mx-auto flex w-full max-w-7xl flex-col items-center gap-12 lg:grid lg:grid-cols-2 lg:items-center lg:gap-10">
+        <div className="relative mx-auto flex w-full max-w-7xl flex-col items-center gap-10 sm:gap-12 lg:grid lg:grid-cols-2 lg:items-center lg:gap-10">
 
           {/* HERO TEXT */}
 
@@ -425,32 +489,35 @@ function SmartNotes() {
             transition={{
               duration: 0.7,
             }}
-            className="w-full max-w-xl text-center lg:text-left"
+            className="w-full min-w-0 max-w-xl text-center lg:text-left"
           >
 
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-4 py-2 text-sm text-blue-400 backdrop-blur">
-              <Sparkles size={16} />
-              AI Smart Notes
+            <div className="mb-5 inline-flex max-w-full items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-3 py-2 text-xs text-blue-400 backdrop-blur sm:mb-6 sm:px-4 sm:text-sm">
+              <Sparkles
+                size={16}
+                className="shrink-0"
+              />
+              <span>AI Smart Notes</span>
             </div>
 
-            <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
+            <h1 className="break-words text-3xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
               Turn Any Topic Into{" "}
               <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
                 Complete Notes
               </span>
             </h1>
 
-            <p className="mt-6 text-base leading-7 text-gray-400 sm:text-lg sm:leading-8">
+            <p className="mx-auto mt-5 max-w-lg text-sm leading-7 text-gray-400 sm:mt-6 sm:text-lg sm:leading-8 lg:mx-0">
               Give CampusHub AI a topic, question or study requirement
               and get complete, structured notes designed for learning
               and revision.
             </p>
 
-            <div className="mt-8 flex flex-wrap justify-center gap-4 lg:justify-start">
+            <div className="mt-7 flex w-full flex-col justify-center gap-3 sm:flex-row sm:flex-wrap sm:gap-4 lg:justify-start">
 
               <a
                 href="#generator"
-                className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-7 py-3.5 font-semibold transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/30 active:scale-95"
+                className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-3.5 text-sm font-semibold transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/30 active:scale-95 sm:w-auto sm:px-7 sm:text-base"
               >
                 Generate Notes
 
@@ -460,17 +527,26 @@ function SmartNotes() {
                 />
               </a>
 
-              <a
-                href="#generator"
-                className="group flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-900/70 px-7 py-3.5 font-semibold transition-all duration-300 hover:border-blue-500 hover:bg-slate-800"
-              >
-                <UploadCloud
-                  size={20}
-                  className="text-blue-400"
-                />
+            <label
+              htmlFor="smart-notes-upload"
+              className="group flex w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-slate-700 bg-slate-900/70 px-5 py-3.5 text-sm font-semibold transition-all duration-300 hover:border-blue-500 hover:bg-slate-800 active:scale-95 sm:w-auto sm:px-7 sm:text-base"
+            >
+              <UploadCloud
+                size={20}
+                className="shrink-0 text-blue-400 transition-transform duration-300 group-hover:-translate-y-0.5"
+              />
 
-                Start Learning
-              </a>
+              <span>Upload Files</span>
+
+              <input
+                id="smart-notes-upload"
+                type="file"
+                accept=".pdf,.doc,.docx,.txt"
+                className="hidden"
+                onChange={handleFileUpload}
+              />
+            </label>
+            
 
             </div>
 
@@ -491,23 +567,23 @@ function SmartNotes() {
               duration: 0.7,
               delay: 0.15,
             }}
-            className="flex w-full max-w-md justify-center lg:ml-auto"
+            className="flex w-full min-w-0 max-w-md justify-center lg:ml-auto"
           >
 
-            <div className="w-full rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-2xl shadow-blue-900/20 backdrop-blur-xl sm:p-8">
+            <div className="w-full min-w-0 rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-2xl shadow-blue-900/20 backdrop-blur-xl sm:rounded-3xl sm:p-8">
 
-              <div className="mb-6 flex items-center gap-4 rounded-2xl bg-slate-800/80 p-5">
+              <div className="mb-5 flex min-w-0 items-center gap-3 rounded-2xl bg-slate-800/80 p-4 sm:gap-4 sm:p-5">
 
-                <div className="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 p-3">
+                <div className="shrink-0 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 p-3">
                   <FileText size={24} />
                 </div>
 
-                <div>
-                  <p className="text-sm text-gray-400">
+                <div className="min-w-0">
+                  <p className="text-xs text-gray-400 sm:text-sm">
                     Computer Science
                   </p>
 
-                  <h3 className="text-lg font-semibold">
+                  <h3 className="break-words text-base font-semibold sm:text-lg">
                     Types of Arrays
                   </h3>
                 </div>
@@ -516,34 +592,34 @@ function SmartNotes() {
 
               <div className="space-y-5">
 
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm font-semibold text-blue-400">
                     Definition
                   </p>
 
-                  <p className="mt-1 text-sm leading-6 text-gray-300">
+                  <p className="mt-1 break-words text-sm leading-6 text-gray-300">
                     An array is a collection of elements of the same
                     data type stored in contiguous memory locations.
                   </p>
                 </div>
 
-                <div>
-                  <p className="text-sm font-semibold text-blue-400">
+                <div className="min-w-0">
+                  <p className="break-words text-sm font-semibold text-blue-400">
                     1. One-Dimensional Array
                   </p>
 
-                  <p className="mt-1 text-sm leading-6 text-gray-300">
+                  <p className="mt-1 break-words text-sm leading-6 text-gray-300">
                     Stores elements in a single sequence and uses
                     one index to access each element.
                   </p>
                 </div>
 
-                <div>
-                  <p className="text-sm font-semibold text-blue-400">
+                <div className="min-w-0">
+                  <p className="break-words text-sm font-semibold text-blue-400">
                     2. Two-Dimensional Array
                   </p>
 
-                  <p className="mt-1 text-sm leading-6 text-gray-300">
+                  <p className="mt-1 break-words text-sm leading-6 text-gray-300">
                     Stores data using rows and columns and is commonly
                     used to represent matrices.
                   </p>
@@ -551,13 +627,13 @@ function SmartNotes() {
 
               </div>
 
-              <div className="mt-6 rounded-xl border border-blue-500/30 bg-blue-600/10 p-4">
+              <div className="mt-6 rounded-xl border border-blue-500/30 bg-blue-600/10 p-3 sm:p-4">
 
                 <p className="text-xs font-semibold uppercase tracking-wide text-blue-400">
                   Quick Revision
                 </p>
 
-                <p className="mt-2 text-sm leading-6 text-gray-300">
+                <p className="mt-2 break-words text-sm leading-6 text-gray-300">
                   Array → 1D → 2D → Multidimensional
                 </p>
 
@@ -577,12 +653,12 @@ function SmartNotes() {
 
       <section
         id="generator"
-        className="relative px-6 py-20"
+        className="relative px-4 py-16 sm:px-6 sm:py-20"
       >
 
         <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-cyan-500/10 blur-[110px]" />
 
-        <div className="relative mx-auto max-w-4xl">
+        <div className="relative mx-auto w-full max-w-4xl min-w-0">
 
           <motion.div
             initial={{
@@ -600,22 +676,25 @@ function SmartNotes() {
             transition={{
               duration: 0.6,
             }}
-            className="mb-12 text-center"
+            className="mb-10 text-center sm:mb-12"
           >
 
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-4 py-2 text-sm text-blue-400 backdrop-blur">
-              <MessageSquare size={16} />
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-3 py-2 text-xs text-blue-400 backdrop-blur sm:mb-6 sm:px-4 sm:text-sm">
+              <MessageSquare
+                size={16}
+                className="shrink-0"
+              />
               AI Notes Generator
             </div>
 
-            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+            <h2 className="text-2xl font-extrabold tracking-tight sm:text-4xl">
               Create Complete{" "}
               <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
                 Study Notes
               </span>
             </h2>
 
-            <p className="mt-4 text-base text-gray-400 sm:text-lg">
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-gray-400 sm:text-lg">
               Enter even a short topic. CampusHub AI will expand it
               into useful and structured notes.
             </p>
@@ -640,7 +719,7 @@ function SmartNotes() {
             transition={{
               duration: 0.6,
             }}
-            className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-2xl shadow-blue-900/10 backdrop-blur-xl sm:p-8"
+            className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-2xl shadow-blue-900/10 backdrop-blur-xl sm:rounded-3xl sm:p-8"
           >
 
             <textarea
@@ -668,7 +747,7 @@ DBMS Normalization
 OR
 
 Binary Search with example`}
-              className="w-full resize-none rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm leading-7 text-white outline-none transition-all duration-300 focus:border-blue-500 focus:shadow-lg focus:shadow-blue-500/20"
+              className="w-full min-w-0 resize-none rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm leading-7 text-white outline-none transition-all duration-300 focus:border-blue-500 focus:shadow-lg focus:shadow-blue-500/20 sm:px-4"
             />
 
             {/* OPTIONS */}
@@ -677,7 +756,7 @@ Binary Search with example`}
 
               {/* SUBJECT */}
 
-              <div>
+              <div className="min-w-0">
 
                 <label className="mb-2 block text-sm font-medium text-gray-300">
                   Select Subject
@@ -688,7 +767,7 @@ Binary Search with example`}
                   onChange={(e) =>
                     setSubject(e.target.value)
                   }
-                  className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition-all duration-300 focus:border-blue-500"
+                  className="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white outline-none transition-all duration-300 focus:border-blue-500 sm:px-4 sm:text-base"
                 >
                   <option>Computer Science</option>
                   <option>Mathematics</option>
@@ -702,7 +781,7 @@ Binary Search with example`}
 
               {/* DIFFICULTY */}
 
-              <div>
+              <div className="min-w-0">
 
                 <label className="mb-2 block text-sm font-medium text-gray-300">
                   Learning Level
@@ -713,7 +792,7 @@ Binary Search with example`}
                   onChange={(e) =>
                     setDifficulty(e.target.value)
                   }
-                  className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition-all duration-300 focus:border-blue-500"
+                  className="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white outline-none transition-all duration-300 focus:border-blue-500 sm:px-4 sm:text-base"
                 >
                   <option>Beginner</option>
                   <option>Intermediate</option>
@@ -733,17 +812,19 @@ Binary Search with example`}
                 !inputText.trim() ||
                 isLoading
               }
-              className="group mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-7 py-3.5 font-semibold transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/30 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+              className="group mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-3.5 text-sm font-semibold transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/30 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 sm:px-7 sm:text-base"
             >
 
               {isLoading ? (
                 <>
                   <RefreshCw
                     size={18}
-                    className="animate-spin"
+                    className="shrink-0 animate-spin"
                   />
 
-                  AI is creating your notes...
+                  <span className="break-words">
+                    AI is creating your notes...
+                  </span>
                 </>
               ) : (
                 <>
@@ -751,7 +832,7 @@ Binary Search with example`}
 
                   <Wand2
                     size={18}
-                    className="transition-transform duration-300 group-hover:scale-110"
+                    className="shrink-0 transition-transform duration-300 group-hover:scale-110"
                   />
                 </>
               )}
@@ -782,28 +863,28 @@ Binary Search with example`}
                   transition={{
                     duration: 0.4,
                   }}
-                  className="mt-10"
+                  className="mt-8 min-w-0 sm:mt-10"
                 >
 
                   {/* NOTES HEADER */}
 
-                  <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
+                  <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
 
-                    <div className="bg-gradient-to-r from-blue-600/20 to-cyan-500/10 p-6">
+                    <div className="bg-gradient-to-r from-blue-600/20 to-cyan-500/10 p-4 sm:p-6">
 
-                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start">
 
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500">
                           <FileText size={23} />
                         </div>
 
-                        <div className="flex-1">
+                        <div className="min-w-0 flex-1">
 
                           <p className="text-sm font-medium text-blue-400">
                             {generatedNotes.subject}
                           </p>
 
-                          <h2 className="mt-1 text-2xl font-extrabold text-white">
+                          <h2 className="mt-1 break-words text-xl font-extrabold leading-tight text-white sm:text-2xl">
                             {generatedNotes.title}
                           </h2>
 
@@ -813,7 +894,7 @@ Binary Search with example`}
 
                         </div>
 
-                        <span className="w-fit rounded-full border border-blue-500/30 bg-blue-600/10 px-3 py-1.5 text-xs font-medium text-blue-400">
+                        <span className="w-fit max-w-full shrink-0 break-words rounded-full border border-blue-500/30 bg-blue-600/10 px-3 py-1.5 text-xs font-medium text-blue-400">
                           {generatedNotes.difficulty}
                         </span>
 
@@ -829,22 +910,22 @@ Binary Search with example`}
 
                   {generatedNotes.introduction && (
 
-                    <div className="mt-6 rounded-2xl border border-blue-500/30 bg-blue-600/10 p-6">
+                    <div className="mt-6 min-w-0 rounded-2xl border border-blue-500/30 bg-blue-600/10 p-4 sm:p-6">
 
                       <div className="mb-3 flex items-center gap-2">
 
                         <BookOpen
                           size={19}
-                          className="text-blue-400"
+                          className="shrink-0 text-blue-400"
                         />
 
-                        <h3 className="text-lg font-bold text-blue-400">
+                        <h3 className="break-words text-base font-bold text-blue-400 sm:text-lg">
                           Definition / Introduction
                         </h3>
 
                       </div>
 
-                      <p className="whitespace-pre-line text-[15px] leading-8 text-gray-300">
+                      <p className="whitespace-pre-line break-words text-sm leading-7 text-gray-300 sm:text-[15px] sm:leading-8">
                         {generatedNotes.introduction}
                       </p>
 
@@ -858,7 +939,7 @@ Binary Search with example`}
 
                   {generatedNotes.sections.length > 0 && (
 
-                    <div className="mt-7 space-y-5">
+                    <div className="mt-7 min-w-0 space-y-5">
 
                       {generatedNotes.sections.map(
                         renderSection
@@ -874,16 +955,16 @@ Binary Search with example`}
 
                   {generatedNotes.keyPoints.length > 0 && (
 
-                    <div className="mt-7 rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
+                    <div className="mt-7 min-w-0 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 sm:p-6">
 
                       <div className="mb-5 flex items-center gap-2">
 
                         <ListChecks
                           size={20}
-                          className="text-blue-400"
+                          className="shrink-0 text-blue-400"
                         />
 
-                        <h3 className="text-lg font-bold">
+                        <h3 className="text-base font-bold sm:text-lg">
                           Important Points
                         </h3>
 
@@ -896,7 +977,7 @@ Binary Search with example`}
 
                             <div
                               key={index}
-                              className="flex items-start gap-3"
+                              className="flex min-w-0 items-start gap-3"
                             >
 
                               <CheckCircle2
@@ -904,7 +985,7 @@ Binary Search with example`}
                                 className="mt-1 shrink-0 text-blue-400"
                               />
 
-                              <p className="leading-7 text-gray-300">
+                              <p className="min-w-0 break-words text-sm leading-7 text-gray-300 sm:text-base">
                                 {point}
                               </p>
 
@@ -925,29 +1006,29 @@ Binary Search with example`}
 
                   {generatedNotes.keywords.length > 0 && (
 
-                    <div className="mt-7 rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
+                    <div className="mt-7 min-w-0 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 sm:p-6">
 
                       <div className="mb-4 flex items-center gap-2">
 
                         <Layers
                           size={19}
-                          className="text-cyan-400"
+                          className="shrink-0 text-cyan-400"
                         />
 
-                        <h3 className="text-lg font-bold">
+                        <h3 className="text-base font-bold sm:text-lg">
                           Important Terms
                         </h3>
 
                       </div>
 
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex min-w-0 flex-wrap gap-2">
 
                         {generatedNotes.keywords.map(
                           (keyword, index) => (
 
                             <span
                               key={index}
-                              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-gray-300"
+                              className="max-w-full break-words rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-gray-300 sm:text-sm"
                             >
                               {keyword}
                             </span>
@@ -967,16 +1048,16 @@ Binary Search with example`}
 
                   {generatedNotes.examTips.length > 0 && (
 
-                    <div className="mt-7 rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-6">
+                    <div className="mt-7 min-w-0 rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-4 sm:p-6">
 
                       <div className="mb-5 flex items-center gap-2">
 
                         <Lightbulb
                           size={20}
-                          className="text-yellow-400"
+                          className="shrink-0 text-yellow-400"
                         />
 
-                        <h3 className="text-lg font-bold text-yellow-400">
+                        <h3 className="break-words text-base font-bold text-yellow-400 sm:text-lg">
                           Exam-Oriented Points
                         </h3>
 
@@ -989,12 +1070,12 @@ Binary Search with example`}
 
                             <div
                               key={index}
-                              className="flex items-start gap-3"
+                              className="flex min-w-0 items-start gap-3"
                             >
 
                               <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-yellow-400" />
 
-                              <p className="leading-7 text-gray-300">
+                              <p className="min-w-0 break-words text-sm leading-7 text-gray-300 sm:text-base">
                                 {tip}
                               </p>
 
@@ -1016,16 +1097,16 @@ Binary Search with example`}
                   {(generatedNotes.keyPoints.length > 0 ||
                     generatedNotes.sections.length > 0) && (
 
-                    <div className="mt-7 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-6">
+                    <div className="mt-7 min-w-0 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-4 sm:p-6">
 
                       <div className="mb-4 flex items-center gap-2">
 
                         <Zap
                           size={19}
-                          className="text-cyan-400"
+                          className="shrink-0 text-cyan-400"
                         />
 
-                        <h3 className="text-lg font-bold text-cyan-400">
+                        <h3 className="text-base font-bold text-cyan-400 sm:text-lg">
                           Quick Revision
                         </h3>
 
@@ -1038,7 +1119,10 @@ Binary Search with example`}
                           generatedNotes.keyPoints
                             .slice(0, 5)
                             .map((point, index) => (
-                              <p key={index}>
+                              <p
+                                key={index}
+                                className="break-words"
+                              >
                                 • {point}
                               </p>
                             ))
@@ -1048,7 +1132,10 @@ Binary Search with example`}
                           generatedNotes.sections
                             .slice(0, 5)
                             .map((section, index) => (
-                              <p key={index}>
+                              <p
+                                key={index}
+                                className="break-words"
+                              >
                                 • {section.heading}
                               </p>
                             ))
@@ -1077,18 +1164,18 @@ Binary Search with example`}
       {/* FEATURES */}
       {/* ====================================================== */}
 
-      <section className="relative px-6 py-20">
+      <section className="relative px-4 py-16 sm:px-6 sm:py-20">
 
         <div className="relative mx-auto max-w-7xl">
 
-          <div className="mx-auto mb-16 max-w-2xl text-center">
+          <div className="mx-auto mb-12 max-w-2xl text-center sm:mb-16">
 
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-4 py-2 text-sm text-blue-400">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-3 py-2 text-xs text-blue-400 sm:mb-6 sm:px-4 sm:text-sm">
               <Sparkles size={16} />
               Why It Works
             </div>
 
-            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+            <h2 className="break-words text-2xl font-extrabold tracking-tight sm:text-4xl">
               Notes that understand{" "}
               <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
                 your topic
@@ -1097,7 +1184,7 @@ Binary Search with example`}
 
           </div>
 
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-8">
 
             {features.map((item, index) => {
 
@@ -1123,18 +1210,18 @@ Binary Search with example`}
                     duration: 0.5,
                     delay: index * 0.1,
                   }}
-                  className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/60 p-8 shadow-xl backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:border-blue-500/50"
+                  className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-xl backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:border-blue-500/50 sm:rounded-3xl sm:p-8"
                 >
 
-                  <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg">
+                  <div className="mb-5 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg sm:mb-6 sm:h-14 sm:w-14">
                     <Icon size={26} />
                   </div>
 
-                  <h3 className="mb-3 text-xl font-semibold">
+                  <h3 className="mb-3 break-words text-lg font-semibold sm:text-xl">
                     {item.title}
                   </h3>
 
-                  <p className="text-base leading-relaxed text-gray-400">
+                  <p className="break-words text-sm leading-relaxed text-gray-400 sm:text-base">
                     {item.description}
                   </p>
 
@@ -1153,18 +1240,18 @@ Binary Search with example`}
       {/* HOW IT WORKS */}
       {/* ====================================================== */}
 
-      <section className="relative px-6 py-20">
+      <section className="relative px-4 py-16 sm:px-6 sm:py-20">
 
         <div className="relative mx-auto max-w-7xl">
 
-          <div className="mx-auto mb-16 max-w-2xl text-center">
+          <div className="mx-auto mb-12 max-w-2xl text-center sm:mb-16">
 
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-4 py-2 text-sm text-blue-400">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-3 py-2 text-xs text-blue-400 sm:mb-6 sm:px-4 sm:text-sm">
               <ListChecks size={16} />
               How It Works
             </div>
 
-            <h2 className="text-3xl font-extrabold sm:text-4xl">
+            <h2 className="break-words text-2xl font-extrabold sm:text-4xl">
               From topic to{" "}
               <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
                 complete notes
@@ -1173,7 +1260,7 @@ Binary Search with example`}
 
           </div>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
 
             {steps.map((step, index) => {
 
@@ -1198,22 +1285,22 @@ Binary Search with example`}
                     duration: 0.5,
                     delay: index * 0.1,
                   }}
-                  className="relative rounded-3xl border border-slate-800 bg-slate-900/60 p-6 backdrop-blur-xl"
+                  className="relative min-w-0 rounded-2xl border border-slate-800 bg-slate-900/60 p-5 backdrop-blur-xl sm:rounded-3xl sm:p-6"
                 >
 
-                  <span className="absolute right-6 top-6 text-3xl font-bold text-slate-800">
+                  <span className="absolute right-5 top-5 text-2xl font-bold text-slate-800 sm:right-6 sm:top-6 sm:text-3xl">
                     {step.number}
                   </span>
 
-                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500">
+                  <div className="mb-5 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500">
                     <Icon size={22} />
                   </div>
 
-                  <h3 className="mb-2 text-lg font-semibold">
+                  <h3 className="mb-2 break-words text-lg font-semibold">
                     {step.title}
                   </h3>
 
-                  <p className="text-sm leading-relaxed text-gray-400">
+                  <p className="break-words text-sm leading-relaxed text-gray-400">
                     {step.description}
                   </p>
 
@@ -1232,46 +1319,46 @@ Binary Search with example`}
       {/* BENEFITS */}
       {/* ====================================================== */}
 
-      <section className="relative px-6 py-20">
+      <section className="relative px-4 py-16 sm:px-6 sm:py-20">
 
-        <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
+        <div className="relative mx-auto grid max-w-7xl items-center gap-8 sm:gap-12 lg:grid-cols-2">
 
-          <div>
+          <div className="min-w-0">
 
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-4 py-2 text-sm text-blue-400">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-3 py-2 text-xs text-blue-400 sm:mb-6 sm:px-4 sm:text-sm">
               <Target size={16} />
               Why Students Choose It
             </div>
 
-            <h2 className="text-3xl font-extrabold sm:text-4xl">
+            <h2 className="break-words text-2xl font-extrabold sm:text-4xl">
               Study Smarter{" "}
               <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
                 With AI
               </span>
             </h2>
 
-            <p className="mt-6 text-base leading-7 text-gray-400 sm:text-lg">
+            <p className="mt-5 break-words text-sm leading-7 text-gray-400 sm:mt-6 sm:text-lg">
               Start with a short topic and let CampusHub AI turn
               it into complete study notes.
             </p>
 
           </div>
 
-          <div className="space-y-4">
+          <div className="min-w-0 space-y-4">
 
             {benefits.map((benefit) => (
 
               <div
                 key={benefit}
-                className="flex items-center gap-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-5 backdrop-blur-xl"
+                className="flex min-w-0 items-start gap-3 rounded-2xl border border-slate-800 bg-slate-900/60 p-4 backdrop-blur-xl sm:items-center sm:gap-4 sm:p-5"
               >
 
                 <CheckCircle2
                   size={20}
-                  className="shrink-0 text-green-400"
+                  className="mt-0.5 shrink-0 text-green-400 sm:mt-0"
                 />
 
-                <p className="text-sm text-gray-200 sm:text-base">
+                <p className="min-w-0 break-words text-sm leading-6 text-gray-200 sm:text-base">
                   {benefit}
                 </p>
 
@@ -1289,34 +1376,34 @@ Binary Search with example`}
       {/* FINAL CTA */}
       {/* ====================================================== */}
 
-      <section className="relative px-6 py-24">
+      <section className="relative px-4 py-16 sm:px-6 sm:py-24">
 
         <div className="relative mx-auto max-w-5xl">
 
-          <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/60 px-8 py-16 text-center shadow-2xl backdrop-blur-xl sm:px-12 sm:py-20">
+          <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/60 px-4 py-12 text-center shadow-2xl backdrop-blur-xl sm:rounded-3xl sm:px-12 sm:py-20">
 
             <div className="relative flex flex-col items-center">
 
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-4 py-2 text-sm text-blue-400">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-3 py-2 text-xs text-blue-400 sm:mb-6 sm:px-4 sm:text-sm">
                 <FileText size={16} />
                 AI Smart Notes
               </div>
 
-              <h2 className="max-w-2xl text-4xl font-extrabold sm:text-5xl">
+              <h2 className="max-w-2xl break-words text-3xl font-extrabold leading-tight sm:text-5xl">
                 Give us a topic.
                 <span className="block bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
                   Get complete notes.
                 </span>
               </h2>
 
-              <p className="mt-6 max-w-xl text-lg leading-8 text-gray-400">
+              <p className="mt-5 max-w-xl break-words text-base leading-7 text-gray-400 sm:mt-6 sm:text-lg sm:leading-8">
                 Enter a topic, concept or study requirement and let
                 CampusHub AI build structured notes for you.
               </p>
 
               <a
                 href="#generator"
-                className="mt-10 flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-8 py-4 font-semibold transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/30"
+                className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-6 py-4 text-sm font-semibold transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/30 sm:mt-10 sm:w-auto sm:px-8 sm:text-base"
               >
                 Generate My Notes
                 <ArrowRight size={18} />
