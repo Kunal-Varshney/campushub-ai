@@ -1,1002 +1,3 @@
-// import Roadmap from "../models/Roadmap.js";
-
-// // ============================================================
-// // ALLOWED CAREERS
-// // ============================================================
-
-// const allowedCareers = [
-//   "frontend",
-//   "backend",
-//   "fullstack",
-//   "ai",
-//   "ml",
-//   "data",
-//   "cyber",
-//   "cloud",
-//   "devops",
-//   "android",
-//   "uiux",
-// ];
-
-// // ============================================================
-// // ALLOWED LEVELS
-// // ============================================================
-
-// const allowedLevels = [
-//   "Beginner",
-//   "Intermediate",
-//   "Advanced",
-// ];
-
-// // ============================================================
-// // CAREER DISPLAY NAMES
-// // ============================================================
-
-// const careerNames = {
-//   frontend: "Frontend Developer",
-//   backend: "Backend Developer",
-//   fullstack: "Full Stack Developer",
-//   ai: "AI Engineer",
-//   ml: "Machine Learning Engineer",
-//   data: "Data Scientist",
-//   cyber: "Cyber Security",
-//   cloud: "Cloud Engineer",
-//   devops: "DevOps Engineer",
-//   android: "Android Developer",
-//   uiux: "UI/UX Designer",
-// };
-
-// // ============================================================
-// // NORMALIZE CAREER
-// // ============================================================
-
-// const normalizeCareer = (career) => {
-//   if (!career) {
-//     return null;
-//   }
-
-//   // If frontend sends an object
-//   if (typeof career === "object") {
-//     career =
-//       career.id ||
-//       career.value ||
-//       career.careerId ||
-//       career.career ||
-//       career.name ||
-//       career.title;
-//   }
-
-//   if (!career) {
-//     return null;
-//   }
-
-//   const value = String(career)
-//     .trim()
-//     .toLowerCase()
-//     .replace(/\s+/g, " ");
-
-//   const careerMap = {
-//     // Frontend
-//     frontend: "frontend",
-//     "frontend developer": "frontend",
-//     "front end developer": "frontend",
-
-//     // Backend
-//     backend: "backend",
-//     "backend developer": "backend",
-//     "back end developer": "backend",
-
-//     // Full Stack
-//     fullstack: "fullstack",
-//     "full stack": "fullstack",
-//     "fullstack developer": "fullstack",
-//     "full stack developer": "fullstack",
-
-//     // AI
-//     ai: "ai",
-//     "ai engineer": "ai",
-//     "artificial intelligence": "ai",
-//     "artificial intelligence engineer": "ai",
-
-//     // ML
-//     ml: "ml",
-//     "machine learning": "ml",
-//     "machine learning engineer": "ml",
-
-//     // Data
-//     data: "data",
-//     "data science": "data",
-//     "data scientist": "data",
-
-//     // Cyber
-//     cyber: "cyber",
-//     cybersecurity: "cyber",
-//     "cyber security": "cyber",
-//     "cyber security specialist": "cyber",
-
-//     // Cloud
-//     cloud: "cloud",
-//     "cloud engineer": "cloud",
-//     "cloud computing": "cloud",
-
-//     // DevOps
-//     devops: "devops",
-//     "devops engineer": "devops",
-
-//     // Android
-//     android: "android",
-//     "android developer": "android",
-
-//     // UI/UX
-//     uiux: "uiux",
-//     "ui/ux": "uiux",
-//     "ui/ux designer": "uiux",
-//     "ui ux designer": "uiux",
-//     "uiux designer": "uiux",
-//   };
-
-//   return careerMap[value] || null;
-// };
-
-// // ============================================================
-// // NORMALIZE LEVEL
-// // ============================================================
-
-// const normalizeLevel = (level) => {
-//   if (!level) {
-//     return null;
-//   }
-
-//   const value = String(level).trim().toLowerCase();
-
-//   const levelMap = {
-//     beginner: "Beginner",
-//     intermediate: "Intermediate",
-//     advanced: "Advanced",
-//   };
-
-//   return levelMap[value] || null;
-// };
-
-// // ============================================================
-// // GENERATE ROADMAP
-// // ============================================================
-
-// export const generateRoadmap = async (req, res) => {
-//   try {
-//     const userId = req.user?._id;
-
-//     // --------------------------------------------------------
-//     // RAW REQUEST
-//     // --------------------------------------------------------
-
-//     const { career, careerId, level, skillLevel, experienceLevel } =
-//       req.body;
-
-//     console.log("=================================");
-//     console.log("ROADMAP REQUEST");
-//     console.log("BODY:", JSON.stringify(req.body, null, 2));
-//     console.log("USER ID:", userId);
-//     console.log("=================================");
-
-//     // --------------------------------------------------------
-//     // AUTH CHECK
-//     // --------------------------------------------------------
-
-//     if (!userId) {
-//       return res.status(401).json({
-//         success: false,
-//         message: "Unauthorized",
-//       });
-//     }
-
-//     // --------------------------------------------------------
-//     // EXTRACT CAREER
-//     // --------------------------------------------------------
-
-//     let careerInput = careerId || career;
-
-//     // If career is an object
-//     if (career && typeof career === "object") {
-//       careerInput =
-//         career.id ||
-//         career.value ||
-//         career.careerId ||
-//         career.career ||
-//         career.name ||
-//         career.title ||
-//         careerInput;
-//     }
-
-//     // --------------------------------------------------------
-//     // EXTRACT LEVEL
-//     // --------------------------------------------------------
-
-//     let levelInput =
-//       level ||
-//       skillLevel ||
-//       experienceLevel;
-
-//     // If career object contains level
-//     if (career && typeof career === "object") {
-//       levelInput =
-//         levelInput ||
-//         career.level ||
-//         career.skillLevel ||
-//         career.experienceLevel;
-//     }
-
-//     console.log("Career input:", careerInput);
-//     console.log("Level input:", levelInput);
-
-//     // --------------------------------------------------------
-//     // CAREER REQUIRED
-//     // --------------------------------------------------------
-
-//     if (!careerInput) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Career is required",
-//         receivedBody: req.body,
-//       });
-//     }
-
-//     // --------------------------------------------------------
-//     // NORMALIZE CAREER
-//     // --------------------------------------------------------
-
-//     const normalizedCareer =
-//       normalizeCareer(careerInput);
-
-//     console.log(
-//       "Normalized career:",
-//       normalizedCareer
-//     );
-
-//     // --------------------------------------------------------
-//     // CAREER VALIDATION
-//     // --------------------------------------------------------
-
-//     if (!normalizedCareer) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Invalid career path",
-//         receivedCareer: careerInput,
-//         allowedCareers,
-//       });
-//     }
-
-//     // --------------------------------------------------------
-//     // LEVEL REQUIRED
-//     // --------------------------------------------------------
-
-//     if (!levelInput) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Skill level is required",
-//         receivedBody: req.body,
-//       });
-//     }
-
-//     // --------------------------------------------------------
-//     // NORMALIZE LEVEL
-//     // --------------------------------------------------------
-
-//     const normalizedLevel =
-//       normalizeLevel(levelInput);
-
-//     console.log(
-//       "Normalized level:",
-//       normalizedLevel
-//     );
-
-//     // --------------------------------------------------------
-//     // LEVEL VALIDATION
-//     // --------------------------------------------------------
-
-//     if (!normalizedLevel) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Invalid skill level",
-//         receivedLevel: levelInput,
-//         allowedLevels,
-//       });
-//     }
-
-//     // --------------------------------------------------------
-//     // CAREER NAME
-//     // --------------------------------------------------------
-
-//     const careerName =
-//       careerNames[normalizedCareer];
-
-//     // --------------------------------------------------------
-//     // CREATE ROADMAP DATA
-//     // --------------------------------------------------------
-
-//     const roadmapSteps = createRoadmap(
-//       normalizedCareer,
-//       normalizedLevel
-//     );
-
-//     const weeklyPlan = createWeeklyPlan(
-//       normalizedCareer
-//     );
-
-//     const projects = createProjects(
-//       normalizedCareer
-//     );
-
-//     const skillAnalysis =
-//       createSkillAnalysis(normalizedLevel);
-
-//     // --------------------------------------------------------
-//     // SAVE / UPDATE ROADMAP
-//     // --------------------------------------------------------
-
-//     console.log("Saving roadmap...");
-//     console.log("Career:", normalizedCareer);
-//     console.log("Level:", normalizedLevel);
-
-//     const roadmap =
-//       await Roadmap.findOneAndUpdate(
-//         {
-//           user: userId,
-//           career: normalizedCareer,
-//           level: normalizedLevel,
-//         },
-//         {
-//           user: userId,
-//           career: normalizedCareer,
-//           level: normalizedLevel,
-//           roadmapSteps,
-//           weeklyPlan,
-//           projects,
-//           skillAnalysis,
-//         },
-//         {
-//           new: true,
-//           upsert: true,
-//           setDefaultsOnInsert: true,
-//         }
-//       );
-
-//     // --------------------------------------------------------
-//     // SUCCESS RESPONSE
-//     // --------------------------------------------------------
-
-//     console.log(
-//       "Roadmap generated successfully:",
-//       roadmap._id
-//     );
-
-//     return res.status(200).json({
-//       success: true,
-//       message: "Roadmap generated successfully",
-
-//       roadmap: {
-//         id: roadmap._id,
-//         career: careerName,
-//         careerId: normalizedCareer,
-//         level: roadmap.level,
-//         roadmapSteps: roadmap.roadmapSteps,
-//         weeklyPlan: roadmap.weeklyPlan,
-//         projects: roadmap.projects,
-//         skillAnalysis: roadmap.skillAnalysis,
-//       },
-//     });
-//   } catch (error) {
-//     console.error("=================================");
-//     console.error("GENERATE ROADMAP ERROR");
-//     console.error("Message:", error.message);
-//     console.error("Name:", error.name);
-//     console.error("Stack:", error.stack);
-//     console.error("=================================");
-
-//     return res.status(500).json({
-//       success: false,
-//       message: "Failed to generate roadmap",
-//       error: error.message,
-//     });
-//   }
-// };
-
-// // ============================================================
-// // GET USER ROADMAPS
-// // ============================================================
-
-// export const getMyRoadmaps = async (req, res) => {
-//   try {
-//     const userId = req.user?._id;
-
-//     if (!userId) {
-//       return res.status(401).json({
-//         success: false,
-//         message: "Unauthorized",
-//       });
-//     }
-
-//     const roadmaps = await Roadmap.find({
-//       user: userId,
-//     }).sort({
-//       createdAt: -1,
-//     });
-
-//     return res.status(200).json({
-//       success: true,
-//       count: roadmaps.length,
-//       roadmaps,
-//     });
-//   } catch (error) {
-//     console.error(
-//       "Get Roadmaps Error:",
-//       error
-//     );
-
-//     return res.status(500).json({
-//       success: false,
-//       message: "Failed to fetch roadmaps",
-//       error: error.message,
-//     });
-//   }
-// };
-
-// // ============================================================
-// // GET SINGLE ROADMAP
-// // ============================================================
-
-// export const getRoadmapById = async (req, res) => {
-//   try {
-//     const userId = req.user?._id;
-
-//     const { id } = req.params;
-
-//     if (!userId) {
-//       return res.status(401).json({
-//         success: false,
-//         message: "Unauthorized",
-//       });
-//     }
-
-//     const roadmap = await Roadmap.findOne({
-//       _id: id,
-//       user: userId,
-//     });
-
-//     if (!roadmap) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Roadmap not found",
-//       });
-//     }
-
-//     return res.status(200).json({
-//       success: true,
-//       roadmap,
-//     });
-//   } catch (error) {
-//     console.error(
-//       "Get Roadmap Error:",
-//       error
-//     );
-
-//     return res.status(500).json({
-//       success: false,
-//       message: "Failed to fetch roadmap",
-//       error: error.message,
-//     });
-//   }
-// };
-
-// // ============================================================
-// // ROADMAP GENERATOR
-// // ============================================================
-
-// const createRoadmap = (career, level) => {
-//   const data = {
-//     // ========================================================
-//     // FRONTEND
-//     // ========================================================
-
-//     frontend: [
-//       {
-//         title: "HTML & CSS Fundamentals",
-//         difficulty: "Beginner",
-//         time: "1 Week",
-//         description:
-//           "Learn semantic HTML, CSS fundamentals, Flexbox, Grid and responsive design.",
-//       },
-//       {
-//         title: "JavaScript Essentials",
-//         difficulty: "Beginner",
-//         time: "3 Weeks",
-//         description:
-//           "Master variables, functions, arrays, objects, DOM, ES6+ and async JavaScript.",
-//       },
-//       {
-//         title: "Git & GitHub",
-//         difficulty: "Beginner",
-//         time: "1 Week",
-//         description:
-//           "Learn version control, branches, commits, pull requests and GitHub workflows.",
-//       },
-//       {
-//         title: "React.js",
-//         difficulty: "Intermediate",
-//         time: "3 Weeks",
-//         description:
-//           "Learn components, props, state, hooks, routing and reusable architecture.",
-//       },
-//       {
-//         title: "Advanced Frontend",
-//         difficulty: "Advanced",
-//         time: "3 Weeks",
-//         description:
-//           "Learn performance optimization, advanced state management and production patterns.",
-//       },
-//       {
-//         title: "Projects & Portfolio",
-//         difficulty: "Advanced",
-//         time: "3 Weeks",
-//         description:
-//           "Build production-ready projects and create a strong developer portfolio.",
-//       },
-//       {
-//         title: "Deployment",
-//         difficulty: "Advanced",
-//         time: "1 Week",
-//         description:
-//           "Deploy frontend applications and understand production configuration.",
-//       },
-//       {
-//         title: "Interview Preparation",
-//         difficulty: "Advanced",
-//         time: "2 Weeks",
-//         description:
-//           "Practice JavaScript, React, frontend system questions and coding problems.",
-//       },
-//     ],
-
-//     // ========================================================
-//     // BACKEND
-//     // ========================================================
-
-//     backend: [
-//       {
-//         title: "Programming Fundamentals",
-//         difficulty: "Beginner",
-//         time: "2 Weeks",
-//         description:
-//           "Build strong programming logic using JavaScript and understand core concepts.",
-//       },
-//       {
-//         title: "Node.js",
-//         difficulty: "Intermediate",
-//         time: "2 Weeks",
-//         description:
-//           "Learn Node.js runtime, modules, event loop, asynchronous programming and APIs.",
-//       },
-//       {
-//         title: "Express.js",
-//         difficulty: "Intermediate",
-//         time: "2 Weeks",
-//         description:
-//           "Learn routing, middleware, controllers, REST APIs and backend architecture.",
-//       },
-//       {
-//         title: "MongoDB",
-//         difficulty: "Intermediate",
-//         time: "2 Weeks",
-//         description:
-//           "Learn NoSQL databases, schemas, Mongoose, queries and aggregation.",
-//       },
-//       {
-//         title: "Authentication & Security",
-//         difficulty: "Advanced",
-//         time: "2 Weeks",
-//         description:
-//           "Implement JWT authentication, authorization, password hashing and API security.",
-//       },
-//       {
-//         title: "Backend Projects",
-//         difficulty: "Advanced",
-//         time: "4 Weeks",
-//         description:
-//           "Build production-style REST APIs and complete backend applications.",
-//       },
-//       {
-//         title: "Deployment & APIs",
-//         difficulty: "Advanced",
-//         time: "1 Week",
-//         description:
-//           "Deploy backend services and configure environment variables and production APIs.",
-//       },
-//       {
-//         title: "Backend Interview Preparation",
-//         difficulty: "Advanced",
-//         time: "2 Weeks",
-//         description:
-//           "Prepare for Node.js, databases, APIs, authentication and backend interviews.",
-//       },
-//     ],
-//   };
-
-//   let steps = data[career];
-
-//   // ========================================================
-//   // GENERIC CAREERS
-//   // ========================================================
-
-//   if (!steps) {
-//     steps = [
-//       {
-//         title: `${career} Fundamentals`,
-//         difficulty: "Beginner",
-//         time: "2 Weeks",
-//         description:
-//           `Learn the fundamentals required to start a career as a ${career}.`,
-//       },
-//       {
-//         title: `${career} Core Skills`,
-//         difficulty: "Intermediate",
-//         time: "3 Weeks",
-//         description:
-//           `Develop the core technical skills required for ${career}.`,
-//       },
-//       {
-//         title: "Projects",
-//         difficulty: "Intermediate",
-//         time: "3 Weeks",
-//         description:
-//           "Build practical projects to apply your technical knowledge.",
-//       },
-//       {
-//         title: "Advanced Skills",
-//         difficulty: "Advanced",
-//         time: "3 Weeks",
-//         description:
-//           "Learn advanced concepts and industry-standard development practices.",
-//       },
-//       {
-//         title: "Portfolio & Deployment",
-//         difficulty: "Advanced",
-//         time: "2 Weeks",
-//         description:
-//           "Create portfolio projects and deploy them for real-world usage.",
-//       },
-//       {
-//         title: "Interview Preparation",
-//         difficulty: "Advanced",
-//         time: "2 Weeks",
-//         description:
-//           "Prepare for technical interviews and placement opportunities.",
-//       },
-//     ];
-//   }
-
-//   // ========================================================
-//   // ADD PROGRESS
-//   // ========================================================
-
-//   return steps.map((step, index) => ({
-//     ...step,
-
-//     status:
-//       level === "Beginner" && index === 0
-//         ? "in-progress"
-//         : index === 0
-//         ? "completed"
-//         : "pending",
-
-//     progress:
-//       level === "Beginner" && index === 0
-//         ? 40
-//         : index === 0
-//         ? 100
-//         : 0,
-//   }));
-// };
-
-// // ============================================================
-// // WEEKLY PLAN
-// // ============================================================
-
-// const createWeeklyPlan = (career) => {
-//   return [
-//     {
-//       week: "Week 1",
-//       topics: [
-//         "Fundamentals",
-//         "Core Concepts",
-//         "Environment Setup",
-//       ],
-//       assignment:
-//         `Learn the fundamentals of ${career} development.`,
-//       miniProject:
-//         `${career} Starter Project`,
-//       hours: 10,
-//     },
-
-//     {
-//       week: "Week 2",
-//       topics: [
-//         "Practical Skills",
-//         "APIs",
-//         "Git & GitHub",
-//       ],
-//       assignment:
-//         "Practice the concepts by building small features.",
-//       miniProject:
-//         "Practice Application",
-//       hours: 12,
-//     },
-
-//     {
-//       week: "Week 3",
-//       topics: [
-//         "Advanced Concepts",
-//         "Debugging",
-//         "Best Practices",
-//       ],
-//       assignment:
-//         "Build a complete feature using the learned concepts.",
-//       miniProject:
-//         "Feature-Based Project",
-//       hours: 14,
-//     },
-
-//     {
-//       week: "Week 4",
-//       topics: [
-//         "Project",
-//         "Deployment",
-//         "Portfolio",
-//       ],
-//       assignment:
-//         "Build and deploy a portfolio-ready project.",
-//       miniProject:
-//         "Final Portfolio Project",
-//       hours: 15,
-//     },
-//   ];
-// };
-
-// // ============================================================
-// // PROJECTS
-// // ============================================================
-
-// const createProjects = (career) => {
-//   // --------------------------------------------------------
-//   // BACKEND
-//   // --------------------------------------------------------
-
-//   if (career === "backend") {
-//     return [
-//       {
-//         name: "REST API",
-//         difficulty: "Beginner",
-//         skills: ["Node.js", "Express"],
-//         time: "1 Week",
-//       },
-//       {
-//         name: "Authentication API",
-//         difficulty: "Intermediate",
-//         skills: [
-//           "Node.js",
-//           "JWT",
-//           "MongoDB",
-//         ],
-//         time: "2 Weeks",
-//       },
-//       {
-//         name: "Task Manager API",
-//         difficulty: "Intermediate",
-//         skills: [
-//           "Express",
-//           "MongoDB",
-//           "JWT",
-//         ],
-//         time: "2 Weeks",
-//       },
-//       {
-//         name: "Realtime Chat Backend",
-//         difficulty: "Advanced",
-//         skills: [
-//           "Node.js",
-//           "Socket.IO",
-//           "MongoDB",
-//         ],
-//         time: "3 Weeks",
-//       },
-//     ];
-//   }
-
-//   // --------------------------------------------------------
-//   // FRONTEND
-//   // --------------------------------------------------------
-
-//   if (career === "frontend") {
-//     return [
-//       {
-//         name: "Responsive Portfolio",
-//         difficulty: "Beginner",
-//         skills: [
-//           "HTML",
-//           "CSS",
-//           "JavaScript",
-//         ],
-//         time: "1 Week",
-//       },
-//       {
-//         name: "Weather Dashboard",
-//         difficulty: "Beginner",
-//         skills: [
-//           "JavaScript",
-//           "API",
-//           "CSS",
-//         ],
-//         time: "1 Week",
-//       },
-//       {
-//         name: "React Dashboard",
-//         difficulty: "Intermediate",
-//         skills: [
-//           "React",
-//           "Hooks",
-//           "API",
-//         ],
-//         time: "2 Weeks",
-//       },
-//       {
-//         name: "E-commerce Frontend",
-//         difficulty: "Advanced",
-//         skills: [
-//           "React",
-//           "State Management",
-//           "API",
-//         ],
-//         time: "3 Weeks",
-//       },
-//     ];
-//   }
-
-//   // --------------------------------------------------------
-//   // FULL STACK
-//   // --------------------------------------------------------
-
-//   if (career === "fullstack") {
-//     return [
-//       {
-//         name: "Full Stack Portfolio",
-//         difficulty: "Beginner",
-//         skills: [
-//           "HTML",
-//           "CSS",
-//           "JavaScript",
-//         ],
-//         time: "1 Week",
-//       },
-//       {
-//         name: "MERN Authentication App",
-//         difficulty: "Intermediate",
-//         skills: [
-//           "React",
-//           "Node.js",
-//           "Express",
-//           "MongoDB",
-//           "JWT",
-//         ],
-//         time: "2 Weeks",
-//       },
-//       {
-//         name: "Task Management Platform",
-//         difficulty: "Intermediate",
-//         skills: [
-//           "React",
-//           "Node.js",
-//           "Express",
-//           "MongoDB",
-//         ],
-//         time: "3 Weeks",
-//       },
-//       {
-//         name: "Production MERN Application",
-//         difficulty: "Advanced",
-//         skills: [
-//           "React",
-//           "Node.js",
-//           "Express",
-//           "MongoDB",
-//           "JWT",
-//           "Deployment",
-//         ],
-//         time: "4 Weeks",
-//       },
-//     ];
-//   }
-
-//   // --------------------------------------------------------
-//   // GENERIC
-//   // --------------------------------------------------------
-
-//   return [
-//     {
-//       name: `${career} Starter Project`,
-//       difficulty: "Beginner",
-//       skills: [
-//         "Fundamentals",
-//         "Git",
-//       ],
-//       time: "1 Week",
-//     },
-//     {
-//       name: `${career} Practical Project`,
-//       difficulty: "Intermediate",
-//       skills: [
-//         "Core Skills",
-//         "API",
-//       ],
-//       time: "2 Weeks",
-//     },
-//     {
-//       name: `${career} Advanced Project`,
-//       difficulty: "Advanced",
-//       skills: [
-//         "Advanced Concepts",
-//         "Deployment",
-//       ],
-//       time: "3 Weeks",
-//     },
-//   ];
-// };
-
-// // ============================================================
-// // SKILL ANALYSIS
-// // ============================================================
-
-// const createSkillAnalysis = (level) => {
-//   if (level === "Beginner") {
-//     return {
-//       currentSkills: 25,
-//       missingSkills: 75,
-//       industryReadiness: 20,
-//       interviewReadiness: 15,
-//       confidenceScore: 30,
-//     };
-//   }
-
-//   if (level === "Intermediate") {
-//     return {
-//       currentSkills: 60,
-//       missingSkills: 40,
-//       industryReadiness: 60,
-//       interviewReadiness: 50,
-//       confidenceScore: 65,
-//     };
-//   }
-
-//   return {
-//     currentSkills: 85,
-//     missingSkills: 15,
-//     industryReadiness: 85,
-//     interviewReadiness: 80,
-//     confidenceScore: 88,
-//   };
-// };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import Roadmap from "../models/Roadmap.js";
 
 // ============================================================
@@ -2669,4 +1670,199 @@ const createInterviewPreparation = (
     codingChallenges: 10,
     portfolioReview: true,
   };
+};
+
+// ============================================================
+// UPDATE ROADMAP STEP PROGRESS
+// PATCH /api/roadmap/:id/progress
+// ============================================================
+
+export const updateRoadmapStepProgress = async (
+  req,
+  res
+) => {
+  try {
+    const userId = req.user?._id;
+    const { id } = req.params;
+
+    const {
+      stepIndex,
+      progress,
+    } = req.body;
+
+    // --------------------------------------------------------
+    // AUTH CHECK
+    // --------------------------------------------------------
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    // --------------------------------------------------------
+    // VALIDATE STEP INDEX
+    // --------------------------------------------------------
+
+    if (
+      stepIndex === undefined ||
+      stepIndex === null ||
+      Number.isNaN(Number(stepIndex))
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Step index is required",
+      });
+    }
+
+    const index = Number(stepIndex);
+
+    // --------------------------------------------------------
+    // VALIDATE PROGRESS
+    // --------------------------------------------------------
+
+    const numericProgress = Number(progress);
+
+    if (
+      Number.isNaN(numericProgress) ||
+      numericProgress < 0 ||
+      numericProgress > 100
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Progress must be a number between 0 and 100",
+      });
+    }
+
+    // --------------------------------------------------------
+    // FIND USER ROADMAP
+    // --------------------------------------------------------
+
+    const roadmap =
+      await Roadmap.findOne({
+        _id: id,
+        user: userId,
+      });
+
+    if (!roadmap) {
+      return res.status(404).json({
+        success: false,
+        message: "Roadmap not found",
+      });
+    }
+
+    // --------------------------------------------------------
+    // VALIDATE STEP
+    // --------------------------------------------------------
+
+    if (
+      !roadmap.roadmapSteps ||
+      index < 0 ||
+      index >= roadmap.roadmapSteps.length
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid roadmap step",
+      });
+    }
+
+    // --------------------------------------------------------
+    // UPDATE STEP
+    // --------------------------------------------------------
+
+    roadmap.roadmapSteps[index].progress =
+      numericProgress;
+
+    roadmap.roadmapSteps[index].status =
+      numericProgress === 100
+        ? "completed"
+        : numericProgress > 0
+        ? "in-progress"
+        : "pending";
+
+    await roadmap.save();
+
+    // --------------------------------------------------------
+    // CALCULATE OVERALL PROGRESS
+    // --------------------------------------------------------
+
+    const steps = roadmap.roadmapSteps;
+
+    const totalProgress = steps.reduce(
+      (total, step) =>
+        total + Number(step.progress || 0),
+      0
+    );
+
+    const overallProgress =
+      steps.length > 0
+        ? Math.round(
+            totalProgress / steps.length
+          )
+        : 0;
+
+    // --------------------------------------------------------
+    // FIND NEXT STEP
+    // --------------------------------------------------------
+
+    let nextStep =
+      steps.find(
+        (step) =>
+          step.status === "in-progress"
+      ) || null;
+
+    if (!nextStep) {
+      nextStep =
+        steps.find(
+          (step) =>
+            step.status === "pending"
+        ) || null;
+    }
+
+    // --------------------------------------------------------
+    // RESPONSE
+    // --------------------------------------------------------
+
+    return res.status(200).json({
+      success: true,
+      message: "Roadmap progress updated successfully",
+
+      roadmap: {
+        id: roadmap._id,
+        career: roadmap.career,
+        level: roadmap.level,
+
+        roadmapSteps:
+          roadmap.roadmapSteps,
+
+        progress:
+          overallProgress,
+
+        completedSteps:
+          steps.filter(
+            (step) =>
+              step.status === "completed"
+          ).length,
+
+        totalSteps:
+          steps.length,
+
+        nextStep,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Update Roadmap Progress Error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Failed to update roadmap progress",
+      error: error.message,
+    });
+  }
 };

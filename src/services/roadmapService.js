@@ -180,3 +180,33 @@ export const getRoadmapById = async (id) => {
     throw error;
   }
 };
+
+/* ============================================================
+   UPDATE ROADMAP STEP PROGRESS
+============================================================ */
+
+export const updateRoadmapStepProgress = async (
+  roadmapId,
+  stepIndex,
+  progress
+) => {
+  try {
+    const response = await API.patch(
+      `/roadmap/${roadmapId}/progress`,
+      {
+        stepIndex,
+        progress,
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Update Roadmap Progress Error:",
+      error.response?.data ||
+        error.message
+    );
+
+    throw error;
+  }
+};

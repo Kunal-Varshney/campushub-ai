@@ -4,6 +4,7 @@ import {
   generateRoadmap,
   getMyRoadmaps,
   getRoadmapById,
+  updateRoadmapStepProgress,
 } from "../controllers/roadmap.controller.js";
 
 import authMiddleware from "../middleware/auth.middleware.js";
@@ -30,6 +31,17 @@ router.get(
   "/",
   authMiddleware,
   getMyRoadmaps
+);
+
+// ============================================================
+// UPDATE ROADMAP STEP PROGRESS
+// PATCH /api/roadmap/:id/progress
+// ============================================================
+
+router.patch(
+  "/:id/progress",
+  authMiddleware,
+  updateRoadmapStepProgress
 );
 
 // ============================================================
