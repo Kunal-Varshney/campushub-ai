@@ -52,6 +52,13 @@ function Footer() {
               <span className="text-blue-500">AI</span>
             </Link>
 
+             <p className="mt-2 text-xs font-medium text-slate-500">
+                Built by{" "}
+                <span className="text-slate-300">
+                  Kunal Varshney
+                </span>
+              </p>
+
             <p className="mt-5 max-w-xs text-sm leading-7 text-slate-400">
               An AI-powered campus platform helping students
               learn smarter, build skills, discover opportunities,
