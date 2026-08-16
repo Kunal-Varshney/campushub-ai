@@ -1,946 +1,560 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import {
-  Users,
-  Rocket,
-  Code,
-  Brain,
-  GraduationCap,
-  Sparkles,
-  ArrowRight,
-  Target,
-  Palette,
-  Database,
-  Megaphone,
-  Heart,
-  Lightbulb,
-  Globe,
-  CheckCircle2,
-} from "lucide-react";
-import { submitCareerApplication } from "../../services/api";
-import { motion } from "framer-motion";
+// src/pages/Careers.jsx
 
-const opportunities = [
+import { motion } from "framer-motion";
+import {
+  ArrowRight,
+  BriefcaseBusiness,
+  Code2,
+  Brain,
+  Palette,
+  Megaphone,
+  Users,
+  Sparkles,
+  CheckCircle2,
+  Mail,
+  Rocket,
+  Heart,
+  Globe,
+} from "lucide-react";
+
+// ============================================================
+// OPEN ROLES
+// ============================================================
+
+const roles = [
   {
-    icon: Code,
-    title: "Frontend Developer Intern",
+    icon: Code2,
+    title: "Frontend Developer",
+    type: "Internship / Full-time",
     description:
-      "Build responsive React interfaces, interactive experiences, and user-focused features for CampusHub AI.",
+      "Help us build fast, modern and intuitive experiences for students using React and modern frontend technologies.",
     skills: ["React", "JavaScript", "Tailwind CSS"],
   },
-
   {
-    icon: Brain,
-    title: "AI/ML Intern",
+    icon: Code2,
+    title: "Backend Developer",
+    type: "Internship / Full-time",
     description:
-      "Work on intelligent features that help students learn, discover opportunities, and make better career decisions.",
-    skills: ["Python", "Machine Learning", "AI"],
-  },
-
-  {
-    icon: Database,
-    title: "Backend Developer Intern",
-    description:
-      "Build secure APIs, database systems, authentication, and scalable backend services powering CampusHub AI.",
+      "Build reliable APIs, services and systems that power the CampusHub AI platform.",
     skills: ["Node.js", "Express", "MongoDB"],
   },
-
+  {
+    icon: Brain,
+    title: "AI / ML Developer",
+    type: "Internship / Full-time",
+    description:
+      "Work on AI-powered features that help students learn, prepare and make better career decisions.",
+    skills: ["Python", "Machine Learning", "AI APIs"],
+  },
   {
     icon: Palette,
     title: "UI/UX Designer",
+    type: "Internship / Freelance",
     description:
-      "Design simple, beautiful, and meaningful experiences that make learning technology easier for students.",
-    skills: ["Figma", "UI/UX", "Prototyping"],
+      "Design simple, engaging and student-friendly experiences across the CampusHub AI platform.",
+    skills: ["Figma", "UI Design", "UX Research"],
   },
-
   {
     icon: Megaphone,
-    title: "Community & Growth Intern",
+    title: "Content & Community",
+    type: "Internship / Part-time",
     description:
-      "Help us grow the CampusHub community, connect with students, and create engaging educational experiences.",
-    skills: ["Communication", "Content", "Community"],
+      "Create useful content and help build a strong community of students around CampusHub AI.",
+    skills: ["Content", "Communication", "Community"],
   },
-
   {
     icon: Rocket,
-    title: "Product Intern",
+    title: "Product & Growth",
+    type: "Internship / Full-time",
     description:
-      "Work closely with the team to understand student problems, define features, and turn ideas into useful products.",
-    skills: ["Research", "Product", "Problem Solving"],
+      "Help us understand students better, improve the product and grow CampusHub AI.",
+    skills: ["Product Thinking", "Research", "Growth"],
   },
 ];
+
+// ============================================================
+// WHY JOIN
+// ============================================================
 
 const benefits = [
   {
     icon: Rocket,
-    title: "Build Real Products",
+    title: "Build Something Meaningful",
     description:
-      "Don't just work on assignments. Build features that solve real problems for students.",
+      "Work on a platform focused on solving real problems faced by students.",
   },
-
   {
-    icon: GraduationCap,
-    title: "Learn From Mentors",
+    icon: Brain,
+    title: "Learn & Experiment",
     description:
-      "Get practical guidance, feedback, and exposure to real-world development practices.",
+      "Get opportunities to work with modern technologies and explore new ideas.",
   },
-
-  {
-    icon: Target,
-    title: "Own Your Work",
-    description:
-      "Take ownership of meaningful tasks and see your ideas become part of the product.",
-  },
-
-  {
-    icon: Lightbulb,
-    title: "Experiment & Innovate",
-    description:
-      "We encourage new ideas, experimentation, and creative approaches to difficult problems.",
-  },
-
   {
     icon: Users,
-    title: "Work With a Team",
+    title: "Collaborative Environment",
     description:
-      "Collaborate with developers, designers, AI enthusiasts, and other passionate students.",
+      "Work with people who enjoy building, learning and improving together.",
   },
-
-  {
-    icon: Globe,
-    title: "Build Your Career",
-    description:
-      "Gain experience, strengthen your portfolio, and develop skills that prepare you for your career.",
-  },
-];
-
-const values = [
   {
     icon: Heart,
     title: "Student First",
     description:
-      "Every decision starts with one question: does this make a student's journey better?",
-  },
-
-  {
-    icon: Lightbulb,
-    title: "Think Big",
-    description:
-      "We believe technology and AI can completely transform the way students learn and grow.",
-  },
-
-  {
-    icon: Users,
-    title: "Grow Together",
-    description:
-      "We believe the best teams learn from each other and celebrate each other's growth.",
-  },
-
-  {
-    icon: Sparkles,
-    title: "Keep Improving",
-    description:
-      "We continuously learn, experiment, build, measure, and improve.",
+      "Every feature starts with one question: how can we make students' journeys easier?",
   },
 ];
 
+// ============================================================
+// CAREERS
+// ============================================================
+
 function Careers() {
-  const [showModal, setShowModal] = useState(false);
-  const [selectedRole, setSelectedRole] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
-
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    resume: "",
-    portfolio: "",
-    message: "",
-  });
-
-  const handleApply = (role) => {
-    setSelectedRole(role);
-    setShowModal(true);
-    setSuccess(false);
-    setError("");
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    setLoading(true);
-    setError("");
-    setSuccess(false);
-
-    try {
-      const response = await submitCareerApplication({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        role: selectedRole,
-        resume: formData.resume,
-        portfolio: formData.portfolio,
-        message: formData.message,
-      });
-
-      if (response.success) {
-        setSuccess(true);
-
-        setFormData({
-          name: "",
-          email: "",
-          phone: "",
-          resume: "",
-          portfolio: "",
-          message: "",
-        });
-      } else {
-        setError(
-          response.message || "Failed to submit application."
-        );
-      }
-    } catch (err) {
-      console.error("Career application error:", err);
-
-      setError(
-        err.response?.data?.message ||
-          err.message ||
-          "Something went wrong. Please try again."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const closeModal = () => {
-    if (loading) return;
-
-    setShowModal(false);
-    setError("");
-  };
-
   return (
-     <div className="min-h-screen bg-slate-950 text-white overflow-hidden">
+    <div className="min-h-screen overflow-hidden bg-slate-950 text-white">
 
-    {/* =====================================================
-        APPLICATION MODAL
-    ===================================================== */}
+      {/* ======================================================
+          BACKGROUND
+      ====================================================== */}
 
-    {showModal && (
-      <div
-        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm"
-        onMouseDown={(e) => {
-          if (e.target === e.currentTarget) {
-            closeModal();
-          }
-        }}
-      >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.25 }}
-          className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-slate-700 bg-slate-950 p-6 shadow-2xl shadow-blue-500/10 md:p-8"
-        >
+      <div className="pointer-events-none fixed inset-0 opacity-[0.035] [background-image:linear-gradient(rgba(255,255,255,.3)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.3)_1px,transparent_1px)] [background-size:56px_56px]" />
 
-          {/* Close Button */}
+      <div className="pointer-events-none fixed -left-40 top-20 h-96 w-96 rounded-full bg-blue-600/10 blur-[120px]" />
 
-          <button
-            type="button"
-            onClick={closeModal}
-            disabled={loading}
-            className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-gray-400 transition hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+      <div className="pointer-events-none fixed -right-40 top-[40%] h-96 w-96 rounded-full bg-cyan-500/10 blur-[120px]" />
+
+      {/* ======================================================
+          HERO
+      ====================================================== */}
+
+      <section className="relative px-4 pb-20 pt-28 sm:px-6 sm:pb-24 sm:pt-36">
+
+        <div className="relative mx-auto max-w-5xl text-center">
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-4 py-2 text-xs font-medium text-blue-400 backdrop-blur sm:text-sm"
           >
-            ✕
-          </button>
-
-
-          {!success ? (
-            <>
-              {/* Modal Header */}
-
-              <div className="mb-8 pr-10">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400">
-                  <Rocket size={24} />
-                </div>
-
-                <h2 className="text-2xl font-bold md:text-3xl">
-                  Apply for Internship
-                </h2>
-
-                <p className="mt-2 text-gray-400">
-                  You're applying for:
-                </p>
-
-                <div className="mt-2 inline-flex rounded-lg border border-blue-500/20 bg-blue-500/10 px-3 py-2 text-sm font-semibold text-blue-400">
-                  {selectedRole}
-                </div>
-              </div>
-
-
-              {/* Error */}
-
-              {error && (
-                <div className="mb-5 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-                  {error}
-                </div>
-              )}
-
-
-              {/* Application Form */}
-
-              <form onSubmit={handleSubmit} className="space-y-5">
-
-                {/* Name */}
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-300">
-                    Full Name *
-                  </label>
-
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    placeholder="Enter your full name"
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition placeholder:text-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                  />
-                </div>
-
-
-                {/* Email */}
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-300">
-                    Email Address *
-                  </label>
-
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    placeholder="you@example.com"
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition placeholder:text-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                  />
-                </div>
-
-
-                {/* Phone */}
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-300">
-                    Phone Number
-                  </label>
-
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    placeholder="Enter your phone number"
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition placeholder:text-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                  />
-                </div>
-
-
-                {/* Resume */}
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-300">
-                    Resume URL *
-                  </label>
-
-                  <input
-                    type="url"
-                    name="resume"
-                    value={formData.resume}
-                    onChange={handleChange}
-                    required
-                    placeholder="https://drive.google.com/..."
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition placeholder:text-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                  />
-
-                  <p className="mt-1 text-xs text-gray-600">
-                    Upload your resume somewhere like Google Drive and paste
-                    the public link here.
-                  </p>
-                </div>
-
-
-                {/* Portfolio */}
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-300">
-                    Portfolio / GitHub URL
-                  </label>
-
-                  <input
-                    type="url"
-                    name="portfolio"
-                    value={formData.portfolio}
-                    onChange={handleChange}
-                    placeholder="https://github.com/yourusername"
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition placeholder:text-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                  />
-                </div>
-
-
-                {/* Message */}
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-300">
-                    Why should we consider you?
-                  </label>
-
-                  <textarea
-                    name="message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    rows={5}
-                    placeholder="Tell us about yourself, your skills, projects, and why you want to join CampusHub AI..."
-                    className="w-full resize-none rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition placeholder:text-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                  />
-                </div>
-
-
-                {/* Submit */}
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-3.5 font-semibold transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {loading ? (
-                    <>
-                      <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      Submit Application
-                      <ArrowRight size={18} />
-                    </>
-                  )}
-                </button>
-
-              </form>
-            </>
-          ) : (
-
-            /* =====================================================
-                SUCCESS STATE
-            ===================================================== */
-
-            <div className="py-10 text-center">
-
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-500/10">
-                <CheckCircle2
-                  size={45}
-                  className="text-green-400"
-                />
-              </div>
-
-              <h2 className="mt-6 text-3xl font-bold">
-                Application Submitted!
-              </h2>
-
-              <p className="mx-auto mt-4 max-w-md leading-7 text-gray-400">
-                Thank you for applying for the{" "}
-                <span className="font-semibold text-blue-400">
-                  {selectedRole}
-                </span>{" "}
-                position. Our team will review your application and get back
-                to you soon.
-              </p>
-
-              <button
-                type="button"
-                onClick={closeModal}
-                className="mt-8 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-7 py-3 font-semibold transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/20"
-              >
-                Done
-              </button>
-
-            </div>
-          )}
-
-        </motion.div>
-      </div>
-    )}
-
-
-    {/* =====================================================
-        HERO
-    ===================================================== */}
-
-    <section className="relative px-6 py-28 text-center">
-
-        <div className="absolute -top-32 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-blue-600/20 blur-[140px]" />
-
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
-          className="relative mx-auto max-w-4xl"
-        >
-
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/70 px-5 py-2.5 text-sm text-blue-400 backdrop-blur">
             <Sparkles size={16} />
-            We're building the future of student technology
-          </div>
+            Careers at CampusHub AI
+          </motion.div>
 
-          <h1 className="mt-7 text-4xl font-extrabold leading-tight md:text-6xl lg:text-7xl">
-
-            Build Something That
-
-            <span className="block bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
-              Matters.
+          <motion.h1
+            initial={{ opacity: 0, y: 25 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.1 }}
+            className="text-4xl font-extrabold leading-tight tracking-tight sm:text-6xl lg:text-7xl"
+          >
+            Build the future of
+            <span className="block bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
+              student careers.
             </span>
+          </motion.h1>
 
-          </h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-gray-400 sm:text-lg sm:leading-8"
+          >
+            CampusHub AI is building a platform that helps students
+            understand themselves, discover opportunities, build skills
+            and move confidently toward their careers.
+          </motion.p>
 
-          <p className="mx-auto mt-7 max-w-3xl text-lg leading-8 text-gray-400 md:text-xl">
-            Join CampusHub AI and help us build intelligent tools that make
-            learning, career discovery, and student life simpler, smarter,
-            and more accessible.
-          </p>
-
-          <div className="mt-9 flex flex-col justify-center gap-4 sm:flex-row">
-
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+            className="mt-8 flex flex-col justify-center gap-3 sm:flex-row"
+          >
             <a
               href="#open-roles"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-7 py-3.5 font-semibold transition hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/30"
+              className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-6 py-3.5 text-sm font-semibold transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/30 sm:px-8 sm:text-base"
             >
               Explore Opportunities
-              <ArrowRight size={18} />
+
+              <ArrowRight
+                size={18}
+                className="transition-transform duration-300 group-hover:translate-x-1"
+              />
             </a>
 
             <a
-              href="#culture"
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900/70 px-7 py-3.5 font-semibold text-gray-200 transition hover:border-blue-500/50"
+              href="#contact"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900/70 px-6 py-3.5 text-sm font-semibold text-gray-200 transition-all duration-300 hover:border-blue-500 hover:bg-slate-800 sm:px-8 sm:text-base"
             >
-              Our Culture
+              <Mail size={18} />
+              Get in Touch
             </a>
+          </motion.div>
 
-          </div>
-
-        </motion.div>
+        </div>
       </section>
 
+      {/* ======================================================
+          WHY JOIN CAMPUSHUB
+      ====================================================== */}
 
-      {/* =====================================================
-          MISSION
-      ===================================================== */}
+      <section className="relative px-4 py-16 sm:px-6 sm:py-24">
 
-      <section className="px-6 py-20">
+        <div className="mx-auto max-w-7xl">
 
-        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto mb-12 max-w-2xl text-center sm:mb-16">
 
-          <div className="grid items-center gap-12 md:grid-cols-2">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-4 py-2 text-xs text-blue-400 sm:text-sm">
+              <BriefcaseBusiness size={16} />
+              Why CampusHub AI
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-            >
-
-              <span className="text-sm font-semibold uppercase tracking-widest text-blue-400">
-                Our Mission
+            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+              Work on something that
+              <span className="block bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
+                actually matters.
               </span>
-
-              <h2 className="mt-4 text-3xl font-bold leading-tight md:text-5xl">
-                Technology should make
-                <span className="text-blue-400"> student life easier.</span>
-              </h2>
-
-              <p className="mt-6 leading-8 text-gray-400">
-                Students today have access to more information than ever,
-                but finding the right resources, building skills, discovering
-                opportunities, and planning a career can still be confusing.
-              </p>
-
-              <p className="mt-4 leading-8 text-gray-400">
-                CampusHub AI is building one intelligent ecosystem where
-                students can learn, grow, discover opportunities, and prepare
-                for their future.
-              </p>
-
-            </motion.div>
-
-
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="grid grid-cols-2 gap-4"
-            >
-
-              {[
-                ["Learn", "Build skills faster"],
-                ["Discover", "Find the right opportunities"],
-                ["Connect", "Grow with a community"],
-                ["Achieve", "Move closer to your goals"],
-              ].map(([title, description], index) => (
-
-                <div
-                  key={index}
-                  className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:-translate-y-1 hover:border-blue-500/40"
-                >
-
-                  <CheckCircle2 className="text-blue-400" size={25} />
-
-                  <h3 className="mt-4 font-bold">
-                    {title}
-                  </h3>
-
-                  <p className="mt-2 text-sm text-gray-500">
-                    {description}
-                  </p>
-
-                </div>
-
-              ))}
-
-            </motion.div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      {/* =====================================================
-          OPEN ROLES
-      ===================================================== */}
-
-      <section id="open-roles" className="bg-slate-900/40 px-6 py-24">
-
-        <div className="mx-auto max-w-7xl">
-
-          <div className="mx-auto max-w-3xl text-center">
-
-            <span className="text-sm font-semibold uppercase tracking-widest text-blue-400">
-              Opportunities
-            </span>
-
-            <h2 className="mt-3 text-3xl font-bold md:text-5xl">
-              Find Your Place With Us
             </h2>
 
-            <p className="mt-5 text-gray-400">
-              Whether you're a developer, designer, AI enthusiast, or
-              community builder, there's a place for you to learn, contribute,
-              and grow.
+            <p className="mt-5 text-sm leading-7 text-gray-400 sm:text-base">
+              Join us in building technology that can make education,
+              skill development and career discovery more accessible
+              for students.
             </p>
 
           </div>
 
-
-          <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-
-            {opportunities.map((item, index) => {
-
-              const Icon = item.icon;
-
-              return (
-
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 35 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.08 }}
-                  viewport={{ once: true }}
-                  className="group rounded-3xl border border-slate-800 bg-slate-950/80 p-7 backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10"
-                >
-
-                  <div className="flex items-start justify-between">
-
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-400 transition group-hover:scale-110">
-                      <Icon size={28} />
-                    </div>
-
-                    <span className="rounded-full border border-slate-700 px-3 py-1 text-xs text-gray-500">
-                      Internship
-                    </span>
-
-                  </div>
-
-
-                  <h3 className="mt-6 text-xl font-bold">
-                    {item.title}
-                  </h3>
-
-
-                  <p className="mt-4 min-h-[80px] text-sm leading-6 text-gray-400">
-                    {item.description}
-                  </p>
-
-
-                  <div className="mt-5 flex flex-wrap gap-2">
-
-                    {item.skills.map((skill) => (
-
-                      <span
-                        key={skill}
-                        className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs text-gray-400"
-                      >
-                        {skill}
-                      </span>
-
-                    ))}
-
-                  </div>
-
-
-                  <button
-                    onClick={() => handleApply(item.title)}
-                    className="mt-7 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-3 font-semibold transition hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-500/20"
-                  >
-                    Apply Now
-                    <ArrowRight size={17} />
-                  </button>
-
-                </motion.div>
-
-              );
-
-            })}
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      {/* =====================================================
-          BENEFITS
-      ===================================================== */}
-
-      <section className="px-6 py-24">
-
-        <div className="mx-auto max-w-7xl">
-
-          <div className="mx-auto max-w-3xl text-center">
-
-            <span className="text-sm font-semibold uppercase tracking-widest text-blue-400">
-              Why CampusHub AI?
-            </span>
-
-            <h2 className="mt-3 text-3xl font-bold md:text-5xl">
-              More Than Just an Internship
-            </h2>
-
-            <p className="mt-5 text-gray-400">
-              We want you to leave CampusHub AI with stronger skills,
-              meaningful experience, and confidence in your abilities.
-            </p>
-
-          </div>
-
-
-          <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
 
             {benefits.map((item, index) => {
 
               const Icon = item.icon;
 
               return (
-
                 <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 25 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: index * 0.08 }}
-                  viewport={{ once: true }}
-                  className="rounded-2xl border border-slate-800 bg-slate-900/50 p-7 transition hover:-translate-y-2 hover:border-blue-500/40"
+                  key={item.title}
+                  initial={{
+                    opacity: 0,
+                    y: 25,
+                  }}
+                  whileInView={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  viewport={{
+                    once: true,
+                    amount: 0.2,
+                  }}
+                  transition={{
+                    duration: 0.5,
+                    delay: index * 0.08,
+                  }}
+                  className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:border-blue-500/40"
                 >
 
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400">
-                    <Icon size={25} />
+                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500">
+                    <Icon size={23} />
                   </div>
 
-                  <h3 className="mt-5 text-xl font-semibold">
+                  <h3 className="mb-3 text-lg font-semibold">
                     {item.title}
                   </h3>
 
-                  <p className="mt-3 leading-7 text-gray-400">
+                  <p className="text-sm leading-7 text-gray-400">
                     {item.description}
                   </p>
 
                 </motion.div>
-
               );
-
             })}
 
           </div>
 
         </div>
-
       </section>
 
+      {/* ======================================================
+          OPEN ROLES
+      ====================================================== */}
 
-      {/* =====================================================
-          CULTURE
-      ===================================================== */}
-
-      <section id="culture" className="bg-slate-900/50 px-6 py-24">
+      <section
+        id="open-roles"
+        className="relative px-4 py-16 sm:px-6 sm:py-24"
+      >
 
         <div className="mx-auto max-w-7xl">
 
-          <div className="mx-auto max-w-3xl text-center">
+          <div className="mb-12 sm:mb-16">
 
-            <span className="text-sm font-semibold uppercase tracking-widest text-blue-400">
-              Our Culture
-            </span>
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-4 py-2 text-xs text-blue-400 sm:text-sm">
+              <Code2 size={16} />
+              Open Opportunities
+            </div>
 
-            <h2 className="mt-3 text-3xl font-bold md:text-5xl">
-              What We Believe In
-            </h2>
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
 
-            <p className="mt-5 text-gray-400">
-              Great products are built by people who care about the problem,
-              the users, and each other.
-            </p>
+              <div className="max-w-2xl">
+
+                <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+                  Find your place at
+                  <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
+                    {" "}CampusHub AI
+                  </span>
+                </h2>
+
+                <p className="mt-4 text-sm leading-7 text-gray-400 sm:text-base">
+                  We are looking for curious people who want to learn,
+                  build and contribute to a product with a real purpose.
+                </p>
+
+              </div>
+
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <Globe size={17} />
+                Remote-friendly opportunities
+              </div>
+
+            </div>
 
           </div>
 
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
 
-          <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {roles.map((role, index) => {
 
-            {values.map((item, index) => {
-
-              const Icon = item.icon;
+              const Icon = role.icon;
 
               return (
-
-                <div
-                  key={index}
-                  className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6 text-center transition hover:-translate-y-2 hover:border-blue-500/40"
+                <motion.div
+                  key={role.title}
+                  initial={{
+                    opacity: 0,
+                    y: 25,
+                  }}
+                  whileInView={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  viewport={{
+                    once: true,
+                    amount: 0.2,
+                  }}
+                  transition={{
+                    duration: 0.5,
+                    delay: index * 0.07,
+                  }}
+                  className="group rounded-2xl border border-slate-800 bg-slate-900/60 p-5 backdrop-blur-xl transition-all duration-300 hover:border-blue-500/40 hover:bg-slate-900 sm:rounded-3xl sm:p-7"
                 >
 
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-400">
-                    <Icon size={27} />
+                  <div className="flex flex-col gap-5 sm:flex-row">
+
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-600/10 text-blue-400 sm:h-14 sm:w-14">
+                      <Icon size={25} />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+
+                        <div>
+                          <h3 className="text-xl font-bold">
+                            {role.title}
+                          </h3>
+
+                          <p className="mt-1 text-xs font-medium text-cyan-400">
+                            {role.type}
+                          </p>
+                        </div>
+
+                      </div>
+
+                      <p className="mt-4 text-sm leading-7 text-gray-400">
+                        {role.description}
+                      </p>
+
+                      <div className="mt-5 flex flex-wrap gap-2">
+
+                        {role.skills.map((skill) => (
+                          <span
+                            key={skill}
+                            className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs text-gray-300"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+
+                      </div>
+
+                      <a
+                        href="#contact"
+                        className="group/link mt-6 inline-flex items-center gap-2 text-sm font-semibold text-blue-400 transition-colors hover:text-cyan-400"
+                      >
+                        Apply for this role
+
+                        <ArrowRight
+                          size={16}
+                          className="transition-transform duration-300 group-hover/link:translate-x-1"
+                        />
+                      </a>
+
+                    </div>
+
                   </div>
 
-                  <h3 className="mt-5 text-lg font-bold">
-                    {item.title}
-                  </h3>
-
-                  <p className="mt-3 text-sm leading-6 text-gray-400">
-                    {item.description}
-                  </p>
-
-                </div>
-
+                </motion.div>
               );
-
             })}
 
           </div>
 
         </div>
-
       </section>
 
-
-      {/* =====================================================
+      {/* ======================================================
           WHO WE ARE LOOKING FOR
-      ===================================================== */}
+      ====================================================== */}
 
-      <section className="px-6 py-24">
+      <section className="relative px-4 py-16 sm:px-6 sm:py-24">
 
-        <div className="mx-auto max-w-5xl rounded-3xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 via-slate-900 to-cyan-500/10 p-8 text-center md:p-14">
+        <div className="mx-auto max-w-5xl">
 
-          <Users className="mx-auto text-blue-400" size={40} />
+          <div className="overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950/30 p-6 sm:p-10 lg:p-14">
 
-          <h2 className="mt-5 text-3xl font-bold md:text-4xl">
-            Who Are We Looking For?
-          </h2>
+            <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
 
-          <p className="mx-auto mt-5 max-w-2xl leading-7 text-gray-400">
-            You don't need to know everything. We are looking for curious,
-            motivated people who love learning, solving problems, and building
-            things that create real impact.
-          </p>
+              <div>
 
+                <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-4 py-2 text-xs text-blue-400 sm:text-sm">
+                  <Users size={16} />
+                  Our Culture
+                </div>
 
-          <div className="mx-auto mt-8 flex max-w-2xl flex-wrap justify-center gap-3">
+                <h2 className="text-3xl font-extrabold leading-tight sm:text-4xl">
+                  You don't need to
+                  <span className="block bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
+                    know everything.
+                  </span>
+                </h2>
 
-            {[
-              "Curious Learners",
-              "Problem Solvers",
-              "Developers",
-              "AI Enthusiasts",
-              "Designers",
-              "Creators",
-              "Team Players",
-              "Self Starters",
-            ].map((item) => (
+                <p className="mt-5 text-sm leading-7 text-gray-400 sm:text-base">
+                  We value curiosity, ownership and the willingness to
+                  learn. If you are a student, fresher or experienced
+                  professional who wants to build meaningful products,
+                  we would love to hear from you.
+                </p>
 
-              <span
-                key={item}
-                className="rounded-full border border-slate-700 bg-slate-900/80 px-4 py-2 text-sm text-gray-300"
-              >
-                {item}
-              </span>
+              </div>
 
-            ))}
+              <div className="space-y-4">
+
+                {[
+                  "Curious and willing to learn",
+                  "Interested in solving real problems",
+                  "Comfortable taking ownership",
+                  "Passionate about technology and students",
+                  "Ready to experiment and improve",
+                ].map((item) => (
+
+                  <div
+                    key={item}
+                    className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/60 p-4"
+                  >
+
+                    <CheckCircle2
+                      size={19}
+                      className="shrink-0 text-cyan-400"
+                    />
+
+                    <span className="text-sm text-gray-300">
+                      {item}
+                    </span>
+
+                  </div>
+
+                ))}
+
+              </div>
+
+            </div>
 
           </div>
 
         </div>
-
       </section>
 
+      {/* ======================================================
+          CONTACT / APPLICATION
+      ====================================================== */}
 
-      {/* =====================================================
-          FINAL CTA
-      ===================================================== */}
+      <section
+        id="contact"
+        className="relative px-4 py-16 sm:px-6 sm:py-24"
+      >
 
-      <section className="relative overflow-hidden px-6 py-28 text-center">
+        <div className="mx-auto max-w-4xl">
 
-        <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-600/20 blur-[120px]" />
+          <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/70 px-5 py-12 text-center shadow-2xl backdrop-blur-xl sm:px-10 sm:py-16">
 
-        <div className="relative mx-auto max-w-3xl">
+            <div className="pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full bg-blue-600/10 blur-3xl" />
 
-          <Sparkles className="mx-auto text-cyan-400" size={35} />
+            <div className="pointer-events-none absolute -bottom-20 -right-20 h-56 w-56 rounded-full bg-cyan-500/10 blur-3xl" />
 
-          <h2 className="mt-6 text-4xl font-bold md:text-5xl">
-            Ready to Build the Future?
-          </h2>
+            <div className="relative">
 
-          <p className="mt-5 text-lg leading-7 text-gray-400">
-            Bring your ideas, curiosity, and ambition. Let's build something
-            meaningful together.
-          </p>
+              <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500">
+                <Mail size={25} />
+              </div>
 
-          <Link
-            to="/signup"
-            className="mt-9 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-8 py-4 font-semibold transition hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/30"
-          >
-            Start Your Journey
-            <ArrowRight size={18} />
-          </Link>
+              <h2 className="text-3xl font-extrabold sm:text-4xl">
+                Don't see your role?
+              </h2>
 
-          <p className="mt-5 text-sm text-gray-500">
-            We’re always interested in meeting talented and curious people.
+              <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-gray-400 sm:text-base">
+                We are always interested in meeting talented people.
+                Send us your resume and tell us how you would like to
+                contribute to CampusHub AI.
+              </p>
+
+              <a
+                href="mailto:careers@campushub.ai?subject=Career%20Application%20-%20CampusHub%20AI"
+                className="mt-8 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-7 py-3.5 text-sm font-semibold transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/30 sm:text-base"
+              >
+                Send Your Application
+                <ArrowRight size={18} />
+              </a>
+
+              <p className="mt-5 text-xs text-gray-500">
+                Replace careers@campushub.ai with your actual
+                CampusHub AI recruitment email before deployment.
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* ======================================================
+          FOOTER MESSAGE
+      ====================================================== */}
+
+      <section className="border-t border-slate-900 px-4 py-10 sm:px-6">
+
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
+
+          <div className="flex items-center gap-2">
+
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500">
+              <Sparkles size={17} />
+            </div>
+
+            <span className="text-sm font-semibold">
+              CampusHub AI
+            </span>
+
+          </div>
+
+          <p className="text-xs text-gray-500 sm:text-sm">
+            Building technology for the next generation of students.
           </p>
 
         </div>
