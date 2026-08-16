@@ -908,6 +908,7 @@ function Topbar({ user }) {
                   type="button"
                   onClick={() => {
                     setNotificationOpen(false);
+                    navigate("/notifications");
                   }}
                   className="
                     flex

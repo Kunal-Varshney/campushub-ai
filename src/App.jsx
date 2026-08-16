@@ -15,6 +15,7 @@ import ResetPassword from "./Pages/ResetPassword/Resetpassword";
 
 // Dashboard
 import StudentDashboard from "./Pages/Dashboard/StudentDashboard";
+import NotificationCenter from "./Pages/Dashboard/NotificationCenter";
 import Discover from "./Pages/Discover/Discover";
 import Settings from "./Pages/Settings/Settings";
 import Profile from "./Pages/Profile/Profile";
@@ -100,6 +101,8 @@ function App() {
       {/* ================= STUDENT DASHBOARD ================= */}
 
       <Route path="/dashboard" element={<StudentDashboard />} />
+
+      <Route path="/notifications" element={<NotificationCenter />}/>
 
       <Route path="/settings" element={<Settings />} />
 
