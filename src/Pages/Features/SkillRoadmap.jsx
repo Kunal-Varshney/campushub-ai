@@ -191,8 +191,8 @@ const ROADMAP_STEPS = [
     icon: FileText,
     difficulty: "Beginner",
     time: "1 Week",
-    status: "completed",
-    progress: 100,
+    status: "pending",
+    progress: 0,
     description:
       "Learn semantic HTML, forms, accessibility and document structure.",
   },
@@ -201,8 +201,8 @@ const ROADMAP_STEPS = [
     icon: PenTool,
     difficulty: "Beginner",
     time: "2 Weeks",
-    status: "completed",
-    progress: 100,
+    status: "pending",
+    progress: 0,
     description:
       "Master Flexbox, Grid, responsive design and modern styling.",
   },
@@ -211,8 +211,8 @@ const ROADMAP_STEPS = [
     icon: Code2,
     difficulty: "Intermediate",
     time: "3 Weeks",
-    status: "in-progress",
-    progress: 40,
+    status: "pending",
+    progress: 0,
     description:
       "DOM manipulation, ES6+, async/await, and core programming logic.",
   },
@@ -641,7 +641,11 @@ function CircularProgress({
   label,
   sublabel,
 }) {
-  const safeValue = Math.min(100, Math.max(0, Number(value) || 0));
+  const safeValue = Math.min(
+    100,
+    Math.max(0, Number(value) || 0)
+  );
+
   const radius = (size - 16) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset =
@@ -698,8 +702,14 @@ function CircularProgress({
             x2="100%"
             y2="100%"
           >
-            <stop offset="0%" stopColor="#22d3ee" />
-            <stop offset="100%" stopColor="#3b82f6" />
+            <stop
+              offset="0%"
+              stopColor="#22d3ee"
+            />
+            <stop
+              offset="100%"
+              stopColor="#3b82f6"
+            />
           </linearGradient>
         </defs>
       </svg>
@@ -725,11 +735,14 @@ function CircularProgress({
   );
 }
 
-function FAQItem({ item, isOpen, onClick }) {
+function FAQItem({
+  item,
+  isOpen,
+  onClick,
+}) {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/50 backdrop-blur-md">
       <button
-        type="button"
         onClick={onClick}
         className="flex w-full items-center justify-between gap-4 px-6 py-4 text-left"
       >
@@ -741,7 +754,9 @@ function FAQItem({ item, isOpen, onClick }) {
           animate={{
             rotate: isOpen ? 180 : 0,
           }}
-          transition={{ duration: 0.3 }}
+          transition={{
+            duration: 0.3,
+          }}
         >
           <ChevronDown className="h-5 w-5 shrink-0 text-cyan-400" />
         </motion.span>
@@ -824,9 +839,6 @@ function SkillRoadmap() {
   const [isLoadingRoadmap, setIsLoadingRoadmap] =
     useState(true);
 
-  const [updatingStep, setUpdatingStep] =
-    useState(null);
-
   const [genProgress, setGenProgress] =
     useState(0);
 
@@ -836,8 +848,32 @@ function SkillRoadmap() {
   const [roadmapData, setRoadmapData] =
     useState(null);
 
+  /*
+   * IMPORTANT:
+   * This state mirrors the progress saved in MongoDB.
+   *
+   * Example:
+   * {
+   *   0: 100,
+   *   1: 100,
+   *   2: 50,
+   *   3: 0
+   * }
+   */
   const [stepProgress, setStepProgress] =
     useState({});
+
+  /*
+   * All roadmaps belonging to current user.
+   */
+  const [savedRoadmaps, setSavedRoadmaps] =
+    useState([]);
+
+  /*
+   * Currently displayed roadmap ID.
+   */
+  const [activeRoadmapId, setActiveRoadmapId] =
+    useState(null);
 
   const [openFaq, setOpenFaq] =
     useState(0);
@@ -845,258 +881,91 @@ function SkillRoadmap() {
   const [checklist, setChecklist] =
     useState(
       PLACEMENT_CHECKLIST.reduce(
-        (acc, item, index) => ({
+        (acc, item, i) => ({
           ...acc,
-          [item.label]: index < 3,
+          [item.label]: i < 3,
         }),
         {}
       )
     );
 
-  /* ============================================================
+  /* ==========================================================
      ACTIVE CAREER
-  ============================================================ */
+  ========================================================== */
 
   const activeCareer = useMemo(
     () =>
       CAREERS.find(
-        (career) => career.id === selectedCareer
+        (career) =>
+          career.id === selectedCareer
       ) || CAREERS[0],
     [selectedCareer]
   );
 
-  /* ============================================================
-     NORMALIZE SAVED ROADMAP
-  ============================================================ */
-
-  const normalizeSavedRoadmap = (saved) => {
-    if (!saved) return null;
-
-    const roadmap =
-      saved.roadmap ||
-      saved.data ||
-      saved;
-
-    if (!roadmap) return null;
-
-    return {
-      ...roadmap,
-
-      roadmapSteps:
-        roadmap.roadmapSteps ||
-        roadmap.steps ||
-        [],
-
-      weeklyPlan:
-        roadmap.weeklyPlan ||
-        [],
-
-      projects:
-        roadmap.projects ||
-        [],
-
-      skillAnalysis:
-        roadmap.skillAnalysis ||
-        null,
-
-      career:
-        roadmap.career ||
-        roadmap.careerName ||
-        selectedCareer,
-
-      level:
-        roadmap.level ||
-        selectedLevel,
-
-      roadmapId:
-        saved._id ||
-        saved.id ||
-        roadmap._id ||
-        roadmap.id,
-    };
-  };
-
-  /* ============================================================
-     EXTRACT SAVED STEP PROGRESS
-  ============================================================ */
-
-  const extractStepProgress = (roadmap) => {
-    const progressMap = {};
-
-    const steps =
-      roadmap?.roadmapSteps ||
-      roadmap?.steps ||
-      [];
-
-    steps.forEach((step, index) => {
-      const value =
-        step?.progress ??
-        step?.completion ??
-        step?.completed
-          ? 100
-          : 0;
-
-      progressMap[index] =
-        typeof value === "number"
-          ? Math.min(100, Math.max(0, value))
-          : 0;
-    });
-
-    return progressMap;
-  };
-
-  /* ============================================================
-     LOAD EXISTING ROADMAP
-  ============================================================ */
-
-  useEffect(() => {
-    let mounted = true;
-
-    const loadRoadmap = async () => {
-      try {
-        setIsLoadingRoadmap(true);
-
-        const response = await getMyRoadmaps();
-
-        console.log(
-          "Saved Roadmaps Response:",
-          response
-        );
-
-        if (!mounted) return;
-
-        const roadmaps =
-          response?.roadmaps ||
-          response?.data ||
-          response?.roadmap ||
-          [];
-
-        let latestRoadmap = null;
-
-        if (Array.isArray(roadmaps)) {
-          latestRoadmap =
-            roadmaps.length > 0
-              ? roadmaps[0]
-              : null;
-        } else if (roadmaps) {
-          latestRoadmap = roadmaps;
-        }
-
-        if (!latestRoadmap) {
-          setRoadmapReady(false);
-          setRoadmapData(null);
-          setStepProgress({});
-          return;
-        }
-
-        const normalized =
-          normalizeSavedRoadmap(
-            latestRoadmap
-          );
-
-        if (!normalized) return;
-
-        setRoadmapData(normalized);
-        setRoadmapReady(true);
-
-        if (normalized.career) {
-          const careerExists =
-            CAREERS.some(
-              (career) =>
-                career.id === normalized.career
-            );
-
-          if (careerExists) {
-            setSelectedCareer(
-              normalized.career
-            );
-          }
-        }
-
-        if (normalized.level) {
-          const validLevel =
-            SKILL_LEVELS.some(
-              (level) =>
-                level.id === normalized.level
-            );
-
-          if (validLevel) {
-            setSelectedLevel(
-              normalized.level
-            );
-          }
-        }
-
-        const savedProgress =
-          extractStepProgress(normalized);
-
-        setStepProgress(savedProgress);
-      } catch (error) {
-        console.error(
-          "Failed to load saved roadmap:",
-          error
-        );
-
-        /*
-          Do not break the page if there is no
-          saved roadmap or the endpoint fails.
-        */
-        setRoadmapReady(false);
-      } finally {
-        if (mounted) {
-          setIsLoadingRoadmap(false);
-        }
-      }
-    };
-
-    loadRoadmap();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  /* ============================================================
-     DISPLAY STEPS
-  ============================================================ */
+  /* ==========================================================
+     NORMALIZE ROADMAP STEPS
+  ========================================================== */
 
   const displaySteps = useMemo(() => {
-    if (!roadmapData?.roadmapSteps?.length) {
-      return ROADMAP_STEPS;
+    if (
+      !roadmapData?.roadmapSteps?.length
+    ) {
+      return ROADMAP_STEPS.map(
+        (step, index) => ({
+          ...step,
+          progress:
+            Number(
+              stepProgress[index] ?? 0
+            ),
+          status:
+            Number(
+              stepProgress[index] ?? 0
+            ) >= 100
+              ? "completed"
+              : "pending",
+        })
+      );
     }
 
     return roadmapData.roadmapSteps.map(
       (step, index) => {
-        const progress =
-          Number(
-            stepProgress[index] ??
-              step?.progress ??
-              0
-          ) || 0;
+        const progress = Math.min(
+          100,
+          Math.max(
+            0,
+            Number(
+              stepProgress[index] ??
+                step?.progress ??
+                0
+            )
+          )
+        );
 
         let status = "pending";
 
         if (progress >= 100) {
           status = "completed";
-        } else if (
-          progress > 0 ||
-          index === 0
-        ) {
+        } else if (progress > 0) {
+          status = "in-progress";
+        } else if (index === 0) {
           status = "in-progress";
         }
 
         return {
           ...step,
-          status,
           progress,
+          status,
         };
       }
     );
-  }, [roadmapData, stepProgress]);
+  }, [
+    roadmapData,
+    stepProgress,
+  ]);
 
-  /* ============================================================
-     OTHER DISPLAY DATA
-  ============================================================ */
+  /* ==========================================================
+     WEEKLY PLAN / PROJECTS
+  ========================================================== */
 
   const displayWeeklyPlan =
     roadmapData?.weeklyPlan?.length
@@ -1108,308 +977,644 @@ function SkillRoadmap() {
       ? roadmapData.projects
       : PROJECTS;
 
+  /* ==========================================================
+     SKILL ANALYSIS
+  ========================================================== */
+
   const displaySkillAnalysis =
     roadmapData?.skillAnalysis
       ? [
           {
             label: "Current Skills",
             value:
-              roadmapData.skillAnalysis
-                .currentSkills ?? 0,
+              Number(
+                roadmapData.skillAnalysis
+                  .currentSkills
+              ) || 0,
             icon: Code2,
           },
           {
             label: "Missing Skills",
             value:
-              roadmapData.skillAnalysis
-                .missingSkills ?? 0,
+              Number(
+                roadmapData.skillAnalysis
+                  .missingSkills
+              ) || 0,
             icon: Target,
           },
           {
             label: "Industry Readiness",
             value:
-              roadmapData.skillAnalysis
-                .industryReadiness ?? 0,
+              Number(
+                roadmapData.skillAnalysis
+                  .industryReadiness
+              ) || 0,
             icon: TrendingUp,
           },
           {
             label: "Interview Readiness",
             value:
-              roadmapData.skillAnalysis
-                .interviewReadiness ?? 0,
+              Number(
+                roadmapData.skillAnalysis
+                  .interviewReadiness
+              ) || 0,
             icon: Mic,
           },
         ]
       : SKILL_ANALYSIS;
 
   const displayConfidenceScore =
-    roadmapData?.skillAnalysis
-      ?.confidenceScore ?? 81;
+    Number(
+      roadmapData?.skillAnalysis
+        ?.confidenceScore
+    ) || 0;
 
   const displayCareerName =
     roadmapData?.career ||
     activeCareer.name;
 
-  /* ============================================================
-     GENERATE ROADMAP
-  ============================================================ */
+  /* ==========================================================
+     OVERALL ROADMAP PROGRESS
+     
+     Overall progress = average progress of all roadmap steps.
+     
+     Example:
+     10 steps:
+     100 + 100 + 50 + 0... = 25%
+  ========================================================== */
 
-  const handleGenerateRoadmap = async () => {
-    if (isGenerating) return;
+  const overallProgress = useMemo(() => {
+    if (!displaySteps.length) {
+      return 0;
+    }
 
-    let progressInterval;
+    const totalProgress =
+      displaySteps.reduce(
+        (sum, step) =>
+          sum +
+          Number(step.progress || 0),
+        0
+      );
 
+    return Math.round(
+      totalProgress /
+        displaySteps.length
+    );
+  }, [displaySteps]);
+
+  const completedRoadmapSteps =
+    useMemo(() => {
+      return displaySteps.filter(
+        (step) =>
+          Number(step.progress || 0) >=
+          100
+      ).length;
+    }, [displaySteps]);
+
+  /* ==========================================================
+     LOAD SAVED ROADMAP
+     
+     This is the main persistence feature.
+     
+     New user:
+     no roadmap -> 0%
+     
+     Existing user:
+     MongoDB roadmap -> saved step progress
+  ========================================================== */
+
+  const loadSavedRoadmap = async () => {
     try {
-      setIsGenerating(true);
-      setRoadmapReady(false);
-      setGenProgress(10);
+      setIsLoadingRoadmap(true);
 
-      progressInterval = setInterval(() => {
-        setGenProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
+      const response =
+        await getMyRoadmaps();
+
+      console.log(
+        "MY ROADMAPS RESPONSE:",
+        response
+      );
+
+      /*
+       * Backend can return:
+       *
+       * { roadmaps: [] }
+       * { data: [] }
+       * []
+       */
+      let roadmaps =
+        response?.roadmaps ??
+        response?.data ??
+        response;
+
+      /*
+       * Sometimes backend may return:
+       *
+       * { data: { roadmaps: [] } }
+       */
+      if (
+        !Array.isArray(roadmaps) &&
+        Array.isArray(
+          response?.data?.roadmaps
+        )
+      ) {
+        roadmaps =
+          response.data.roadmaps;
+      }
+
+      if (!Array.isArray(roadmaps)) {
+        roadmaps = [];
+      }
+
+      setSavedRoadmaps(roadmaps);
+
+      /*
+       * NEW USER
+       */
+      if (!roadmaps.length) {
+        setRoadmapData(null);
+        setActiveRoadmapId(null);
+        setStepProgress({});
+        setRoadmapReady(false);
+        return;
+      }
+
+      /*
+       * Sort by created date if available.
+       * Latest roadmap becomes active.
+       */
+      const sortedRoadmaps = [
+        ...roadmaps,
+      ].sort((a, b) => {
+        const dateA = new Date(
+          a?.createdAt || 0
+        ).getTime();
+
+        const dateB = new Date(
+          b?.createdAt || 0
+        ).getTime();
+
+        return dateA - dateB;
+      });
+
+      const latestRoadmap =
+        sortedRoadmaps[
+          sortedRoadmaps.length - 1
+        ];
+
+      if (!latestRoadmap) {
+        return;
+      }
+
+      /*
+       * ROADMAP ID
+       */
+      const roadmapId =
+        latestRoadmap?._id ||
+        latestRoadmap?.id ||
+        latestRoadmap?.roadmapId ||
+        null;
+
+      setActiveRoadmapId(
+        roadmapId
+      );
+
+      setRoadmapData(
+        latestRoadmap
+      );
+
+      /*
+       * Restore saved progress.
+       *
+       * Supports:
+       * step.progress
+       * step.completion
+       * step.completed
+       */
+      const restoredProgress =
+        {};
+
+      const steps =
+        latestRoadmap?.roadmapSteps ||
+        latestRoadmap?.steps ||
+        [];
+
+      steps.forEach(
+        (step, index) => {
+          let progress = Number(
+            step?.progress ??
+              step?.completion ??
+              0
+          );
+
+          if (
+            step?.completed === true
+          ) {
+            progress = 100;
           }
 
-          return prev + 10;
-        });
-      }, 150);
+          if (
+            !Number.isFinite(
+              progress
+            )
+          ) {
+            progress = 0;
+          }
 
-      const response =
-        await generateRoadmap(
-          selectedCareer,
-          selectedLevel
-        );
+          progress = Math.min(
+            100,
+            Math.max(0, progress)
+          );
 
-      if (progressInterval) {
-        clearInterval(
-          progressInterval
-        );
-      }
-
-      console.log(
-        "AI Roadmap Response:",
-        response
+          restoredProgress[
+            index
+          ] = progress;
+        }
       );
+
+      setStepProgress(
+        restoredProgress
+      );
+
+      setRoadmapReady(true);
+
+      /*
+       * Keep career/level selectors
+       * synchronized with saved roadmap.
+       */
+      if (
+        latestRoadmap?.career
+      ) {
+        const savedCareer =
+          String(
+            latestRoadmap.career
+          )
+            .trim()
+            .toLowerCase();
+
+        const matchingCareer =
+          CAREERS.find(
+            (career) =>
+              career.id ===
+              savedCareer ||
+              career.name
+                .toLowerCase() ===
+                savedCareer
+          );
+
+        if (matchingCareer) {
+          setSelectedCareer(
+            matchingCareer.id
+          );
+        }
+      }
 
       if (
-        response?.success &&
-        response?.roadmap
+        latestRoadmap?.level
       ) {
-        const normalized =
-          normalizeSavedRoadmap(
-            response.roadmap
+        const matchingLevel =
+          SKILL_LEVELS.find(
+            (level) =>
+              level.id.toLowerCase() ===
+              String(
+                latestRoadmap.level
+              )
+                .trim()
+                .toLowerCase()
           );
 
-        /*
-          Important:
-          Newly generated roadmap should start
-          from zero progress.
-        */
-        setStepProgress({});
-        setRoadmapData(normalized);
-        setGenProgress(100);
-        setRoadmapReady(true);
-
-        window.setTimeout(() => {
-          document
-            .getElementById(
-              "generated-roadmap"
-            )
-            ?.scrollIntoView({
-              behavior: "smooth",
-              block: "start",
-            });
-        }, 150);
-      } else {
-        throw new Error(
-          response?.message ||
-            "Failed to generate roadmap"
-        );
-      }
-    } catch (error) {
-      console.error(
-        "Roadmap generation failed:",
-        error
-      );
-
-      alert(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Failed to generate roadmap. Please try again."
-      );
-
-      setRoadmapReady(
-        Boolean(roadmapData)
-      );
-    } finally {
-      if (progressInterval) {
-        clearInterval(progressInterval);
-      }
-
-      setIsGenerating(false);
-    }
-  };
-
-  /* ============================================================
-     UPDATE ROADMAP STEP
-  ============================================================ */
-
-  const handleStepProgress = async (
-    index
-  ) => {
-    if (
-      updatingStep !== null ||
-      !roadmapData
-    ) {
-      return;
-    }
-
-    const currentProgress =
-      Number(
-        stepProgress[index] ?? 0
-      ) || 0;
-
-    const nextProgress =
-      currentProgress >= 100
-        ? 0
-        : 100;
-
-    const previousProgress = {
-      ...stepProgress,
-    };
-
-    /*
-      Optimistic UI update.
-      User sees the result immediately.
-    */
-    setStepProgress((prev) => ({
-      ...prev,
-      [index]: nextProgress,
-    }));
-
-    try {
-      setUpdatingStep(index);
-
-      const roadmapId =
-        roadmapData?.roadmapId ||
-        roadmapData?._id ||
-        roadmapData?.id;
-
-      const stepId =
-        roadmapData?.roadmapSteps?.[
-          index
-        ]?._id ||
-        roadmapData?.roadmapSteps?.[
-          index
-        ]?.id;
-
-      /*
-        Try the most complete payload first.
-        This is compatible with the roadmap
-        service used by CampusHub AI.
-      */
-      const payload = {
-        roadmapId,
-        stepIndex: index,
-        stepId,
-        progress: nextProgress,
-        completed:
-          nextProgress >= 100,
-      };
-
-      const response =
-        await updateRoadmapStepProgress(
-          payload
-        );
-
-      console.log(
-        "Step progress updated:",
-        response
-      );
-
-      /*
-        If backend returns updated roadmap,
-        sync frontend with backend.
-      */
-      const returnedRoadmap =
-        response?.roadmap ||
-        response?.data?.roadmap;
-
-      if (returnedRoadmap) {
-        const normalized =
-          normalizeSavedRoadmap(
-            returnedRoadmap
+        if (matchingLevel) {
+          setSelectedLevel(
+            matchingLevel.id
           );
-
-        if (normalized) {
-          setRoadmapData(normalized);
-
-          /*
-            Preserve optimistic progress if
-            backend response does not contain it.
-          */
-          setStepProgress((prev) => ({
-            ...prev,
-            [index]:
-              nextProgress,
-          }));
         }
       }
     } catch (error) {
       console.error(
-        "Failed to update roadmap step:",
+        "Failed to load saved roadmap:",
         error
       );
 
       /*
-        Roll back if API fails.
-      */
-      setStepProgress(
-        previousProgress
-      );
-
-      alert(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Failed to update step progress."
-      );
+       * Do not break the page if
+       * roadmap loading fails.
+       */
     } finally {
-      setUpdatingStep(null);
+      setIsLoadingRoadmap(false);
     }
   };
 
-  /* ============================================================
-     CHECKLIST
-  ============================================================ */
+  /* ==========================================================
+     INITIAL LOAD
+  ========================================================== */
 
-  const toggleChecklist = (label) => {
-    setChecklist((prev) => ({
-      ...prev,
-      [label]: !prev[label],
-    }));
+  useEffect(() => {
+    loadSavedRoadmap();
+  }, []);
+
+  /* ==========================================================
+     GENERATE ROADMAP
+  ========================================================== */
+
+  const handleGenerateRoadmap =
+    async () => {
+      let progressInterval = null;
+
+      try {
+        setIsGenerating(true);
+        setRoadmapReady(false);
+        setGenProgress(10);
+
+        progressInterval =
+          setInterval(() => {
+            setGenProgress(
+              (prev) => {
+                if (prev >= 90) {
+                  if (
+                    progressInterval
+                  ) {
+                    clearInterval(
+                      progressInterval
+                    );
+                  }
+
+                  return 90;
+                }
+
+                return prev + 10;
+              }
+            );
+          }, 150);
+
+        const response =
+          await generateRoadmap(
+            selectedCareer,
+            selectedLevel
+          );
+
+        if (
+          progressInterval
+        ) {
+          clearInterval(
+            progressInterval
+          );
+        }
+
+        console.log(
+          "AI ROADMAP RESPONSE:",
+          response
+        );
+
+        if (
+          response?.success &&
+          response?.roadmap
+        ) {
+          const generatedRoadmap =
+            response.roadmap;
+
+          /*
+           * Find generated roadmap ID.
+           */
+          const roadmapId =
+            generatedRoadmap?._id ||
+            generatedRoadmap?.id ||
+            generatedRoadmap?.roadmapId ||
+            response?.roadmapId ||
+            null;
+
+          /*
+           * New roadmap starts from 0.
+           */
+          const initialProgress =
+            {};
+
+          const generatedSteps =
+            generatedRoadmap
+              ?.roadmapSteps ||
+            [];
+
+          generatedSteps.forEach(
+            (_, index) => {
+              initialProgress[
+                index
+              ] = 0;
+            }
+          );
+
+          setStepProgress(
+            initialProgress
+          );
+
+          setRoadmapData(
+            generatedRoadmap
+          );
+
+          setActiveRoadmapId(
+            roadmapId
+          );
+
+          setGenProgress(100);
+          setRoadmapReady(true);
+
+          /*
+           * Update saved roadmaps
+           * locally.
+           */
+          setSavedRoadmaps(
+            (prev) => [
+              ...prev,
+              generatedRoadmap,
+            ]
+          );
+        } else {
+          throw new Error(
+            response?.message ||
+              "Failed to generate roadmap"
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Roadmap generation failed:",
+          error
+        );
+
+        alert(
+          error?.response?.data
+            ?.message ||
+            error?.message ||
+            "Failed to generate roadmap. Please try again."
+        );
+
+        setRoadmapReady(false);
+      } finally {
+        if (
+          progressInterval
+        ) {
+          clearInterval(
+            progressInterval
+          );
+        }
+
+        setIsGenerating(false);
+      }
+    };
+
+  /* ==========================================================
+     UPDATE STEP PROGRESS
+     
+     This saves progress to backend.
+  ========================================================== */
+
+  const toggleStepProgress =
+    async (index) => {
+      if (!activeRoadmapId) {
+        console.warn(
+          "No active roadmap found."
+        );
+
+        alert(
+          "Please generate or load a roadmap first."
+        );
+
+        return;
+      }
+
+      const currentProgress =
+        Number(
+          stepProgress[index] ?? 0
+        );
+
+      const nextProgress =
+        currentProgress >= 100
+          ? 0
+          : 100;
+
+      /*
+       * Optimistic UI update.
+       */
+      setStepProgress(
+        (prev) => ({
+          ...prev,
+          [index]:
+            nextProgress,
+        })
+      );
+
+      try {
+        const response =
+          await updateRoadmapStepProgress(
+            activeRoadmapId,
+            index,
+            nextProgress
+          );
+
+        console.log(
+          "ROADMAP STEP UPDATED:",
+          response
+        );
+
+        /*
+         * Backend may return updated roadmap.
+         */
+        const updatedRoadmap =
+          response?.roadmap ||
+          response?.data?.roadmap ||
+          (
+            response?.data?.roadmapSteps
+              ? response.data
+              : null
+          );
+
+        if (
+          updatedRoadmap
+            ?.roadmapSteps
+        ) {
+          setRoadmapData(
+            updatedRoadmap
+          );
+
+          const syncedProgress =
+            {};
+
+          updatedRoadmap.roadmapSteps.forEach(
+            (step, stepIndex) => {
+              let progress =
+                Number(
+                  step?.progress ??
+                    step?.completion ??
+                    0
+                );
+
+              if (
+                step?.completed ===
+                true
+              ) {
+                progress = 100;
+              }
+
+              syncedProgress[
+                stepIndex
+              ] = Math.min(
+                100,
+                Math.max(
+                  0,
+                  progress
+                )
+              );
+            }
+          );
+
+          setStepProgress(
+            syncedProgress
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Failed to update roadmap step:",
+          error
+        );
+
+        /*
+         * Rollback optimistic update
+         * if backend request failed.
+         */
+        setStepProgress(
+          (prev) => ({
+            ...prev,
+            [index]:
+              currentProgress,
+          })
+        );
+
+        alert(
+          error?.response?.data
+            ?.message ||
+            error?.message ||
+            "Failed to save roadmap progress."
+        );
+      }
+    };
+
+  /* ==========================================================
+     PLACEMENT CHECKLIST
+  ========================================================== */
+
+  const toggleChecklist = (
+    label
+  ) => {
+    setChecklist(
+      (prev) => ({
+        ...prev,
+        [label]:
+          !prev[label],
+      })
+    );
   };
 
   const completedCount =
-    Object.values(checklist).filter(
-      Boolean
-    ).length;
-
-  /* ============================================================
-     ROADMAP OVERALL PROGRESS
-  ============================================================ */
-
-  const roadmapOverallProgress =
-    displaySteps.length > 0
-      ? Math.round(
-          displaySteps.reduce(
-            (sum, step) =>
-              sum +
-              (Number(step.progress) || 0),
-            0
-          ) / displaySteps.length
-        )
-      : 0;
+    Object.values(
+      checklist
+    ).filter(Boolean).length;
 
   /* ============================================================
      RENDER
@@ -1418,7 +1623,7 @@ function SkillRoadmap() {
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden bg-slate-950 text-slate-100">
       {/* ======================================================
-          HERO
+          1. HERO
       ====================================================== */}
 
       <section className="relative overflow-hidden px-6 pb-24 pt-28 sm:px-10 lg:px-20">
@@ -1442,11 +1647,11 @@ function SkillRoadmap() {
             </h1>
 
             <p className="mt-6 max-w-xl text-base text-slate-400 sm:text-lg">
-              Pick a career path, tell us your
-              level, and let AI generate a
-              step-by-step learning journey —
-              from your first line of code to
-              your first offer letter.
+              Pick a career path, tell us
+              your level, and let AI generate
+              a step-by-step learning journey
+              — from your first line of code
+              to your first offer letter.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">
@@ -1519,36 +1724,38 @@ function SkillRoadmap() {
                 pos: "right-2 bottom-2",
                 delay: 1.2,
               },
-            ].map((card) => (
-              <motion.div
-                key={card.label}
-                className={`absolute ${card.pos} flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3 backdrop-blur-xl`}
-                animate={{
-                  y: [0, -14, 0],
-                }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: card.delay,
-                }}
-                initial={{
-                  opacity: 0,
-                }}
-                whileInView={{
-                  opacity: 1,
-                }}
-                viewport={{
-                  once: true,
-                }}
-              >
-                <card.icon className="h-4 w-4 text-cyan-400" />
+            ].map(
+              (card) => (
+                <motion.div
+                  key={card.label}
+                  className={`absolute ${card.pos} flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3 backdrop-blur-xl`}
+                  animate={{
+                    y: [0, -14, 0],
+                  }}
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: card.delay,
+                  }}
+                  initial={{
+                    opacity: 0,
+                  }}
+                  whileInView={{
+                    opacity: 1,
+                  }}
+                  viewport={{
+                    once: true,
+                  }}
+                >
+                  <card.icon className="h-4 w-4 text-cyan-400" />
 
-                <span className="text-xs font-medium text-slate-200">
-                  {card.label}
-                </span>
-              </motion.div>
-            ))}
+                  <span className="text-xs font-medium text-slate-200">
+                    {card.label}
+                  </span>
+                </motion.div>
+              )
+            )}
 
             <motion.div
               initial={{
@@ -1574,7 +1781,7 @@ function SkillRoadmap() {
       </section>
 
       {/* ======================================================
-          CAREER
+          2. CAREER
       ====================================================== */}
 
       <section
@@ -1597,15 +1804,18 @@ function SkillRoadmap() {
 
                 return (
                   <motion.button
-                    key={career.id}
-                    type="button"
+                    key={
+                      career.id
+                    }
                     custom={i}
                     initial="hidden"
                     whileInView="visible"
                     viewport={{
                       once: true,
                     }}
-                    variants={scaleIn}
+                    variants={
+                      scaleIn
+                    }
                     onClick={() =>
                       setSelectedCareer(
                         career.id
@@ -1651,7 +1861,7 @@ function SkillRoadmap() {
       </section>
 
       {/* ======================================================
-          LEVEL
+          3. SKILL LEVEL
       ====================================================== */}
 
       <section className="relative px-6 py-24 sm:px-10 lg:px-20">
@@ -1670,15 +1880,18 @@ function SkillRoadmap() {
 
                 return (
                   <motion.button
-                    key={level.id}
-                    type="button"
+                    key={
+                      level.id
+                    }
                     custom={i}
                     initial="hidden"
                     whileInView="visible"
                     viewport={{
                       once: true,
                     }}
-                    variants={fadeUp}
+                    variants={
+                      fadeUp
+                    }
                     onClick={() =>
                       setSelectedLevel(
                         level.id
@@ -1723,7 +1936,7 @@ function SkillRoadmap() {
       </section>
 
       {/* ======================================================
-          GENERATOR
+          4. GENERATOR
       ====================================================== */}
 
       <section className="relative px-6 py-16 sm:px-10 lg:px-20">
@@ -1738,7 +1951,7 @@ function SkillRoadmap() {
             className="rounded-3xl border border-slate-800 bg-slate-900/50 p-10 backdrop-blur-xl"
           >
             <p className="text-sm text-slate-400">
-              Generate a roadmap for{" "}
+              Generating a roadmap for{" "}
               <span className="font-semibold text-cyan-300">
                 {activeCareer.name}
               </span>{" "}
@@ -1749,11 +1962,12 @@ function SkillRoadmap() {
             </p>
 
             <motion.button
-              type="button"
               onClick={
                 handleGenerateRoadmap
               }
-              disabled={isGenerating}
+              disabled={
+                isGenerating
+              }
               whileHover={{
                 scale: isGenerating
                   ? 1
@@ -1764,7 +1978,7 @@ function SkillRoadmap() {
                   ? 1
                   : 0.97,
               }}
-              className="mx-auto mt-6 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-70"
+              className="mx-auto mt-6 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 disabled:opacity-70"
             >
               {isGenerating ? (
                 <>
@@ -1774,9 +1988,7 @@ function SkillRoadmap() {
               ) : (
                 <>
                   <Wand2 className="h-4 w-4" />
-                  {roadmapReady
-                    ? "Regenerate AI Roadmap"
-                    : "Generate AI Roadmap"}
+                  Generate AI Roadmap
                 </>
               )}
             </motion.button>
@@ -1818,7 +2030,8 @@ function SkillRoadmap() {
                           }}
                           transition={{
                             duration: 0.9,
-                            repeat: Infinity,
+                            repeat:
+                              Infinity,
                             delay:
                               i * 0.2,
                           }}
@@ -1842,41 +2055,17 @@ function SkillRoadmap() {
                 </motion.div>
               )}
             </AnimatePresence>
-
-            {!isGenerating &&
-              isLoadingRoadmap && (
-                <div className="mt-5 flex items-center justify-center gap-2 text-xs text-slate-500">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Loading your saved roadmap...
-                </div>
-              )}
-
-            {!isGenerating &&
-              roadmapReady &&
-              roadmapData && (
-                <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-xs">
-                  <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-emerald-400">
-                    Saved Roadmap
-                  </span>
-
-                  <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-cyan-300">
-                    Overall Progress:{" "}
-                    {roadmapOverallProgress}%
-                  </span>
-                </div>
-              )}
           </motion.div>
         </div>
       </section>
 
       {/* ======================================================
-          GENERATED ROADMAP
+          5. ROADMAP
       ====================================================== */}
 
       <AnimatePresence>
         {roadmapReady && (
           <motion.section
-            id="generated-roadmap"
             initial={{
               opacity: 0,
               height: 0,
@@ -1892,40 +2081,95 @@ function SkillRoadmap() {
             transition={{
               duration: 0.5,
             }}
-            className="relative scroll-mt-20 px-6 py-10 sm:px-10 lg:px-20"
+            className="relative px-6 py-10 sm:px-10 lg:px-20"
           >
             <div className="mx-auto max-w-4xl">
               <SectionHeading
                 badge="Your Roadmap"
                 title={`${displayCareerName} Roadmap`}
-                subtitle="Follow each stage in order — every step builds on the last. Click a step to mark it complete."
+                subtitle="Follow each stage in order — every step builds on the last."
               />
 
-              <div className="mb-8 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+              {/* ==================================================
+                  OVERALL PROGRESS
+              ================================================== */}
+
+              <motion.div
+                initial={{
+                  opacity: 0,
+                  y: 15,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                className="mb-10 rounded-3xl border border-cyan-500/20 bg-cyan-500/5 p-6 backdrop-blur-xl"
+              >
+                <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-slate-500">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-cyan-300">
                       Overall Progress
                     </p>
 
-                    <p className="mt-1 text-2xl font-bold text-white">
-                      {roadmapOverallProgress}%
-                    </p>
+                    <div className="mt-2 flex items-end gap-3">
+                      <span className="text-4xl font-bold text-white">
+                        {overallProgress}%
+                      </span>
+
+                      <span className="mb-1 text-xs text-slate-500">
+                        {completedRoadmapSteps}/
+                        {
+                          displaySteps.length
+                        }{" "}
+                        steps completed
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="h-3 min-w-[200px] flex-1 overflow-hidden rounded-full bg-slate-800">
-                    <motion.div
-                      className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500"
-                      animate={{
-                        width: `${roadmapOverallProgress}%`,
-                      }}
-                      transition={{
-                        duration: 0.5,
-                      }}
-                    />
+                  <div className="w-full sm:max-w-xs">
+                    <div className="mb-2 flex justify-between text-[11px] text-slate-500">
+                      <span>
+                        Learning Progress
+                      </span>
+
+                      <span>
+                        {overallProgress}%
+                      </span>
+                    </div>
+
+                    <div className="h-3 overflow-hidden rounded-full bg-slate-800">
+                      <motion.div
+                        className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-600"
+                        initial={{
+                          width: 0,
+                        }}
+                        animate={{
+                          width: `${overallProgress}%`,
+                        }}
+                        transition={{
+                          duration: 0.8,
+                          ease: "easeOut",
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
+
+              {/* ==================================================
+                  LOADING SAVED ROADMAP
+              ================================================== */}
+
+              {isLoadingRoadmap && (
+                <div className="mb-8 flex items-center justify-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/50 p-4 text-xs text-slate-400">
+                  <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
+                  Loading your saved learning progress...
+                </div>
+              )}
+
+              {/* ==================================================
+                  TIMELINE
+              ================================================== */}
 
               <div className="relative">
                 <div className="absolute bottom-0 left-6 top-0 w-px bg-slate-800 sm:left-7" />
@@ -1945,10 +2189,6 @@ function SkillRoadmap() {
                           i
                         );
 
-                      const isUpdating =
-                        updatingStep ===
-                        i;
-
                       return (
                         <motion.div
                           key={`${step.title}-${i}`}
@@ -1958,22 +2198,22 @@ function SkillRoadmap() {
                           viewport={{
                             once: true,
                           }}
-                          variants={fadeUp}
+                          variants={
+                            fadeUp
+                          }
                           className="relative flex gap-4 sm:gap-5"
                         >
+                          {/* STEP ICON */}
+
                           <div
                             className={`relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border sm:h-14 sm:w-14 ${style.border} ${style.bg}`}
                           >
-                            {isUpdating ? (
-                              <Loader2
-                                className={`h-5 w-5 animate-spin sm:h-6 sm:w-6 ${style.text}`}
-                              />
-                            ) : (
-                              <StepIcon
-                                className={`h-5 w-5 sm:h-6 sm:w-6 ${style.text}`}
-                              />
-                            )}
+                            <StepIcon
+                              className={`h-5 w-5 sm:h-6 sm:w-6 ${style.text}`}
+                            />
                           </div>
+
+                          {/* STEP CARD */}
 
                           <div className="flex-1 rounded-2xl border border-slate-800 bg-slate-900/50 p-5 backdrop-blur-xl">
                             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1989,77 +2229,73 @@ function SkillRoadmap() {
                             </div>
 
                             <p className="mt-2 text-xs text-slate-400 sm:text-sm">
-                              {step.description ||
-                                "Follow this learning stage to strengthen your career-ready skills."}
+                              {
+                                step.description
+                              }
                             </p>
 
                             <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-slate-500">
-                              {step.difficulty && (
-                                <span className="flex items-center gap-1">
-                                  <Target className="h-3 w-3 text-cyan-400" />
-                                  {
-                                    step.difficulty
-                                  }
-                                </span>
-                              )}
+                              <span className="flex items-center gap-1">
+                                <Target className="h-3 w-3 text-cyan-400" />
+                                {step.difficulty ||
+                                  "General"}
+                              </span>
 
-                              {step.time && (
-                                <span className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3 text-cyan-400" />
-                                  {step.time}
-                                </span>
-                              )}
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3 text-cyan-400" />
+                                {step.time ||
+                                  "Flexible"}
+                              </span>
                             </div>
+
+                            {/* PROGRESS BAR */}
 
                             <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
                               <motion.div
                                 className={`h-full rounded-full bg-gradient-to-r ${style.bar}`}
+                                initial={{
+                                  width: 0,
+                                }}
                                 animate={{
                                   width: `${step.progress}%`,
                                 }}
                                 transition={{
-                                  duration: 0.5,
+                                  duration: 0.7,
+                                  ease: "easeOut",
                                 }}
                               />
                             </div>
 
-                            <div className="mt-4 flex items-center justify-between gap-3">
+                            {/* PROGRESS CONTROLS */}
+
+                            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                               <span className="text-[11px] text-slate-500">
-                                {step.progress}% complete
+                                {step.progress}%
+                                complete
                               </span>
 
-                              {roadmapData && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleStepProgress(
-                                      i
-                                    )
-                                  }
-                                  disabled={
-                                    isUpdating
-                                  }
-                                  className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition ${
-                                    step.progress >=
-                                    100
-                                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20"
-                                      : "border-cyan-500/30 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20"
-                                  } disabled:cursor-not-allowed disabled:opacity-50`}
-                                >
-                                  {step.progress >=
-                                  100 ? (
-                                    <>
-                                      <CheckCircle2 className="h-3.5 w-3.5" />
-                                      Mark Pending
-                                    </>
-                                  ) : (
-                                    <>
-                                      <CheckCircle2 className="h-3.5 w-3.5" />
-                                      Mark Complete
-                                    </>
-                                  )}
-                                </button>
-                              )}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  toggleStepProgress(
+                                    i
+                                  )
+                                }
+                                disabled={
+                                  !activeRoadmapId
+                                }
+                                className={`rounded-xl border px-3 py-1.5 text-[11px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                                  step.progress >=
+                                  100
+                                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                                    : "border-cyan-500/30 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20"
+                                }`}
+                              >
+                                {step.progress >=
+                                100
+                                  ? "Mark Incomplete"
+                                  : "Mark Complete"}
+                              </button>
                             </div>
                           </div>
                         </motion.div>
@@ -2074,7 +2310,7 @@ function SkillRoadmap() {
       </AnimatePresence>
 
       {/* ======================================================
-          WEEKLY PLAN
+          6. WEEKLY PLAN
       ====================================================== */}
 
       <section className="relative px-6 py-24 sm:px-10 lg:px-20">
@@ -2116,9 +2352,13 @@ function SkillRoadmap() {
                         week.topics ||
                         []
                       ).map(
-                        (topic) => (
+                        (
+                          topic
+                        ) => (
                           <span
-                            key={topic}
+                            key={
+                              topic
+                            }
                             className="rounded-full border border-slate-700 bg-slate-800/60 px-2 py-0.5 text-[11px] text-slate-300"
                           >
                             {topic}
@@ -2134,7 +2374,9 @@ function SkillRoadmap() {
                     </p>
 
                     <p className="text-xs text-slate-400">
-                      {week.assignment}
+                      {
+                        week.assignment
+                      }
                     </p>
                   </div>
 
@@ -2144,13 +2386,16 @@ function SkillRoadmap() {
                     </p>
 
                     <p className="text-xs text-slate-400">
-                      {week.miniProject}
+                      {
+                        week.miniProject
+                      }
                     </p>
                   </div>
 
                   <div className="mt-5 flex items-center gap-1.5 text-xs text-cyan-300">
                     <Clock className="h-3.5 w-3.5" />
-                    {week.hours} hrs / week
+                    {week.hours} hrs /
+                    week
                   </div>
                 </motion.div>
               )
@@ -2160,7 +2405,7 @@ function SkillRoadmap() {
       </section>
 
       {/* ======================================================
-          PROJECTS
+          7. PROJECTS
       ====================================================== */}
 
       <section
@@ -2195,7 +2440,9 @@ function SkillRoadmap() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="text-sm font-semibold text-white sm:text-base">
-                      {project.name}
+                      {
+                        project.name
+                      }
                     </h3>
 
                     <span
@@ -2209,7 +2456,9 @@ function SkillRoadmap() {
                           : "border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-300"
                       }`}
                     >
-                      {project.difficulty}
+                      {
+                        project.difficulty
+                      }
                     </span>
                   </div>
 
@@ -2220,7 +2469,9 @@ function SkillRoadmap() {
                     ).map(
                       (skill) => (
                         <span
-                          key={skill}
+                          key={
+                            skill
+                          }
                           className="rounded-full border border-slate-700 bg-slate-800/60 px-2 py-0.5 text-[11px] text-slate-300"
                         >
                           {skill}
@@ -2248,7 +2499,7 @@ function SkillRoadmap() {
       </section>
 
       {/* ======================================================
-          RESOURCES
+          8. RESOURCES
       ====================================================== */}
 
       <section className="relative px-6 py-24 sm:px-10 lg:px-20">
@@ -2260,9 +2511,9 @@ function SkillRoadmap() {
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {RESOURCES.map(
-              (resource, i) => (
+              (res, i) => (
                 <motion.div
-                  key={resource.title}
+                  key={res.title}
                   custom={i}
                   initial="hidden"
                   whileInView="visible"
@@ -2276,19 +2527,21 @@ function SkillRoadmap() {
                   className="group flex flex-col rounded-3xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-xl transition"
                 >
                   <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-600/20 text-cyan-400 transition group-hover:from-cyan-500 group-hover:to-blue-600 group-hover:text-white">
-                    <resource.icon className="h-6 w-6" />
+                    <res.icon className="h-6 w-6" />
                   </div>
 
                   <h3 className="text-base font-semibold text-white">
-                    {resource.title}
+                    {res.title}
                   </h3>
 
                   <p className="mt-2 flex-1 text-sm text-slate-400">
-                    {resource.desc}
+                    {res.desc}
                   </p>
 
                   <motion.a
-                    href={resource.url}
+                    href={
+                      res.url
+                    }
                     target="_blank"
                     rel="noopener noreferrer"
                     whileHover={{
@@ -2300,6 +2553,7 @@ function SkillRoadmap() {
                     className="mt-4 flex items-center justify-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/60 py-2 text-xs font-semibold text-slate-200 transition hover:border-cyan-500/50 hover:text-cyan-300"
                   >
                     Open Resource
+
                     <ExternalLink className="h-3.5 w-3.5" />
                   </motion.a>
                 </motion.div>
@@ -2310,7 +2564,7 @@ function SkillRoadmap() {
       </section>
 
       {/* ======================================================
-          SKILL ANALYSIS
+          9. SKILL ANALYSIS
       ====================================================== */}
 
       <section className="relative px-6 py-24 sm:px-10 lg:px-20">
@@ -2338,7 +2592,9 @@ function SkillRoadmap() {
                   className="flex flex-col items-center rounded-3xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-xl"
                 >
                   <CircularProgress
-                    value={item.value}
+                    value={
+                      item.value
+                    }
                     size={110}
                   />
 
@@ -2390,7 +2646,7 @@ function SkillRoadmap() {
       </section>
 
       {/* ======================================================
-          PLACEMENT
+          10. PLACEMENT READINESS
       ====================================================== */}
 
       <section className="relative px-6 py-24 sm:px-10 lg:px-20">
@@ -2405,19 +2661,24 @@ function SkillRoadmap() {
             {PLACEMENT_CHECKLIST.map(
               (item, i) => {
                 const done =
-                  checklist[item.label];
+                  checklist[
+                    item.label
+                  ];
 
                 return (
                   <motion.button
-                    key={item.label}
-                    type="button"
+                    key={
+                      item.label
+                    }
                     custom={i}
                     initial="hidden"
                     whileInView="visible"
                     viewport={{
                       once: true,
                     }}
-                    variants={fadeUp}
+                    variants={
+                      fadeUp
+                    }
                     onClick={() =>
                       toggleChecklist(
                         item.label
@@ -2466,7 +2727,7 @@ function SkillRoadmap() {
       </section>
 
       {/* ======================================================
-          STATS
+          11. STATS
       ====================================================== */}
 
       <section className="relative px-6 py-24 sm:px-10 lg:px-20">
@@ -2475,14 +2736,18 @@ function SkillRoadmap() {
             {STATS.map(
               (stat, i) => (
                 <motion.div
-                  key={stat.label}
+                  key={
+                    stat.label
+                  }
                   custom={i}
                   initial="hidden"
                   whileInView="visible"
                   viewport={{
                     once: true,
                   }}
-                  variants={scaleIn}
+                  variants={
+                    scaleIn
+                  }
                   whileHover={{
                     y: -6,
                   }}
@@ -2507,7 +2772,7 @@ function SkillRoadmap() {
       </section>
 
       {/* ======================================================
-          TESTIMONIALS
+          12. TESTIMONIALS
       ====================================================== */}
 
       <section className="relative px-6 py-24 sm:px-10 lg:px-20">
@@ -2519,9 +2784,9 @@ function SkillRoadmap() {
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {TESTIMONIALS.map(
-              (testimonial, i) => (
+              (t, i) => (
                 <motion.div
-                  key={testimonial.name}
+                  key={t.name}
                   custom={i}
                   initial="hidden"
                   whileInView="visible"
@@ -2537,38 +2802,45 @@ function SkillRoadmap() {
                   <div className="mb-4 flex items-center gap-1 text-amber-400">
                     {Array.from({
                       length: 5,
-                    }).map((_, index) => (
-                      <Star
-                        key={index}
-                        className="h-3.5 w-3.5 fill-amber-400"
-                      />
-                    ))}
+                    }).map(
+                      (_, idx) => (
+                        <Star
+                          key={
+                            idx
+                          }
+                          className="h-3.5 w-3.5 fill-amber-400"
+                        />
+                      )
+                    )}
                   </div>
 
                   <p className="flex-1 text-sm leading-relaxed text-slate-300">
-                    "{testimonial.review}"
+                    "{t.review}"
                   </p>
 
                   <div className="mt-6 flex items-center gap-3">
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 text-sm font-bold text-white">
-                      {testimonial.name
-                        .split(" ")
+                      {t.name
+                        .split(
+                          " "
+                        )
                         .map(
-                          (word) =>
-                            word[0]
+                          (
+                            w
+                          ) =>
+                            w[0]
                         )
                         .join("")}
                     </div>
 
                     <div>
                       <p className="text-sm font-semibold text-white">
-                        {testimonial.name}
+                        {t.name}
                       </p>
 
                       <p className="text-xs text-slate-500">
-                        {testimonial.college}{" "}
-                        ·{" "}
-                        {testimonial.career}
+                        {t.college} ·{" "}
+                        {t.career}
                       </p>
                     </div>
                   </div>
@@ -2580,7 +2852,7 @@ function SkillRoadmap() {
       </section>
 
       {/* ======================================================
-          FAQ
+          13. FAQ
       ====================================================== */}
 
       <section className="relative px-6 py-24 sm:px-10 lg:px-20">
@@ -2601,16 +2873,20 @@ function SkillRoadmap() {
                   viewport={{
                     once: true,
                   }}
-                  variants={fadeUp}
+                  variants={
+                    fadeUp
+                  }
                 >
                   <FAQItem
                     item={item}
                     isOpen={
-                      openFaq === i
+                      openFaq ===
+                      i
                     }
                     onClick={() =>
                       setOpenFaq(
-                        openFaq === i
+                        openFaq ===
+                          i
                           ? -1
                           : i
                       )
@@ -2624,7 +2900,7 @@ function SkillRoadmap() {
       </section>
 
       {/* ======================================================
-          FINAL CTA
+          14. FINAL CTA
       ====================================================== */}
 
       <section className="relative px-6 py-24 sm:px-10 lg:px-20">
@@ -2651,9 +2927,10 @@ function SkillRoadmap() {
             </h2>
 
             <p className="mx-auto mt-4 max-w-xl text-slate-400">
-              Your career path is one click
-              away. Let AI build the exact
-              roadmap you need to get placed.
+              Your career path is one
+              click away. Let AI build
+              the exact roadmap you need
+              to get placed.
             </p>
 
             <motion.a
