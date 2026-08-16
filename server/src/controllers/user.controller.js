@@ -22,7 +22,7 @@ function getIndiaDateKey(date) {
 }
 
 // ============================================================
-// HELPER — CALCULATE CURRENT ACTIVITY STREAK
+// HELPER — CALCULATE CURRENT LEARNING STREAK
 // ============================================================
 
 function calculateStreak(dates = []) {
@@ -36,41 +36,64 @@ function calculateStreak(dates = []) {
         .filter(Boolean)
         .map((date) => getIndiaDateKey(date))
     ),
-  ].sort((a, b) => new Date(b) - new Date(a));
+  ].sort(
+    (a, b) =>
+      new Date(b) - new Date(a)
+  );
 
   if (uniqueDates.length === 0) {
     return 0;
   }
 
-  const today = getIndiaDateKey(new Date());
+  const today =
+    getIndiaDateKey(new Date());
 
-  const yesterdayDate = new Date();
+  const yesterdayDate =
+    new Date();
+
   yesterdayDate.setDate(
     yesterdayDate.getDate() - 1
   );
 
   const yesterday =
-    getIndiaDateKey(yesterdayDate);
+    getIndiaDateKey(
+      yesterdayDate
+    );
 
   let currentDate;
 
-  // If user was active today, start from today.
-  // Otherwise allow yesterday to continue the streak.
+  // User was active today.
   if (uniqueDates.includes(today)) {
     currentDate = new Date();
-  } else if (uniqueDates.includes(yesterday)) {
-    currentDate = yesterdayDate;
-  } else {
+  }
+
+  // User was active yesterday.
+  // Allow yesterday to continue the streak.
+  else if (
+    uniqueDates.includes(yesterday)
+  ) {
+    currentDate =
+      yesterdayDate;
+  }
+
+  // No activity today or yesterday.
+  else {
     return 0;
   }
 
   let streak = 0;
 
-  for (let i = 0; i < uniqueDates.length; i++) {
+  while (true) {
     const expectedDate =
-      getIndiaDateKey(currentDate);
+      getIndiaDateKey(
+        currentDate
+      );
 
-    if (uniqueDates.includes(expectedDate)) {
+    if (
+      uniqueDates.includes(
+        expectedDate
+      )
+    ) {
       streak++;
 
       currentDate.setDate(
@@ -89,16 +112,23 @@ function calculateStreak(dates = []) {
 // GET /api/user/profile
 // ============================================================
 
-export const getProfile = async (req, res) => {
+export const getProfile = async (
+  req,
+  res
+) => {
   try {
-    const user = await User.findById(req.user.id)
-      .select("-password")
-      .lean();
+    const user =
+      await User.findById(
+        req.user.id
+      )
+        .select("-password")
+        .lean();
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found",
+        message:
+          "User not found",
       });
     }
 
@@ -107,11 +137,15 @@ export const getProfile = async (req, res) => {
       user,
     });
   } catch (error) {
-    console.error("Get Profile Error:", error);
+    console.error(
+      "Get Profile Error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message:
+        error.message,
     });
   }
 };
@@ -121,7 +155,10 @@ export const getProfile = async (req, res) => {
 // PUT /api/user/profile
 // ============================================================
 
-export const updateProfile = async (req, res) => {
+export const updateProfile = async (
+  req,
+  res
+) => {
   try {
     const {
       name,
@@ -130,40 +167,47 @@ export const updateProfile = async (req, res) => {
       year,
     } = req.body;
 
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      {
-        name,
-        college,
-        branch,
-        year,
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    )
-      .select("-password")
-      .lean();
+    const user =
+      await User.findByIdAndUpdate(
+        req.user.id,
+        {
+          name,
+          college,
+          branch,
+          year,
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      )
+        .select("-password")
+        .lean();
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found",
+        message:
+          "User not found",
       });
     }
 
     return res.status(200).json({
       success: true,
-      message: "Profile Updated Successfully 🚀",
+      message:
+        "Profile Updated Successfully 🚀",
       user,
     });
   } catch (error) {
-    console.error("Update Profile Error:", error);
+    console.error(
+      "Update Profile Error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message:
+        error.message,
     });
   }
 };
@@ -173,22 +217,30 @@ export const updateProfile = async (req, res) => {
 // GET /api/user/dashboard
 // ============================================================
 
-export const getDashboard = async (req, res) => {
+export const getDashboard = async (
+  req,
+  res
+) => {
   try {
-    const userId = req.user.id;
+    const userId =
+      req.user.id;
 
     // ========================================================
     // GET USER
     // ========================================================
 
-    const user = await User.findById(userId)
-      .select("-password")
-      .lean();
+    const user =
+      await User.findById(
+        userId
+      )
+        .select("-password")
+        .lean();
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found",
+        message:
+          "User not found",
       });
     }
 
@@ -208,7 +260,7 @@ export const getDashboard = async (req, res) => {
       recentNotifications,
       latestRoadmap,
       allAIActivity,
-      allNotificationActivity,
+      allNoteActivity,
     ] = await Promise.all([
       // ------------------------------------------------------
       // AI QUESTIONS
@@ -312,7 +364,7 @@ export const getDashboard = async (req, res) => {
         .lean(),
 
       // ------------------------------------------------------
-      // ALL AI ACTIVITY FOR STREAK
+      // ALL AI ACTIVITY FOR LEARNING STREAK
       // ------------------------------------------------------
 
       AIUsage.find({
@@ -322,11 +374,11 @@ export const getDashboard = async (req, res) => {
         .lean(),
 
       // ------------------------------------------------------
-      // ALL NOTIFICATION ACTIVITY FOR STREAK
+      // ALL NOTE ACTIVITY FOR LEARNING STREAK
       // ------------------------------------------------------
 
-      Notification.find({
-        user: userId,
+      Note.find({
+        uploadedBy: userId,
       })
         .select("createdAt")
         .lean(),
@@ -362,31 +414,42 @@ export const getDashboard = async (req, res) => {
       profileStrength += 10;
     }
 
-    profileStrength = Math.min(
-      profileStrength,
-      100
-    );
+    profileStrength =
+      Math.min(
+        profileStrength,
+        100
+      );
 
     // ========================================================
-    // ROADMAP PROGRESS
+    // ROADMAP PROGRESS + NEXT STEP
     // ========================================================
 
     let roadmapProgress = 0;
     let totalRoadmapSteps = 0;
     let completedRoadmapSteps = 0;
+    let nextRoadmapStep = null;
 
     if (
       latestRoadmap &&
       Array.isArray(
         latestRoadmap.roadmapSteps
       ) &&
-      latestRoadmap.roadmapSteps.length > 0
+      latestRoadmap
+        .roadmapSteps.length > 0
     ) {
       const steps =
         latestRoadmap.roadmapSteps;
 
+      // ------------------------------------------------------
+      // TOTAL STEPS
+      // ------------------------------------------------------
+
       totalRoadmapSteps =
         steps.length;
+
+      // ------------------------------------------------------
+      // COMPLETED STEPS
+      // ------------------------------------------------------
 
       completedRoadmapSteps =
         steps.filter(
@@ -395,9 +458,16 @@ export const getDashboard = async (req, res) => {
             "completed"
         ).length;
 
+      // ------------------------------------------------------
+      // OVERALL ROADMAP PROGRESS
+      // ------------------------------------------------------
+
       const totalProgress =
         steps.reduce(
-          (total, step) =>
+          (
+            total,
+            step
+          ) =>
             total +
             Number(
               step.progress || 0
@@ -410,25 +480,119 @@ export const getDashboard = async (req, res) => {
           totalProgress /
             steps.length
         );
+
+      // ------------------------------------------------------
+      // FIND NEXT ACTION
+      // ------------------------------------------------------
+
+      // Priority 1:
+      // Currently active step
+      nextRoadmapStep =
+        steps.find(
+          (step) =>
+            step.status ===
+              "in-progress" ||
+            step.status ===
+              "in_progress"
+        ) || null;
+
+      // Priority 2:
+      // First pending step
+      if (!nextRoadmapStep) {
+        nextRoadmapStep =
+          steps.find(
+            (step) =>
+              step.status ===
+                "pending" ||
+              step.status ===
+                "not-started" ||
+              step.status ===
+                "not_started"
+          ) || null;
+      }
+
+      // Priority 3:
+      // Any incomplete step
+      if (!nextRoadmapStep) {
+        nextRoadmapStep =
+          steps.find(
+            (step) =>
+              step.status !==
+              "completed"
+          ) || null;
+      }
+
+      // ------------------------------------------------------
+      // NORMALIZE NEXT STEP
+      // ------------------------------------------------------
+
+      if (nextRoadmapStep) {
+        nextRoadmapStep = {
+          title:
+            nextRoadmapStep.title ||
+            "Next Roadmap Step",
+
+          description:
+            nextRoadmapStep.description ||
+            "",
+
+          difficulty:
+            nextRoadmapStep.difficulty ||
+            "Beginner",
+
+          time:
+            nextRoadmapStep.time ||
+            nextRoadmapStep.duration ||
+            "",
+
+          progress:
+            Number(
+              nextRoadmapStep.progress ||
+                0
+            ),
+
+          status:
+            nextRoadmapStep.status ||
+            "pending",
+        };
+      }
     }
 
     // ========================================================
     // LEARNING STREAK
     // ========================================================
 
+    /*
+      IMPORTANT:
+
+      Only genuine learning activity contributes
+      to the learning streak.
+
+      Included:
+      - AI Assistant usage
+      - Notes created/uploaded
+
+      Excluded:
+      - Notifications
+      - System notifications
+      - Roadmap updatedAt
+      - Resume creation
+      - Internship application
+      - Certificate creation
+    */
+
     const activityDates = [
+      // AI learning activity
       ...allAIActivity.map(
-        (item) => item.createdAt
+        (item) =>
+          item.createdAt
       ),
 
-      ...allNotificationActivity.map(
-        (item) => item.createdAt
+      // Notes / learning-material activity
+      ...allNoteActivity.map(
+        (item) =>
+          item.createdAt
       ),
-
-      // Roadmap update also counts as activity.
-      ...(latestRoadmap?.updatedAt
-        ? [latestRoadmap.updatedAt]
-        : []),
     ];
 
     const learningStreak =
@@ -440,8 +604,8 @@ export const getDashboard = async (req, res) => {
     // ACHIEVEMENTS
     // ========================================================
 
-    // Each completed roadmap step represents
-    // a completed learning milestone.
+    // Every completed roadmap step
+    // represents a learning milestone.
 
     const achievements =
       completedRoadmapSteps;
@@ -504,6 +668,9 @@ export const getDashboard = async (req, res) => {
         completedSteps:
           completedRoadmapSteps,
 
+        nextStep:
+          nextRoadmapStep,
+
         route:
           "/skill-roadmap",
       };
@@ -519,33 +686,35 @@ export const getDashboard = async (req, res) => {
     // AI ACTIVITIES
     // --------------------------------------------------------
 
-    recentAI.forEach((item) => {
-      activities.push({
-        id: item._id,
+    recentAI.forEach(
+      (item) => {
+        activities.push({
+          id: item._id,
 
-        type: "ai",
+          type: "ai",
 
-        title:
-          "Asked CampusHub AI",
+          title:
+            "Asked CampusHub AI",
 
-        description:
-          item.question ||
-          "Asked CampusHub AI a question",
+          description:
+            item.question ||
+            "Asked CampusHub AI a question",
 
-        category:
-          item.category ||
-          "General",
+          category:
+            item.category ||
+            "General",
 
-        createdAt:
-          item.createdAt,
+          createdAt:
+            item.createdAt,
 
-        time:
-          item.createdAt,
+          time:
+            item.createdAt,
 
-        link:
-          "/ai-assistant",
-      });
-    });
+          link:
+            "/ai-assistant",
+        });
+      }
+    );
 
     // --------------------------------------------------------
     // NOTIFICATION ACTIVITIES
@@ -596,7 +765,10 @@ export const getDashboard = async (req, res) => {
     );
 
     const latestActivities =
-      activities.slice(0, 10);
+      activities.slice(
+        0,
+        10
+      );
 
     // ========================================================
     // DASHBOARD RESPONSE
@@ -646,6 +818,7 @@ export const getDashboard = async (req, res) => {
 
           // Skills
           skillsCompleted,
+
           totalSkills,
 
           // Streak
@@ -657,9 +830,10 @@ export const getDashboard = async (req, res) => {
 
           // Goals
           goalsCompleted,
+
           totalGoals,
 
-          // Existing platform stats
+          // Platform stats
           aiQuestions:
             aiUsageCount,
 
