@@ -1,5 +1,9 @@
 import mongoose from "mongoose";
 
+// ============================================================
+// ROADMAP STEP
+// ============================================================
+
 const roadmapStepSchema = new mongoose.Schema(
   {
     title: {
@@ -39,6 +43,10 @@ const roadmapStepSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// ============================================================
+// WEEKLY PLAN
+// ============================================================
+
 const weeklyPlanSchema = new mongoose.Schema(
   {
     week: String,
@@ -60,6 +68,10 @@ const weeklyPlanSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// ============================================================
+// PROJECT
+// ============================================================
+
 const projectSchema = new mongoose.Schema(
   {
     name: String,
@@ -79,6 +91,10 @@ const projectSchema = new mongoose.Schema(
   },
   { _id: false }
 );
+
+// ============================================================
+// SKILL ANALYSIS
+// ============================================================
 
 const skillAnalysisSchema = new mongoose.Schema(
   {
@@ -110,18 +126,68 @@ const skillAnalysisSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// ============================================================
+// INTERVIEW PREPARATION
+// ============================================================
+
+const interviewPreparationSchema = new mongoose.Schema(
+  {
+    focus: {
+      type: String,
+      default: "",
+    },
+
+    topics: {
+      type: [String],
+      default: [],
+    },
+
+    mockInterviews: {
+      type: Number,
+      default: 0,
+    },
+
+    codingChallenges: {
+      type: Number,
+      default: 0,
+    },
+
+    portfolioReview: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { _id: false }
+);
+
+// ============================================================
+// ROADMAP SCHEMA
+// ============================================================
+
 const roadmapSchema = new mongoose.Schema(
   {
+    // --------------------------------------------------------
+    // USER
+    // --------------------------------------------------------
+
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
 
+    // --------------------------------------------------------
+    // CAREER
+    // --------------------------------------------------------
+
     career: {
       type: String,
       required: true,
     },
+
+    // --------------------------------------------------------
+    // LEVEL
+    // --------------------------------------------------------
 
     level: {
       type: String,
@@ -129,23 +195,48 @@ const roadmapSchema = new mongoose.Schema(
       required: true,
     },
 
+    // --------------------------------------------------------
+    // ROADMAP STEPS
+    // --------------------------------------------------------
+
     roadmapSteps: {
       type: [roadmapStepSchema],
       default: [],
     },
+
+    // --------------------------------------------------------
+    // WEEKLY PLAN
+    // --------------------------------------------------------
 
     weeklyPlan: {
       type: [weeklyPlanSchema],
       default: [],
     },
 
+    // --------------------------------------------------------
+    // PROJECTS
+    // --------------------------------------------------------
+
     projects: {
       type: [projectSchema],
       default: [],
     },
 
+    // --------------------------------------------------------
+    // SKILL ANALYSIS
+    // --------------------------------------------------------
+
     skillAnalysis: {
       type: skillAnalysisSchema,
+      default: {},
+    },
+
+    // --------------------------------------------------------
+    // INTERVIEW PREPARATION
+    // --------------------------------------------------------
+
+    interviewPreparation: {
+      type: interviewPreparationSchema,
       default: {},
     },
   },
@@ -153,6 +244,10 @@ const roadmapSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// ============================================================
+// MODEL
+// ============================================================
 
 const Roadmap = mongoose.model("Roadmap", roadmapSchema);
 

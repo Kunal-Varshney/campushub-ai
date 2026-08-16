@@ -46,11 +46,8 @@ router.patch(
 );
 
 // ============================================================
-// AI STEP TUTOR — GENERATE LEARNING MODULE FOR ONE STEP
+// AI STEP TUTOR
 // POST /api/roadmap/:id/steps/:stepIndex/learn
-//
-// Triggered by "Start Learning" only. Never touches progress
-// or completion state — see updateRoadmapStepProgress for that.
 // ============================================================
 
 router.post(
