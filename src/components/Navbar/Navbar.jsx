@@ -9,6 +9,7 @@ import {
   Menu,
   X,
   ArrowRight,
+  LayoutDashboard,
 } from "lucide-react";
 
 import {
@@ -23,72 +24,100 @@ function Navbar() {
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  const navigate = useNavigate();
+  const location = useLocation();
+
+
+  // ==========================================================
+  // AUTH CHECK
+  // ==========================================================
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsLoggedIn(!!token);
-  }, []);
+  }, [location.pathname]);
 
-  const navigate = useNavigate();
 
-  const location = useLocation();
+  // ==========================================================
+  // NAVIGATION LINKS
+  // ==========================================================
 
   const links = [
 
-  {
-    name: "Home",
-    type: "page",
-    path: "/",
-  },
+    {
+      name: "Home",
+      type: "page",
+      path: "/",
+    },
 
-  {
-    name: "Features",
-    type: "section",
-    id: "features",
-  },
+    {
+      name: "Features",
+      type: "section",
+      id: "features",
+    },
 
-  {
-    name: "Reviews",
-    type: "section",
-    id: "reviews",
-  },
+    {
+      name: "Reviews",
+      type: "section",
+      id: "reviews",
+    },
 
-  {
-    name: "About",
-    type: "page",
-    path: "/about",
-  },
+    {
+      name: "About",
+      type: "page",
+      path: "/about",
+    },
 
-  {
-    name: "Careers",
-    type: "page",
-    path: "/careers",
-  },
+    {
+      name: "Careers",
+      type: "page",
+      path: "/careers",
+    },
 
-  {
-    name: "Contact",
-    type: "section",
-    id: "contact",
-  },
+    {
+      name: "Contact",
+      type: "section",
+      id: "contact",
+    },
 
-];
+  ];
 
-const handleNavigation = (item) => {
 
-  setOpen(false);
+  // ==========================================================
+  // HANDLE NAVIGATION
+  // ==========================================================
 
-  if (item.type === "page") {
+  const handleNavigation = (item) => {
 
-    navigate(item.path);
+    setOpen(false);
 
-    return;
+    if (item.type === "page") {
 
-  }
+      navigate(item.path);
 
-  if (location.pathname !== "/") {
+      return;
 
-    navigate("/");
+    }
 
-    setTimeout(() => {
+    if (location.pathname !== "/") {
+
+      navigate("/");
+
+      setTimeout(() => {
+
+        const element = document.getElementById(item.id);
+
+        if (element) {
+
+          element.scrollIntoView({
+            behavior: "smooth",
+          });
+
+        }
+
+      }, 150);
+
+    } else {
 
       const element = document.getElementById(item.id);
 
@@ -100,81 +129,98 @@ const handleNavigation = (item) => {
 
       }
 
-    }, 150);
-
-  } else {
-
-    const element = document.getElementById(item.id);
-
-    if (element) {
-
-      element.scrollIntoView({
-        behavior: "smooth",
-      });
-
     }
 
-  }
+  };
 
-};
 
-const handleSignUp = () => {
+  // ==========================================================
+  // SIGN UP
+  // ==========================================================
 
-  setOpen(false);
+  const handleSignUp = () => {
 
-  navigate("/signup");
+    setOpen(false);
 
-};
+    navigate("/signup");
+
+  };
+
+
+  // ==========================================================
+  // DASHBOARD
+  // ==========================================================
+
+  const handleDashboard = () => {
+
+    setOpen(false);
+
+    navigate("/dashboard");
+
+  };
+
+
+  // ==========================================================
+  // UI
+  // ==========================================================
 
   return (
 
-    <header className="
-      sticky
-      top-0
-      z-50
-      border-b
-      border-slate-800/60
-      bg-slate-950/80
-      backdrop-blur-xl
-    ">
+    <header
+      className="
+        sticky
+        top-0
+        z-50
+        border-b
+        border-slate-800/60
+        bg-slate-950/80
+        backdrop-blur-xl
+      "
+    >
+
+      <div
+        className="
+          max-w-7xl
+          mx-auto
+          px-6
+          py-4
+          flex
+          items-center
+          justify-between
+        "
+      >
+
+        {/* ==================================================
+            LOGO
+        ================================================== */}
+
+        <Link to="/" className="shrink-0">
+
+          <h1
+            className="
+              text-2xl
+              sm:text-3xl
+              font-extrabold
+              tracking-wide
+              text-indigo-400
+              cursor-pointer
+            "
+          >
+
+            CampusHub
+
+            <span className="text-white">
+              AI
+            </span>
+
+          </h1>
+
+        </Link>
 
 
-      <div className="
-        max-w-7xl
-        mx-auto
-        px-6
-        py-4
-        flex
-        items-center
-        justify-between
-      ">
-
-
-        {/* Logo */}
-
-        <h1 
-          className="
-            text-3xl
-            font-extrabold
-            tracking-wide
-            text-indigo-400
-            cursor-pointer
-          "
-        >
-
-          CampusHub
-          
-          <span className="text-white">
-            AI
-          </span>
-
-        </h1>
-
-
-
-
-
-        {/* Desktop Links */}
+        {/* ==================================================
+            DESKTOP LINKS
+        ================================================== */}
 
         <nav
           className="
@@ -186,20 +232,15 @@ const handleSignUp = () => {
           "
         >
 
-          {
+          {links.map((item, index) => (
 
-            links.map((item, index) => (
-
-              item.type === "page"
+            item.type === "page"
 
               ?
 
               <Link
-
                 key={index}
-
                 to={item.path}
-
                 className={`
                   transition
                   hover:text-indigo-400
@@ -209,7 +250,6 @@ const handleSignUp = () => {
                       : ""
                   }
                 `}
-
               >
 
                 {item.name}
@@ -219,11 +259,8 @@ const handleSignUp = () => {
               :
 
               <button
-
                 key={index}
-
                 onClick={() => handleNavigation(item)}
-
                 className="
                   transition
                   hover:text-indigo-400
@@ -231,42 +268,76 @@ const handleSignUp = () => {
                   border-none
                   cursor-pointer
                 "
-
               >
 
                 {item.name}
 
               </button>
 
-            ))
-
-          }
+          ))}
 
         </nav>
 
 
-
-
-
-        {/* Right side — Desktop Sign Up + Mobile Hamburger */}
+        {/* ==================================================
+            RIGHT SIDE
+        ================================================== */}
 
         <div
           className="
             flex
             items-center
-            gap-4
+            gap-3
           "
         >
 
-          {/* Desktop Sign Up */}
+          {/* ==================================================
+              DASHBOARD — LOGGED IN ONLY
+          ================================================== */}
 
-          {/* Desktop Sign Up */}
+          {isLoggedIn && (
+
+            <button
+              type="button"
+              onClick={handleDashboard}
+              aria-label="Open Dashboard"
+              title="Dashboard"
+              className="
+                hidden
+                md:flex
+                h-10
+                w-10
+                items-center
+                justify-center
+                rounded-xl
+                border
+                border-slate-700
+                bg-slate-900/70
+                text-slate-300
+                transition-all
+                duration-300
+                hover:border-cyan-500/50
+                hover:bg-cyan-500/10
+                hover:text-cyan-400
+                hover:-translate-y-0.5
+              "
+            >
+
+              <LayoutDashboard size={19} />
+
+            </button>
+
+          )}
+
+
+          {/* ==================================================
+              SIGN UP — LOGGED OUT ONLY
+          ================================================== */}
 
           {!isLoggedIn && (
+
             <button
-
               onClick={handleSignUp}
-
               className="
                 hidden
                 md:flex
@@ -289,7 +360,6 @@ const handleSignUp = () => {
                 hover:shadow-indigo-500/30
                 active:scale-95
               "
-
             >
 
               Sign Up
@@ -297,15 +367,16 @@ const handleSignUp = () => {
               <ArrowRight size={16} />
 
             </button>
-          )}
-                    
 
-          {/* Hamburger — Mobile only */}
+          )}
+
+
+          {/* ==================================================
+              MOBILE HAMBURGER
+          ================================================== */}
 
           <button
-
             onClick={() => setOpen(!open)}
-
             className="
               md:hidden
               rounded-xl
@@ -319,57 +390,44 @@ const handleSignUp = () => {
               hover:bg-slate-900
               hover:scale-105
             "
-
           >
 
-            {
-              open
-              ?
-              <X size={24}/>
-              :
-              <Menu size={24}/>
+            {open
+              ? <X size={24} />
+              : <Menu size={24} />
             }
-
 
           </button>
 
         </div>
 
-
       </div>
 
 
-
-
-
-      {/* Mobile Menu */}
+      {/* ======================================================
+          MOBILE MENU
+      ====================================================== */}
 
       <AnimatePresence>
 
-      {
-        open && (
+        {open && (
 
           <motion.div
-
             initial={{
-              opacity:0,
-              height:0
+              opacity: 0,
+              height: 0,
             }}
-
             animate={{
-              opacity:1,
-              height:"auto"
+              opacity: 1,
+              height: "auto",
             }}
-
             exit={{
-              opacity:0,
-              height:0
+              opacity: 0,
+              height: 0,
             }}
-
             transition={{
-              duration:0.35
+              duration: 0.35,
             }}
-
             className="
               md:hidden
               border-t
@@ -377,84 +435,115 @@ const handleSignUp = () => {
               bg-slate-950
               overflow-hidden
             "
-
           >
 
+            <nav
+              className="
+                flex
+                flex-col
+                gap-5
+                px-6
+                py-6
+                text-slate-300
+              "
+            >
 
-            <nav className="
-              flex
-              flex-col
-              gap-5
-              px-6
-              py-6
-              text-slate-300
-            ">
+              {links.map((item, index) => (
 
+                <button
+                  key={index}
+                  onClick={() => handleNavigation(item)}
+                  className="
+                    transition
+                    hover:text-indigo-400
+                    text-left
+                  "
+                >
 
-              {
-                links.map((item,index)=>(
+                  {item.name}
 
-                  <button
-                    key={index}
-                    onClick={() => handleNavigation(item)}
-                    className="
-                      transition
-                      hover:text-indigo-400
-                      text-left
-                    "
-                  >
+                </button>
 
-                    {item.name}
-                  </button>
-                
-
-                ))
-              }
+              ))}
 
 
+              {/* ==================================================
+                  MOBILE DASHBOARD — LOGGED IN ONLY
+              ================================================== */}
 
-             {!isLoggedIn && (
-              <button
+              {isLoggedIn && (
 
-                onClick={handleSignUp}
+                <button
+                  onClick={handleDashboard}
+                  className="
+                    flex
+                    items-center
+                    gap-3
+                    rounded-xl
+                    border
+                    border-cyan-500/20
+                    bg-cyan-500/5
+                    px-4
+                    py-3
+                    text-cyan-400
+                    transition
+                    hover:bg-cyan-500/10
+                  "
+                >
 
-                className="
-                  flex
-                  items-center
-                  justify-center
-                  gap-2
-                  bg-gradient-to-r
-                  from-indigo-600
-                  to-blue-600
-                  hover:from-indigo-500
-                  hover:to-blue-500
-                  rounded-xl
-                  py-3
-                  font-semibold
-                  text-white
-                  transition
-                  active:scale-95
-                "
+                  <LayoutDashboard size={18} />
 
-              >
+                  <span className="font-medium">
+                    Dashboard
+                  </span>
 
-                Sign Up
+                </button>
 
-                <ArrowRight size={18}/>
+              )}
 
-              </button>
-            )}
+
+              {/* ==================================================
+                  MOBILE SIGN UP — LOGGED OUT ONLY
+              ================================================== */}
+
+              {!isLoggedIn && (
+
+                <button
+                  onClick={handleSignUp}
+                  className="
+                    flex
+                    items-center
+                    justify-center
+                    gap-2
+                    bg-gradient-to-r
+                    from-indigo-600
+                    to-blue-600
+                    hover:from-indigo-500
+                    hover:to-blue-500
+                    rounded-xl
+                    py-3
+                    font-semibold
+                    text-white
+                    transition
+                    active:scale-95
+                  "
+                >
+
+                  Sign Up
+
+                  <ArrowRight size={18} />
+
+                </button>
+
+              )}
 
             </nav>
 
-
           </motion.div>
 
-        )
-      }
+        )}
 
       </AnimatePresence>
-
 
     </header>
 
@@ -464,10 +553,3 @@ const handleSignUp = () => {
 
 
 export default Navbar;
-
-
-
-
-
-
-

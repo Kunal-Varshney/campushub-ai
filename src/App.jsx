@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Navigate, Routes, Route } from "react-router-dom";
 
 // Main Pages
 import Home from "./Pages/Home/Home";
@@ -37,11 +37,34 @@ import MainLayout from "./layouts/MainLayout";
 // Admin
 import AdminDashboard from "./Pages/Admin/AdminDashboard";
 
+
+// ============================================================
+// AUTH HELPERS
+// ============================================================
+
+// Logged-in user ko login/signup page access nahi karne dena
+function PublicRoute({ children }) {
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+}
+
+
+// ============================================================
+// APP
+// ============================================================
+
 function App() {
   return (
     <Routes>
 
-      {/* ================= MAIN WEBSITE ================= */}
+      {/* ====================================================
+          MAIN WEBSITE
+      ==================================================== */}
 
       <Route element={<MainLayout />}>
 
@@ -56,62 +79,137 @@ function App() {
         <Route path="/terms" element={<Terms />} />
 
 
-        {/* ================= DASHBOARD / DISCOVER ================= */}
+        {/* ==================================================
+            DISCOVER
+        ================================================== */}
 
-        <Route path="/discover" element={<Discover />} />
+        <Route
+          path="/discover"
+          element={<Discover />}
+        />
 
 
-        {/* ================= FEATURES ================= */}
+        {/* ==================================================
+            FEATURES
+        ================================================== */}
 
-        <Route path="/ai-assistant" element={<AIAssistant />} />
+        <Route
+          path="/ai-assistant"
+          element={<AIAssistant />}
+        />
 
-        <Route path="/smart-notes" element={<SmartNotes />} />
+        <Route
+          path="/smart-notes"
+          element={<SmartNotes />}
+        />
 
-        <Route path="/resume-builder" element={<ResumeBuilder />} />
+        <Route
+          path="/resume-builder"
+          element={<ResumeBuilder />}
+        />
 
-        <Route path="/mock-interview" element={<MockInterview />} />
+        <Route
+          path="/mock-interview"
+          element={<MockInterview />}
+        />
 
-        <Route path="/internship-finder" element={<InternshipFinder />} />
+        <Route
+          path="/internship-finder"
+          element={<InternshipFinder />}
+        />
 
-        <Route path="/skill-roadmap" element={<SkillRoadmap />} />
+        <Route
+          path="/skill-roadmap"
+          element={<SkillRoadmap />}
+        />
 
-        <Route path="/certificates" element={<Certificates />} />
+        <Route
+          path="/certificates"
+          element={<Certificates />}
+        />
 
         <Route
           path="/certificates/verify/:credentialId"
           element={<VerifyCertificate />}
         />
 
-        <Route path="/community" element={<Community />} />
+        <Route
+          path="/community"
+          element={<Community />}
+        />
 
       </Route>
 
 
-      {/* ================= AUTHENTICATION ================= */}
+      {/* ====================================================
+          AUTHENTICATION
+      ==================================================== */}
 
-      <Route path="/signup" element={<Signup />} />
+      {/* Logged-in user -> Dashboard */}
+      <Route
+        path="/signup"
+        element={
+          <PublicRoute>
+            <Signup />
+          </PublicRoute>
+        }
+      />
 
-      <Route path="/login" element={<Login />} />
+      {/* Logged-in user -> Dashboard */}
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        }
+      />
 
-      <Route path="/forgot-password" element={<Forgot />} />
+      {/* Forgot password public rahega */}
+      <Route
+        path="/forgot-password"
+        element={<Forgot />}
+      />
 
-      <Route path="/reset-password/:token" element={<ResetPassword />}/>
-
-
-      {/* ================= STUDENT DASHBOARD ================= */}
-
-      <Route path="/dashboard" element={<StudentDashboard />} />
-
-      <Route path="/notifications" element={<NotificationCenter />}/>
-
-      <Route path="/settings" element={<Settings />} />
-
-      <Route path="/profile" element={<Profile />} />
+      <Route
+        path="/reset-password/:token"
+        element={<ResetPassword />}
+      />
 
 
-      {/* ================= ADMIN PANEL ================= */}
+      {/* ====================================================
+          STUDENT DASHBOARD
+      ==================================================== */}
 
-      <Route path="/admin/dashboard" element={<AdminDashboard />} />
+      <Route
+        path="/dashboard"
+        element={<StudentDashboard />}
+      />
+
+      <Route
+        path="/notifications"
+        element={<NotificationCenter />}
+      />
+
+      <Route
+        path="/settings"
+        element={<Settings />}
+      />
+
+      <Route
+        path="/profile"
+        element={<Profile />}
+      />
+
+
+      {/* ====================================================
+          ADMIN PANEL
+      ==================================================== */}
+
+      <Route
+        path="/admin/dashboard"
+        element={<AdminDashboard />}
+      />
 
     </Routes>
   );
