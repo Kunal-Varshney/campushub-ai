@@ -170,7 +170,7 @@ function AIAssistant() {
       {/* ---------------------------------------------------------------- */}
       {/* HERO */}
       {/* ---------------------------------------------------------------- */}
-      <section className="relative overflow-hidden px-6 pb-20 pt-28 sm:pt-32">
+        <section className="relative overflow-hidden px-4 pb-16 pt-24 sm:px-6 sm:pb-20 sm:pt-32">
         <div className="pointer-events-none absolute -top-24 -left-24 h-80 w-80 rounded-full bg-blue-600/20 blur-[110px]" />
         <div className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-cyan-500/20 blur-[110px]" />
 
@@ -186,7 +186,7 @@ function AIAssistant() {
               CampusHub AI Assistant
             </div>
 
-            <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
+            <h1 className="text-3xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
               Your Personal{" "}
               <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
                 AI Study Partner
@@ -199,10 +199,10 @@ function AIAssistant() {
               students.
             </p>
 
-            <div className="mt-8 flex flex-wrap justify-center gap-4 lg:justify-start">
+            <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:justify-center lg:justify-start">
               <button
                 onClick={() => navigate("/signup")}
-                className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-7 py-3.5 font-semibold transition-all duration-300 hover:-translate-y-1 hover:from-blue-500 hover:to-cyan-400 hover:shadow-2xl hover:shadow-blue-500/30 active:scale-95"
+                className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-7 py-3.5 font-semibold transition-all duration-300 hover:-translate-y-1 hover:from-blue-500 hover:to-cyan-400 hover:shadow-2xl hover:shadow-blue-500/30 active:scale-95 w-full sm:w-auto"
               >
                 Try It Free
                 <ArrowRight
@@ -213,7 +213,7 @@ function AIAssistant() {
 
               <a
                 href="#chat-demo"
-                className="group flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-900/70 px-7 py-3.5 font-semibold transition-all duration-300 hover:border-blue-500 hover:bg-slate-800 hover:shadow-xl hover:shadow-blue-500/20"
+                 className="group flex w-full items-center justify-center gap-3 rounded-xl border border-slate-700 bg-slate-900/70 px-7 py-3.5 font-semibold transition-all duration-300 hover:border-blue-500 hover:bg-slate-800 hover:shadow-xl hover:shadow-blue-500/20 sm:w-auto"
               >
                 <Zap size={20} className="text-blue-400 transition-transform duration-300 group-hover:scale-110" />
                 See It In Action
@@ -259,7 +259,7 @@ function AIAssistant() {
       {/* ---------------------------------------------------------------- */}
       {/* CHAT DEMO */}
       {/* ---------------------------------------------------------------- */}
-      <section id="chat-demo" className="relative px-6 py-20">
+      <section id="chat-demo" className="relative px-4 sm:px-6 py-20">
         <div className="pointer-events-none absolute -top-24 -right-24 h-80 w-80 rounded-full bg-cyan-500/10 blur-[110px]" />
 
         <div className="relative mx-auto max-w-3xl">
@@ -291,7 +291,7 @@ function AIAssistant() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-2xl shadow-blue-900/20 backdrop-blur-xl sm:p-8"
+            className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-2xl shadow-blue-900/20 backdrop-blur-xl sm:rounded-3xl sm:p-8"
           >
             <div className="mb-5 flex items-center gap-4 rounded-2xl bg-slate-800/80 p-4">
               <div className="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 p-2.5">
@@ -309,8 +309,8 @@ function AIAssistant() {
                   key={index}
                   className={`rounded-xl p-4 text-sm ${
                     item.type === "user"
-                      ? "ml-auto w-fit max-w-[80%] bg-blue-600 text-white"
-                      : "border border-blue-500/30 bg-blue-600/10 text-gray-200"
+                      ? "ml-auto w-fit max-w-[90%] break-words bg-blue-600 text-white sm:max-w-[80%]"
+                      : "break-words border border-blue-500/30 bg-blue-600/10 text-gray-200"
                   }`}
                 >
                   <ReactMarkdown
@@ -353,7 +353,7 @@ function AIAssistant() {
                       ),
 
                       code: ({ children }) => (
-                        <code className="rounded bg-slate-800 px-1.5 py-1 text-sm text-cyan-300">
+                        <code className="break-words rounded bg-slate-800 px-1.5 py-1 text-sm text-cyan-300">
                           {children}
                         </code>
                       ),
@@ -376,13 +376,13 @@ function AIAssistant() {
               <div ref={chatEndRef}></div>
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-2">
+            <div className="mt-5 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
               {suggestedPrompts.map((prompt) => (
                 <button
                   key={prompt}
                   type="button"
                   onClick={() => sendMessage(prompt)}
-                  className="rounded-full border border-slate-700 bg-slate-800/60 px-3 py-1.5 text-xs text-gray-300 transition-colors duration-300 hover:border-blue-500 hover:text-blue-400"
+                  className="shrink-0 rounded-full border border-slate-700 bg-slate-800/60 px-3 py-1.5 text-xs text-gray-300 transition-colors duration-300 hover:border-blue-500 hover:text-blue-400"
                 >
                   {prompt}
                 </button>
@@ -400,7 +400,7 @@ function AIAssistant() {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Ask your AI assistant..."
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                className="min-w-0 flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white outline-none focus:border-blue-500 sm:px-4"
               />
               <button
                 disabled={isTyping}
@@ -419,7 +419,7 @@ function AIAssistant() {
       {/* ---------------------------------------------------------------- */}
       {/* CAPABILITIES */}
       {/* ---------------------------------------------------------------- */}
-      <section className="relative px-6 py-20">
+      <section className="relative px-4 sm:px-6 py-20">
         <div className="pointer-events-none absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-purple-600/10 blur-[110px]" />
 
         <div className="relative mx-auto max-w-7xl">
@@ -455,7 +455,7 @@ function AIAssistant() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.3 }}
                   transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
-                  className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/60 p-8 shadow-xl shadow-black/20 backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/20"
+                  className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/60 p-6 sm:p-8 shadow-xl shadow-black/20 backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/20"
                 >
                   <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-blue-500/20 blur-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
@@ -476,7 +476,7 @@ function AIAssistant() {
       {/* ---------------------------------------------------------------- */}
       {/* HOW IT WORKS */}
       {/* ---------------------------------------------------------------- */}
-      <section className="relative px-6 py-20">
+      <section className="relative px-4 sm:px-6 py-20">
         <div className="pointer-events-none absolute inset-0 opacity-[0.05] [background-image:linear-gradient(rgba(255,255,255,.3)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.3)_1px,transparent_1px)] [background-size:56px_56px]" />
 
         <div className="relative mx-auto max-w-7xl">
@@ -530,7 +530,7 @@ function AIAssistant() {
       {/* ---------------------------------------------------------------- */}
       {/* BENEFITS */}
       {/* ---------------------------------------------------------------- */}
-      <section className="relative px-6 py-20">
+      <section className="relative px-4 sm:px-6 py-20">
         <div className="pointer-events-none absolute -top-24 -left-24 h-80 w-80 rounded-full bg-blue-600/10 blur-[110px]" />
 
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
@@ -579,7 +579,7 @@ function AIAssistant() {
       {/* ---------------------------------------------------------------- */}
       {/* FINAL CTA */}
       {/* ---------------------------------------------------------------- */}
-      <section className="relative px-6 py-24">
+      <section className="relative px-4 py-24 sm:px6">
         <div className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-cyan-500/20 blur-[110px]" />
 
         <div className="relative mx-auto max-w-5xl">
@@ -588,7 +588,7 @@ function AIAssistant() {
             whileInView={{ opacity: 1, scale: 1, y: 0 }}
             viewport={{ once: true, amount: 0.4 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="group relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/60 px-8 py-16 text-center shadow-2xl shadow-black/30 backdrop-blur-xl transition-all duration-300 hover:border-blue-500/50 hover:shadow-blue-500/20 sm:px-12 sm:py-20"
+            className="group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/60 px-5 py-12 text-center shadow-2xl shadow-black/30 backdrop-blur-xl transition-all duration-300 hover:border-blue-500/50 hover:shadow-blue-500/20 sm:rounded-3xl sm:px-12 sm:py-20"
           >
             <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-blue-500/20 blur-3xl opacity-60 transition-opacity duration-500 group-hover:opacity-100" />
             <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-cyan-500/20 blur-3xl opacity-40 transition-opacity duration-500 group-hover:opacity-90" />
@@ -599,7 +599,7 @@ function AIAssistant() {
                 Meet Your AI Assistant
               </div>
 
-              <h2 className="max-w-2xl text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
+              <h2 className="max-w-2xl text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl">
                 Stop searching.{" "}
                 <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
                   Start asking.
@@ -613,7 +613,7 @@ function AIAssistant() {
 
               <button
                 onClick={() => navigate("/signup")}
-                className="group/btn mt-10 flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-8 py-4 font-semibold transition-all duration-300 hover:-translate-y-1 hover:from-blue-500 hover:to-cyan-400 hover:shadow-2xl hover:shadow-blue-500/30 active:scale-95"
+                className="group/btn mt-10 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-6 py-4 font-semibold transition-all duration-300 hover:-translate-y-1 hover:from-blue-500 hover:to-cyan-400 hover:shadow-2xl hover:shadow-blue-500/30 active:scale-95 sm:w-auto sm:px-8"
               >
                 Start Using AI Assistant
                 <ArrowRight
