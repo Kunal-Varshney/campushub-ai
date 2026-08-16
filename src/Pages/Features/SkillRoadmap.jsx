@@ -1393,11 +1393,25 @@ function SkillRoadmap() {
               ?.roadmapSteps ||
             [];
 
-          generatedSteps.forEach(
+          const normalizedSteps =
+            generatedSteps.map((step) => ({
+              ...step,
+              progress: 0,
+              learningUrl:
+                step.learningUrl ||
+                step.resourceUrl ||
+                step.url ||
+                "",
+            }));
+
+          const normalizedRoadmap = {
+            ...generatedRoadmap,
+            roadmapSteps: normalizedSteps,
+          };
+
+          normalizedSteps.forEach(
             (_, index) => {
-              initialProgress[
-                index
-              ] = 0;
+              initialProgress[index] = 0;
             }
           );
 
@@ -1406,7 +1420,7 @@ function SkillRoadmap() {
           );
 
           setRoadmapData(
-            generatedRoadmap
+            normalizedRoadmap
           );
 
           setActiveRoadmapId(
@@ -1426,6 +1440,7 @@ function SkillRoadmap() {
               generatedRoadmap,
             ]
           );
+          
         } else {
           throw new Error(
             response?.message ||
@@ -2275,10 +2290,7 @@ function SkillRoadmap() {
 
                               <button
                                 type="button"
-                                onClick={() => {
-                                  // Start learning action
-                                  toggleStepProgress(i);
-                                }}
+                                onClick={() => handleStartLearning(step, i)}
                                 disabled={!activeRoadmapId}
                                 className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-[11px] font-semibold text-cyan-300 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-50"
                               >
