@@ -431,6 +431,68 @@ function About() {
       </section>
 
       {/* ======================================================
+              MEET THE CREATOR
+          ====================================================== */}
+
+          <section className="py-16 sm:py-20">
+            <div className="mx-auto max-w-5xl px-4 sm:px-6">
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+                className="relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900 p-6 sm:p-10 md:p-12"
+              >
+                {/* Glow */}
+
+                <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-indigo-600/10 blur-3xl" />
+
+                <div className="relative text-center">
+
+                  <span className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-400 sm:text-sm">
+                    Meet the Creator
+                  </span>
+
+                  <h2 className="mt-3 text-3xl font-bold sm:text-4xl">
+                    Built by{" "}
+                    <span className="text-indigo-400">
+                      Kunal Varshney
+                    </span>
+                  </h2>
+
+                  <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-slate-400 sm:text-base sm:leading-8">
+                    CampusHub AI is a student-focused platform created to help
+                    learners find the right direction, build useful skills,
+                    discover opportunities, and take meaningful steps toward
+                    their careers.
+                  </p>
+
+                  <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-slate-500 sm:text-base">
+                    The idea behind CampusHub AI is simple — make the journey
+                    from learning to career easier, more organized, and more
+                    accessible for students.
+                  </p>
+
+                  <div className="mt-7 flex flex-wrap justify-center gap-3">
+                    <span className="rounded-full border border-slate-700 bg-slate-950 px-4 py-2 text-xs text-slate-400 sm:text-sm">
+                      Founder & Developer
+                    </span>
+
+                    <span className="rounded-full border border-slate-700 bg-slate-950 px-4 py-2 text-xs text-slate-400 sm:text-sm">
+                      AI & ML
+                    </span>
+
+                    <span className="rounded-full border border-slate-700 bg-slate-950 px-4 py-2 text-xs text-slate-400 sm:text-sm">
+                      CampusHub AI
+                    </span>
+                  </div>
+
+                </div>
+              </motion.div>
+            </div>
+          </section>
+
+      {/* ======================================================
           MISSION & VISION
       ====================================================== */}
 
