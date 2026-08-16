@@ -2270,31 +2270,19 @@ function SkillRoadmap() {
 
                             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                               <span className="text-[11px] text-slate-500">
-                                {step.progress}%
-                                complete
+                                {step.progress}% complete
                               </span>
 
                               <button
                                 type="button"
-                                onClick={() =>
-                                  toggleStepProgress(
-                                    i
-                                  )
-                                }
-                                disabled={
-                                  !activeRoadmapId
-                                }
-                                className={`rounded-xl border px-3 py-1.5 text-[11px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                                  step.progress >=
-                                  100
-                                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
-                                    : "border-cyan-500/30 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20"
-                                }`}
+                                onClick={() => {
+                                  // Start learning action
+                                  toggleStepProgress(i);
+                                }}
+                                disabled={!activeRoadmapId}
+                                className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-[11px] font-semibold text-cyan-300 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-50"
                               >
-                                {step.progress >=
-                                100
-                                  ? "Mark Incomplete"
-                                  : "Mark Complete"}
+                                Start Learning
                               </button>
                             </div>
                           </div>
@@ -2953,6 +2941,6 @@ function SkillRoadmap() {
       </section>
     </div>
   );
-}
+} 
 
 export default SkillRoadmap;
