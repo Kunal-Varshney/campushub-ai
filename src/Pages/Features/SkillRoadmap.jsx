@@ -1835,9 +1835,10 @@ function SkillRoadmap() {
     setLearningContent(null);
 
     try {
-      const response = await generateStepLearning({
-        roadmapId: activeRoadmapId,
-        stepIndex: index,
+      const response = await generateStepLearning(
+        activeRoadmapId,
+        index,
+        {
         career: displayCareerName,
         level: selectedLevel,
         step: {
