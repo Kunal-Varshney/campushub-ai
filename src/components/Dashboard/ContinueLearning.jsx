@@ -5,6 +5,7 @@ import {
   BookOpen,
   PlayCircle,
   Sparkles,
+  CheckCircle2,
 } from "lucide-react";
 
 import { motion } from "framer-motion";
@@ -40,12 +41,44 @@ function ContinueLearning({ learning }) {
     )
   );
 
+  const totalSteps = Math.max(
+    0,
+    Number(learning?.totalSteps ?? 0)
+  );
+
+  const completedSteps = Math.max(
+    0,
+    Number(learning?.completedSteps ?? 0)
+  );
+
+  const nextStep =
+    learning?.nextStep || null;
+
+  const nextStepTitle =
+    nextStep?.title ||
+    "Continue your roadmap";
+
+  const nextStepDescription =
+    nextStep?.description ||
+    "Keep progressing through your learning roadmap.";
+
+  const nextStepProgress = Math.min(
+    100,
+    Math.max(
+      0,
+      Number(nextStep?.progress ?? 0)
+    )
+  );
+
   // ==========================================================
   // ROADMAP ROUTE
   // ==========================================================
 
   const handleContinue = () => {
-    navigate("/skill-roadmap");
+    navigate(
+      learning?.route ||
+        "/skill-roadmap"
+    );
   };
 
   // ==========================================================
@@ -83,15 +116,22 @@ function ContinueLearning({ learning }) {
 
       </div>
 
-
       {/* ======================================================
           CARD
       ======================================================= */}
 
       <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        initial={{
+          opacity: 0,
+          y: 15,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+        }}
+        transition={{
+          duration: 0.4,
+        }}
         className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60 p-6"
       >
 
@@ -107,7 +147,6 @@ function ContinueLearning({ learning }) {
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600/20 to-cyan-500/10 text-cyan-400">
                 <BookOpen size={22} />
               </div>
-
 
               <div className="min-w-0 flex-1">
 
@@ -125,14 +164,12 @@ function ContinueLearning({ learning }) {
 
               </div>
 
-
               <Sparkles
                 size={18}
                 className="shrink-0 text-cyan-400"
               />
 
             </div>
-
 
             {/* =================================================
                 PROGRESS
@@ -152,11 +189,12 @@ function ContinueLearning({ learning }) {
 
               </div>
 
-
               <div className="h-2 overflow-hidden rounded-full bg-slate-800">
 
                 <motion.div
-                  initial={{ width: 0 }}
+                  initial={{
+                    width: 0,
+                  }}
                   animate={{
                     width: `${progress}%`,
                   }}
@@ -169,8 +207,96 @@ function ContinueLearning({ learning }) {
 
               </div>
 
+              {/* STEP COUNT */}
+
+              {totalSteps > 0 && (
+                <p className="mt-2 text-[11px] text-gray-500">
+                  {completedSteps} of{" "}
+                  {totalSteps} roadmap steps completed
+                </p>
+              )}
+
             </div>
 
+            {/* =================================================
+                NEXT STEP
+            ================================================= */}
+
+            {progress < 100 && nextStep && (
+              <div className="mt-5 rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4">
+
+                <div className="flex items-start gap-3">
+
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400">
+                    <BookOpen size={16} />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+
+                    <div className="flex items-start justify-between gap-3">
+
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-cyan-400">
+                          Next step
+                        </p>
+
+                        <h5 className="mt-1 text-sm font-semibold text-gray-200">
+                          {nextStepTitle}
+                        </h5>
+                      </div>
+
+                      {nextStep?.status && (
+                        <span className="shrink-0 rounded-full border border-slate-700 bg-slate-950/50 px-2 py-1 text-[10px] capitalize text-gray-400">
+                          {String(
+                            nextStep.status
+                          ).replace(
+                            /[-_]/g,
+                            " "
+                          )}
+                        </span>
+                      )}
+
+                    </div>
+
+                    {nextStepDescription && (
+                      <p className="mt-2 text-xs leading-5 text-gray-500">
+                        {nextStepDescription}
+                      </p>
+                    )}
+
+                    {nextStepProgress > 0 && (
+                      <div className="mt-3">
+
+                        <div className="mb-1 flex justify-between text-[10px]">
+                          <span className="text-gray-600">
+                            Step progress
+                          </span>
+
+                          <span className="text-cyan-400">
+                            {nextStepProgress}%
+                          </span>
+                        </div>
+
+                        <div className="h-1 overflow-hidden rounded-full bg-slate-800">
+
+                          <div
+                            className="h-full rounded-full bg-cyan-400"
+                            style={{
+                              width: `${nextStepProgress}%`,
+                            }}
+                          />
+
+                        </div>
+
+                      </div>
+                    )}
+
+                  </div>
+
+                </div>
+
+              </div>
+            )}
 
             {/* =================================================
                 STATUS
@@ -178,36 +304,46 @@ function ContinueLearning({ learning }) {
 
             <div className="mt-5 rounded-xl border border-slate-800 bg-slate-950/50 p-4">
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-4">
 
                 <div>
 
-                  <p className="text-sm font-medium">
+                  <p className="flex items-center gap-2 text-sm font-medium">
+
+                    {progress === 100 && (
+                      <CheckCircle2
+                        size={15}
+                        className="text-cyan-400"
+                      />
+                    )}
+
                     {progress === 100
                       ? "Roadmap completed 🎉"
                       : progress > 0
                       ? "Keep going"
                       : "Ready to start"}
+
                   </p>
 
                   <p className="mt-1 text-xs text-gray-500">
+
                     {progress === 100
                       ? "You completed this learning roadmap."
                       : progress > 0
                       ? "Continue your roadmap and build your skills."
                       : "Start your roadmap to begin learning."}
+
                   </p>
 
                 </div>
 
-                <span className="text-xs font-semibold text-cyan-400">
+                <span className="shrink-0 text-xs font-semibold text-cyan-400">
                   {level}
                 </span>
 
               </div>
 
             </div>
-
 
             {/* =================================================
                 ACTION
@@ -251,7 +387,9 @@ function ContinueLearning({ learning }) {
 
             <button
               type="button"
-              onClick={() => navigate("/skill-roadmap")}
+              onClick={() =>
+                navigate("/skill-roadmap")
+              }
               className="mt-5 flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-2.5 text-sm font-semibold transition hover:scale-[1.02]"
             >
               Create Roadmap

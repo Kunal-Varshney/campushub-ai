@@ -60,6 +60,10 @@ function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // ==========================================================
+  // TIME CONTEXT
+  // ==========================================================
+
   const timeContext = useMemo(
     () => getTimeContext(),
     []
@@ -84,9 +88,55 @@ function StudentDashboard() {
         if (!mounted) return;
 
         if (response?.data?.success) {
-          setDashboardData(
-            response.data.dashboard
-          );
+          const dashboard =
+            response?.data?.dashboard || {};
+
+          setDashboardData({
+            ...dashboard,
+
+            // ------------------------------------------------
+            // SAFE STATS
+            // ------------------------------------------------
+            stats:
+              dashboard?.stats &&
+              typeof dashboard.stats === "object"
+                ? dashboard.stats
+                : {},
+
+            // ------------------------------------------------
+            // SAFE OVERVIEW
+            // ------------------------------------------------
+            overview:
+              dashboard?.overview &&
+              typeof dashboard.overview === "object"
+                ? dashboard.overview
+                : {},
+
+            // ------------------------------------------------
+            // SAFE LEARNING
+            // ------------------------------------------------
+            learning:
+              dashboard?.learning || null,
+
+            // ------------------------------------------------
+            // SAFE ACTIVITIES
+            // ------------------------------------------------
+            activities:
+              Array.isArray(
+                dashboard?.activities
+              )
+                ? dashboard.activities
+                : [],
+
+            // ------------------------------------------------
+            // SAFE NOTIFICATIONS
+            // ------------------------------------------------
+            notifications:
+              dashboard?.notifications || {
+                unreadCount: 0,
+                latest: [],
+              },
+          });
         } else {
           setError(
             response?.data?.message ||
@@ -156,17 +206,29 @@ function StudentDashboard() {
       ...(dashboardData?.user || {}),
     },
 
+    // Backend currently returns stats as an object.
+    // Keep it as an object so StatsGrid can use it safely.
     stats:
-      dashboardData?.stats || [],
+      dashboardData?.stats &&
+      typeof dashboardData.stats === "object"
+        ? dashboardData.stats
+        : {},
 
     learning:
       dashboardData?.learning || null,
 
     overview:
-      dashboardData?.overview || {},
+      dashboardData?.overview &&
+      typeof dashboardData.overview === "object"
+        ? dashboardData.overview
+        : {},
 
     activities:
-      dashboardData?.activities || [],
+      Array.isArray(
+        dashboardData?.activities
+      )
+        ? dashboardData.activities
+        : [],
 
     notifications:
       dashboardData?.notifications || {

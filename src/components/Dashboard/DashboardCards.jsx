@@ -2,6 +2,7 @@ import StatsGrid from "./StatsGrid";
 import ContinueLearning from "./ContinueLearning";
 import RecentActivity from "./RecentActivity";
 import ProfileCard from "./ProfileCard";
+import QuickAccess from "./QuickAccess";
 
 // ============================================================
 // DASHBOARD CARDS
@@ -57,6 +58,12 @@ function DashboardCards({ dashboardData }) {
         />
 
       </section>
+
+      {/* =====================================================
+          QUICK ACCESS
+      ===================================================== */}
+
+      <QuickAccess />
 
       {/* =====================================================
           RECENT ACTIVITY

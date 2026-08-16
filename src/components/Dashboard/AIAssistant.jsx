@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import {
   ArrowRight,
   Bot,
@@ -12,8 +13,13 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
+
 import { motion } from "framer-motion";
 import api from "../../services/api";
+
+// ============================================================
+// QUICK PROMPTS
+// ============================================================
 
 const prompts = [
   {
@@ -34,6 +40,10 @@ const prompts = [
   },
 ];
 
+// ============================================================
+// AI ASSISTANT
+// ============================================================
+
 function AIAssistant() {
   const navigate = useNavigate();
 
@@ -42,9 +52,9 @@ function AIAssistant() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ============================================
-  // SEND MESSAGE TO BACKEND
-  // ============================================
+  // ==========================================================
+  // SEND MESSAGE
+  // ==========================================================
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -60,24 +70,35 @@ function AIAssistant() {
     setResponse("");
 
     try {
-      const res = await api.post("/assistant/chat", {
-        message: value,
-      });
+      const res = await api.post(
+        "/assistant/chat",
+        {
+          message: value,
+        }
+      );
 
-      if (res.data?.success) {
+      if (res?.data?.success) {
         setResponse(
-          res.data.reply || "AI could not generate a response."
+          res.data.reply ||
+            "AI could not generate a response."
         );
+
+        // Clear input after successful request
+        setMessage("");
       } else {
         setError(
-          res.data?.message || "AI response failed."
+          res?.data?.message ||
+            "AI response failed."
         );
       }
     } catch (err) {
-      console.error("Dashboard AI Error:", err);
+      console.error(
+        "Dashboard AI Error:",
+        err
+      );
 
       setError(
-        err.response?.data?.message ||
+        err?.response?.data?.message ||
           "Unable to connect with CampusHub AI. Please try again."
       );
     } finally {
@@ -85,19 +106,49 @@ function AIAssistant() {
     }
   };
 
-  // ============================================
+  // ==========================================================
   // QUICK PROMPT
-  // ============================================
+  // ==========================================================
 
   const handlePrompt = (prompt) => {
+    if (loading) {
+      return;
+    }
+
     setMessage(prompt.label);
+    setResponse("");
     setError("");
   };
 
+  // ==========================================================
+  // INPUT CHANGE
+  // ==========================================================
+
+  const handleMessageChange = (event) => {
+    setMessage(event.target.value);
+
+    if (error) {
+      setError("");
+    }
+  };
+
+  // ==========================================================
+  // UI
+  // ==========================================================
+
   return (
     <motion.section
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{
+        opacity: 0,
+        y: 15,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+      transition={{
+        duration: 0.4,
+      }}
       className="
         relative
         overflow-hidden
@@ -111,7 +162,10 @@ function AIAssistant() {
         p-6
       "
     >
-      {/* Background Glow */}
+
+      {/* ======================================================
+          BACKGROUND GLOW
+      ====================================================== */}
 
       <div
         className="
@@ -129,9 +183,9 @@ function AIAssistant() {
 
       <div className="relative">
 
-        {/* ============================================
+        {/* ====================================================
             HEADER
-        ============================================ */}
+        ==================================================== */}
 
         <div className="flex items-start justify-between gap-4">
 
@@ -169,7 +223,6 @@ function AIAssistant() {
 
           </div>
 
-
           <span
             className="
               hidden
@@ -192,10 +245,9 @@ function AIAssistant() {
 
         </div>
 
-
-        {/* ============================================
-            AI INTRO MESSAGE
-        ============================================ */}
+        {/* ====================================================
+            INTRO
+        ==================================================== */}
 
         <div
           className="
@@ -234,9 +286,9 @@ function AIAssistant() {
               </p>
 
               <p className="mt-1 text-xs leading-5 text-gray-500">
-                Ask me about coding, career, internships,
-                resume, learning or anything related to
-                your campus journey.
+                Ask me about coding, career,
+                internships, resume, learning or
+                anything related to your campus journey.
               </p>
 
             </div>
@@ -245,10 +297,9 @@ function AIAssistant() {
 
         </div>
 
-
-        {/* ============================================
+        {/* ====================================================
             QUICK PROMPTS
-        ============================================ */}
+        ==================================================== */}
 
         <div className="mt-4 flex flex-wrap gap-2">
 
@@ -260,7 +311,9 @@ function AIAssistant() {
               <button
                 key={prompt.label}
                 type="button"
-                onClick={() => handlePrompt(prompt)}
+                onClick={() =>
+                  handlePrompt(prompt)
+                }
                 disabled={loading}
                 className="
                   flex
@@ -285,15 +338,13 @@ function AIAssistant() {
                 {prompt.label}
               </button>
             );
-
           })}
 
         </div>
 
-
-        {/* ============================================
+        {/* ====================================================
             INPUT
-        ============================================ */}
+        ==================================================== */}
 
         <form
           onSubmit={handleSubmit}
@@ -317,10 +368,7 @@ function AIAssistant() {
             <input
               type="text"
               value={message}
-              onChange={(event) => {
-                setMessage(event.target.value);
-                setError("");
-              }}
+              onChange={handleMessageChange}
               disabled={loading}
               placeholder="Ask CampusHub AI..."
               className="
@@ -344,10 +392,12 @@ function AIAssistant() {
 
           </div>
 
-
           <button
             type="submit"
-            disabled={!message.trim() || loading}
+            disabled={
+              !message.trim() ||
+              loading
+            }
             aria-label="Ask AI"
             className="
               flex
@@ -381,16 +431,20 @@ function AIAssistant() {
 
         </form>
 
-
-        {/* ============================================
+        {/* ====================================================
             LOADING
-        ============================================ */}
+        ==================================================== */}
 
         {loading && (
-
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{
+              opacity: 0,
+              y: 8,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
             className="
               mt-4
               rounded-2xl
@@ -436,19 +490,22 @@ function AIAssistant() {
             </div>
 
           </motion.div>
-
         )}
 
-
-        {/* ============================================
-            AI RESPONSE
-        ============================================ */}
+        {/* ====================================================
+            RESPONSE
+        ==================================================== */}
 
         {response && !loading && (
-
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{
+              opacity: 0,
+              y: 10,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
             className="
               mt-4
               rounded-2xl
@@ -493,19 +550,22 @@ function AIAssistant() {
             </div>
 
           </motion.div>
-
         )}
 
-
-        {/* ============================================
+        {/* ====================================================
             ERROR
-        ============================================ */}
+        ==================================================== */}
 
         {error && !loading && (
-
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{
+              opacity: 0,
+              y: 8,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
             className="
               mt-4
               flex
@@ -536,17 +596,17 @@ function AIAssistant() {
             </div>
 
           </motion.div>
-
         )}
 
-
-        {/* ============================================
+        {/* ====================================================
             FULL AI WORKSPACE
-        ============================================ */}
+        ==================================================== */}
 
         <button
           type="button"
-          onClick={() => navigate("/ai-assistant")}
+          onClick={() =>
+            navigate("/ai-assistant")
+          }
           className="
             mt-4
             flex
@@ -571,7 +631,6 @@ function AIAssistant() {
         </button>
 
       </div>
-
     </motion.section>
   );
 }

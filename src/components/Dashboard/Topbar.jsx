@@ -1,6 +1,6 @@
 // src/components/Dashboard/Topbar.jsx
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -26,7 +26,6 @@ import {
   AnimatePresence,
 } from "framer-motion";
 
-
 // ======================================================
 // NOTIFICATION TIME FORMATTER
 // ======================================================
@@ -35,11 +34,20 @@ const formatNotificationTime = (date) => {
   if (!date) return "";
 
   const notificationDate = new Date(date);
+
+  if (Number.isNaN(notificationDate.getTime())) {
+    return "";
+  }
+
   const now = new Date();
 
   const diff = Math.floor(
     (now - notificationDate) / 1000
   );
+
+  if (diff < 0) {
+    return "Just now";
+  }
 
   if (diff < 60) {
     return "Just now";
@@ -72,9 +80,14 @@ const formatNotificationTime = (date) => {
 // ======================================================
 
 function Topbar({ user }) {
-
   const navigate = useNavigate();
 
+  // ======================================================
+  // REFS
+  // ======================================================
+
+  const notificationRef = useRef(null);
+  const dropdownRef = useRef(null);
 
   // ======================================================
   // UI STATES
@@ -95,13 +108,13 @@ function Topbar({ user }) {
   const [notificationLoading, setNotificationLoading] =
     useState(false);
 
+  const [search, setSearch] = useState("");
 
   // ======================================================
   // CURRENT TIME GREETING
   // ======================================================
 
   const getGreeting = () => {
-
     const hour = new Date().getHours();
 
     if (hour >= 5 && hour < 12) {
@@ -119,9 +132,7 @@ function Topbar({ user }) {
     return "Good Night";
   };
 
-
   const greeting = getGreeting();
-
 
   // ======================================================
   // USER
@@ -133,112 +144,138 @@ function Topbar({ user }) {
   const initial =
     user?.name?.charAt(0)?.toUpperCase() || "U";
 
-
   // ======================================================
   // LOAD NOTIFICATIONS
   // ======================================================
 
   const loadNotifications = async () => {
-
     try {
-
       setNotificationLoading(true);
 
-      const response =
-        await getNotifications();
+      const response = await getNotifications();
 
       if (response?.success) {
-
         setNotifications(
-          response.notifications || []
+          Array.isArray(response.notifications)
+            ? response.notifications
+            : []
         );
 
         setUnreadCount(
-          response.unreadCount || 0
+          Number(response.unreadCount || 0)
         );
-
       }
-
     } catch (error) {
-
       console.error(
         "Failed to load notifications:",
         error
       );
-
     } finally {
-
       setNotificationLoading(false);
-
     }
-
   };
-
 
   // ======================================================
   // LOAD NOTIFICATIONS WHEN USER IS AVAILABLE
   // ======================================================
 
   useEffect(() => {
-
     if (user) {
       loadNotifications();
     }
-
   }, [user]);
 
+  // ======================================================
+  // OUTSIDE CLICK + ESCAPE KEY
+  // ======================================================
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target)
+      ) {
+        setNotificationOpen(false);
+      }
+
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
+        setDropdownOpen(false);
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setNotificationOpen(false);
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener(
+      "mousedown",
+      handleOutsideClick
+    );
+
+    document.addEventListener(
+      "keydown",
+      handleEscape
+    );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleOutsideClick
+      );
+
+      document.removeEventListener(
+        "keydown",
+        handleEscape
+      );
+    };
+  }, []);
 
   // ======================================================
   // LOGOUT
   // ======================================================
 
   const handleLogout = () => {
-
     localStorage.removeItem("token");
     localStorage.removeItem("user");
 
+    setDropdownOpen(false);
+    setNotificationOpen(false);
+
     navigate("/login");
-
   };
-
 
   // ======================================================
   // MARK ALL NOTIFICATIONS AS READ
   // ======================================================
 
   const markAllRead = async () => {
-
     try {
-
       const response =
         await markAllNotificationsRead();
 
       if (response?.success) {
-
         setNotifications((current) =>
-          current.map(
-            (notification) => ({
-              ...notification,
-              isRead: true,
-            })
-          )
+          current.map((notification) => ({
+            ...notification,
+            isRead: true,
+          }))
         );
 
         setUnreadCount(0);
-
       }
-
     } catch (error) {
-
       console.error(
         "Failed to mark all notifications:",
         error
       );
-
     }
-
   };
-
 
   // ======================================================
   // HANDLE NOTIFICATION CLICK
@@ -246,22 +283,14 @@ function Topbar({ user }) {
 
   const handleNotificationClick =
     async (notification) => {
-
       try {
-
-        // ------------------------------------------
-        // Mark notification as read
-        // ------------------------------------------
-
-        if (!notification.isRead) {
-
+        if (!notification?.isRead) {
           const response =
             await markNotificationRead(
               notification._id
             );
 
           if (response?.success) {
-
             setNotifications((current) =>
               current.map((item) =>
                 item._id === notification._id
@@ -276,78 +305,81 @@ function Topbar({ user }) {
             setUnreadCount((count) =>
               Math.max(0, count - 1)
             );
-
           }
-
         }
 
-
-        // ------------------------------------------
-        // Navigate if notification has a link
-        // ------------------------------------------
-
-        if (notification.link) {
-
+        if (notification?.link) {
           setNotificationOpen(false);
-
           navigate(notification.link);
-
         }
-
       } catch (error) {
-
         console.error(
           "Failed to handle notification:",
           error
         );
-
       }
-
     };
 
+  // ======================================================
+  // HANDLE SEARCH
+  // ======================================================
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+
+    const value = search.trim();
+
+    if (!value) {
+      return;
+    }
+
+    // Keep search ready for future global search.
+    // Currently no dedicated search route is forced.
+    console.log("CampusHub Search:", value);
+  };
 
   // ======================================================
   // RETURN
   // ======================================================
 
   return (
-
     <header
       className="
         sticky
         top-0
         z-30
         flex
-        min-h-[73px]
+        min-h-[68px]
+        w-full
         items-center
         justify-between
-        gap-4
+        gap-2
         border-b
         border-slate-800
-        bg-slate-950/85
-        px-4
+        bg-slate-950/90
+        px-3
         py-3
         backdrop-blur-xl
+        sm:min-h-[73px]
+        sm:gap-4
         sm:px-6
       "
     >
-
-
       {/* ==================================================
           LEFT SIDE
       ================================================== */}
 
-      <div className="min-w-0">
-
+      <div className="min-w-0 flex-1">
         <h1
           className="
             truncate
-            text-base
+            text-sm
             font-semibold
+            leading-5
             sm:text-xl
+            sm:leading-normal
           "
         >
-
           {greeting},{" "}
 
           <span className="text-white">
@@ -357,9 +389,7 @@ function Topbar({ user }) {
           <span className="ml-1">
             👋
           </span>
-
         </h1>
-
 
         <p
           className="
@@ -372,9 +402,7 @@ function Topbar({ user }) {
         >
           Ready to move one step closer to your goals?
         </p>
-
       </div>
-
 
       {/* ==================================================
           RIGHT SIDE
@@ -385,17 +413,16 @@ function Topbar({ user }) {
           flex
           shrink-0
           items-center
-          gap-2
+          gap-1.5
           sm:gap-3
         "
       >
-
-
         {/* ==================================================
             SEARCH
         ================================================== */}
 
-        <div
+        <form
+          onSubmit={handleSearchSubmit}
           className="
             relative
             hidden
@@ -404,7 +431,6 @@ function Topbar({ user }) {
             md:block
           "
         >
-
           <Search
             size={16}
             className="
@@ -419,7 +445,12 @@ function Topbar({ user }) {
 
           <input
             type="text"
+            value={search}
+            onChange={(event) =>
+              setSearch(event.target.value)
+            }
             placeholder="Search CampusHub..."
+            aria-label="Search CampusHub"
             className="
               w-full
               rounded-xl
@@ -439,9 +470,7 @@ function Topbar({ user }) {
               focus:bg-slate-900
             "
           />
-
-        </div>
-
+        </form>
 
         {/* ==================================================
             HOME
@@ -453,8 +482,8 @@ function Topbar({ user }) {
           aria-label="Go to Home"
           className="
             flex
-            h-10
-            w-10
+            h-9
+            w-9
             shrink-0
             items-center
             justify-center
@@ -467,24 +496,24 @@ function Topbar({ user }) {
             duration-200
             hover:border-cyan-500/40
             hover:text-cyan-400
+            sm:h-10
+            sm:w-10
           "
         >
-
           <Home size={18} />
-
         </button>
-
 
         {/* ==================================================
             NOTIFICATIONS
         ================================================== */}
 
-        <div className="relative">
-
+        <div
+          ref={notificationRef}
+          className="relative"
+        >
           <button
             type="button"
             onClick={async () => {
-
               const nextState =
                 !notificationOpen;
 
@@ -494,14 +523,14 @@ function Topbar({ user }) {
               if (nextState) {
                 await loadNotifications();
               }
-
             }}
             aria-label="Notifications"
+            aria-expanded={notificationOpen}
             className="
               relative
               flex
-              h-10
-              w-10
+              h-9
+              w-9
               shrink-0
               items-center
               justify-center
@@ -514,9 +543,10 @@ function Topbar({ user }) {
               duration-200
               hover:border-cyan-500/40
               hover:text-cyan-400
+              sm:h-10
+              sm:w-10
             "
           >
-
             <Bell
               size={18}
               className={
@@ -526,13 +556,7 @@ function Topbar({ user }) {
               }
             />
 
-
-            {/* ==================================================
-                UNREAD INDICATOR
-            ================================================== */}
-
             {unreadCount > 0 && (
-
               <span
                 className="
                   absolute
@@ -546,50 +570,40 @@ function Topbar({ user }) {
                   shadow-cyan-400/50
                 "
               />
-
             )}
-
           </button>
-
 
           {/* ==================================================
               NOTIFICATION DROPDOWN
           ================================================== */}
 
           <AnimatePresence>
-
             {notificationOpen && (
-
               <motion.div
                 initial={{
                   opacity: 0,
                   y: -8,
                   scale: 0.97,
                 }}
-
                 animate={{
                   opacity: 1,
                   y: 0,
                   scale: 1,
                 }}
-
                 exit={{
                   opacity: 0,
                   y: -8,
                   scale: 0.97,
                 }}
-
                 transition={{
                   duration: 0.18,
                 }}
-
                 className="
-                  absolute
-                  right-0
+                  fixed
+                  left-3
+                  right-3
+                  top-[68px]
                   z-50
-                  mt-3
-                  w-[calc(100vw-2rem)]
-                  max-w-[350px]
                   overflow-hidden
                   rounded-2xl
                   border
@@ -598,13 +612,15 @@ function Topbar({ user }) {
                   shadow-2xl
                   shadow-black/40
                   backdrop-blur-xl
+                  sm:absolute
+                  sm:left-auto
+                  sm:right-0
+                  sm:top-auto
+                  sm:mt-3
+                  sm:w-[350px]
                 "
               >
-
-
-                {/* ==================================================
-                    NOTIFICATION HEADER
-                ================================================== */}
+                {/* HEADER */}
 
                 <div
                   className="
@@ -617,79 +633,55 @@ function Topbar({ user }) {
                     py-3
                   "
                 >
-
                   <div>
-
                     <h3 className="text-sm font-semibold">
                       Notifications
                     </h3>
 
                     <p className="mt-0.5 text-[11px] text-gray-600">
-
                       {notificationLoading
                         ? "Checking for updates..."
                         : unreadCount > 0
                         ? `${unreadCount} unread`
                         : "You're all caught up"}
-
                     </p>
-
                   </div>
 
-
-                  {unreadCount > 0 && !notificationLoading && (
-
-                    <button
-                      type="button"
-                      onClick={markAllRead}
-                      className="
-                        flex
-                        items-center
-                        gap-1
-                        text-[11px]
-                        font-medium
-                        text-cyan-400
-                        transition
-                        hover:text-cyan-300
-                      "
-                    >
-
-                      <CheckCheck size={13} />
-
-                      Mark all read
-
-                    </button>
-
-                  )}
-
+                  {unreadCount > 0 &&
+                    !notificationLoading && (
+                      <button
+                        type="button"
+                        onClick={markAllRead}
+                        className="
+                          flex
+                          items-center
+                          gap-1
+                          text-[11px]
+                          font-medium
+                          text-cyan-400
+                          transition
+                          hover:text-cyan-300
+                        "
+                      >
+                        <CheckCheck size={13} />
+                        Mark all read
+                      </button>
+                    )}
                 </div>
 
-
-                {/* ==================================================
-                    NOTIFICATION LIST
-                ================================================== */}
+                {/* NOTIFICATION LIST */}
 
                 <div
                   className="
-                    max-h-[360px]
+                    max-h-[55vh]
                     overflow-y-auto
+                    sm:max-h-[360px]
                   "
                 >
-
-                  {/* ==================================================
-                      LOADING
-                  ================================================== */}
+                  {/* LOADING */}
 
                   {notificationLoading ? (
-
-                    <div
-                      className="
-                        px-6
-                        py-10
-                        text-center
-                      "
-                    >
-
+                    <div className="px-6 py-10 text-center">
                       <div
                         className="
                           mx-auto
@@ -712,14 +704,10 @@ function Topbar({ user }) {
                       >
                         Loading notifications...
                       </p>
-
                     </div>
-
                   ) : notifications.length > 0 ? (
-
                     notifications.map(
                       (notification) => (
-
                         <button
                           key={notification._id}
                           type="button"
@@ -747,11 +735,7 @@ function Topbar({ user }) {
                             }
                           `}
                         >
-
-
-                          {/* ==================================================
-                              NOTIFICATION ICON
-                          ================================================== */}
+                          {/* ICON */}
 
                           <div
                             className="
@@ -767,18 +751,12 @@ function Topbar({ user }) {
                               text-cyan-400
                             "
                           >
-
                             <Sparkles size={16} />
-
                           </div>
 
-
-                          {/* ==================================================
-                              NOTIFICATION CONTENT
-                          ================================================== */}
+                          {/* CONTENT */}
 
                           <div className="min-w-0 flex-1">
-
                             <div
                               className="
                                 flex
@@ -787,7 +765,6 @@ function Topbar({ user }) {
                                 gap-2
                               "
                             >
-
                               <p
                                 className={`
                                   text-sm
@@ -798,14 +775,11 @@ function Topbar({ user }) {
                                   }
                                 `}
                               >
-                                {notification.title}
+                                {notification.title ||
+                                  "CampusHub Update"}
                               </p>
 
-
-                              {/* Unread dot */}
-
                               {!notification.isRead && (
-
                                 <span
                                   className="
                                     mt-1
@@ -816,11 +790,8 @@ function Topbar({ user }) {
                                     bg-cyan-400
                                   "
                                 />
-
                               )}
-
                             </div>
-
 
                             <p
                               className="
@@ -830,9 +801,9 @@ function Topbar({ user }) {
                                 text-gray-500
                               "
                             >
-                              {notification.message}
+                              {notification.message ||
+                                "You have a new CampusHub update."}
                             </p>
-
 
                             <p
                               className="
@@ -845,19 +816,12 @@ function Topbar({ user }) {
                                 notification.createdAt
                               )}
                             </p>
-
                           </div>
-
                         </button>
-
                       )
                     )
-
                   ) : (
-
-                    /* ==================================================
-                       EMPTY STATE
-                    ================================================== */
+                    /* EMPTY STATE */
 
                     <div
                       className="
@@ -866,7 +830,6 @@ function Topbar({ user }) {
                         text-center
                       "
                     >
-
                       <Bell
                         size={28}
                         className="mx-auto text-gray-700"
@@ -892,17 +855,11 @@ function Topbar({ user }) {
                       >
                         No new notifications.
                       </p>
-
                     </div>
-
                   )}
-
                 </div>
 
-
-                {/* ==================================================
-                    NOTIFICATION FOOTER
-                ================================================== */}
+                {/* FOOTER */}
 
                 <button
                   type="button"
@@ -927,62 +884,61 @@ function Topbar({ user }) {
                     hover:bg-slate-800/50
                   "
                 >
-
                   View notification center
-
                 </button>
-
               </motion.div>
-
             )}
-
           </AnimatePresence>
-
         </div>
-
 
         {/* ==================================================
             USER MENU
         ================================================== */}
 
-        <div className="relative">
-
+        <div
+          ref={dropdownRef}
+          className="relative"
+        >
           <button
             type="button"
             onClick={() => {
-
               setDropdownOpen(
                 (open) => !open
               );
 
               setNotificationOpen(false);
-
             }}
+            aria-label="Open user menu"
+            aria-expanded={dropdownOpen}
             className="
               flex
+              h-9
               items-center
-              gap-2
+              gap-1.5
               rounded-xl
               border
               border-slate-800
               bg-slate-900/70
-              py-1.5
-              pl-1.5
-              pr-2
+              py-1
+              pl-1
+              pr-1.5
               transition
               duration-200
               hover:border-cyan-500/40
+              sm:h-auto
+              sm:gap-2
+              sm:py-1.5
+              sm:pl-1.5
               sm:pr-3
             "
           >
-
-            {/* Avatar */}
+            {/* AVATAR */}
 
             <div
               className="
                 flex
-                h-8
-                w-8
+                h-7
+                w-7
                 items-center
                 justify-center
                 rounded-lg
@@ -993,11 +949,8 @@ function Topbar({ user }) {
                 font-semibold
               "
             >
-
               {initial}
-
             </div>
-
 
             <ChevronDown
               size={14}
@@ -1007,47 +960,40 @@ function Topbar({ user }) {
                 sm:block
               "
             />
-
           </button>
-
 
           {/* ==================================================
               USER DROPDOWN
           ================================================== */}
 
           <AnimatePresence>
-
             {dropdownOpen && (
-
               <motion.div
                 initial={{
                   opacity: 0,
                   y: -8,
                   scale: 0.97,
                 }}
-
                 animate={{
                   opacity: 1,
                   y: 0,
                   scale: 1,
                 }}
-
                 exit={{
                   opacity: 0,
                   y: -8,
                   scale: 0.97,
                 }}
-
                 transition={{
                   duration: 0.18,
                 }}
-
                 className="
-                  absolute
-                  right-0
+                  fixed
+                  right-3
+                  top-[68px]
                   z-50
-                  mt-3
-                  w-52
+                  w-[calc(100vw-1.5rem)]
+                  max-w-[260px]
                   overflow-hidden
                   rounded-2xl
                   border
@@ -1056,13 +1002,14 @@ function Topbar({ user }) {
                   shadow-2xl
                   shadow-black/40
                   backdrop-blur-xl
+                  sm:absolute
+                  sm:right-0
+                  sm:top-auto
+                  sm:mt-3
+                  sm:w-52
                 "
               >
-
-
-                {/* ==================================================
-                    USER INFO
-                ================================================== */}
+                {/* USER INFO */}
 
                 <div
                   className="
@@ -1072,7 +1019,6 @@ function Topbar({ user }) {
                     py-3
                   "
                 >
-
                   <p
                     className="
                       truncate
@@ -1093,22 +1039,15 @@ function Topbar({ user }) {
                   >
                     {user?.email || ""}
                   </p>
-
                 </div>
 
-
-                {/* ==================================================
-                    PROFILE
-                ================================================== */}
+                {/* PROFILE */}
 
                 <button
                   type="button"
                   onClick={() => {
-
                     setDropdownOpen(false);
-
                     navigate("/profile");
-
                   }}
                   className="
                     flex
@@ -1124,26 +1063,17 @@ function Topbar({ user }) {
                     hover:text-white
                   "
                 >
-
                   <User size={16} />
-
                   Profile
-
                 </button>
 
-
-                {/* ==================================================
-                    SETTINGS
-                ================================================== */}
+                {/* SETTINGS */}
 
                 <button
                   type="button"
                   onClick={() => {
-
                     setDropdownOpen(false);
-
                     navigate("/settings");
-
                   }}
                   className="
                     flex
@@ -1159,17 +1089,11 @@ function Topbar({ user }) {
                     hover:text-white
                   "
                 >
-
                   <Settings size={16} />
-
                   Settings
-
                 </button>
 
-
-                {/* ==================================================
-                    LOGOUT
-                ================================================== */}
+                {/* LOGOUT */}
 
                 <button
                   type="button"
@@ -1189,27 +1113,16 @@ function Topbar({ user }) {
                     hover:bg-red-500/10
                   "
                 >
-
                   <LogOut size={16} />
-
                   Logout
-
                 </button>
-
               </motion.div>
-
             )}
-
           </AnimatePresence>
-
         </div>
-
       </div>
-
     </header>
-
   );
 }
-
 
 export default Topbar;

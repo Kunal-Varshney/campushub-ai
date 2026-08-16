@@ -1,3 +1,5 @@
+// src/components/Dashboard/StatsGrid.jsx
+
 import {
   BookOpen,
   Target,
@@ -20,20 +22,19 @@ const defaultStats = {
 function StatsGrid({ stats, learning, overview }) {
   // ============================================================
   // BACKEND STATS
+  // Backend now sends stats as an OBJECT
   // ============================================================
 
-  const backendStats = Array.isArray(stats)
-    ? stats
-    : [];
+  const backendStats =
+    stats &&
+    typeof stats === "object"
+      ? stats
+      : {};
 
-  const getBackendValue = (title) => {
-    const stat = backendStats.find(
-      (item) =>
-        item?.title?.toLowerCase() ===
-        title.toLowerCase()
+  const getBackendValue = (key) => {
+    return Number(
+      backendStats?.[key] ?? 0
     );
-
-    return Number(stat?.value || 0);
   };
 
   // ============================================================
@@ -46,8 +47,8 @@ function StatsGrid({ stats, learning, overview }) {
       0,
       Number(
         learning?.progress ??
-        learning?.completion ??
-        0
+          learning?.completion ??
+          0
       )
     )
   );
@@ -55,7 +56,7 @@ function StatsGrid({ stats, learning, overview }) {
   const totalSkills =
     Number(
       learning?.totalSteps ??
-      defaultStats.totalSkills
+        defaultStats.totalSkills
     ) || defaultStats.totalSkills;
 
   const skillsCompleted =
@@ -69,22 +70,22 @@ function StatsGrid({ stats, learning, overview }) {
 
   const aiQuestions = Number(
     overview?.aiQuestions ??
-    getBackendValue("AI Questions")
+      getBackendValue("aiQuestions")
   );
 
   const notes = Number(
     overview?.notes ??
-    getBackendValue("Notes")
+      getBackendValue("notes")
   );
 
   const internships = Number(
     overview?.internships ??
-    getBackendValue("Internships")
+      getBackendValue("internships")
   );
 
   const certificates = Number(
     overview?.certificates ??
-    getBackendValue("Certificates")
+      getBackendValue("certificates")
   );
 
   // ============================================================
@@ -100,25 +101,28 @@ function StatsGrid({ stats, learning, overview }) {
 
     totalSkills,
 
-    // These will become real backend values
-    // when streak/achievement/goal tracking is added.
     streak: Number(
-      overview?.streak ?? 0
+      overview?.streak ??
+        backendStats?.streak ??
+        0
     ),
 
     achievements: Number(
       overview?.achievements ??
-      certificates
+        backendStats?.achievements ??
+        certificates
     ),
 
     goalsCompleted: Number(
       overview?.goalsCompleted ??
-      skillsCompleted
+        backendStats?.goalsCompleted ??
+        skillsCompleted
     ),
 
     totalGoals: Number(
       overview?.totalGoals ??
-      totalSkills
+        backendStats?.totalGoals ??
+        totalSkills
     ),
 
     aiQuestions,
