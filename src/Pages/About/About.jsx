@@ -30,7 +30,6 @@ const defaultFeatures = [
     route: "/ai-assistant",
     tag: "AI Powered",
   },
-
   {
     icon: BookOpen,
     title: "Smart Notes",
@@ -39,7 +38,6 @@ const defaultFeatures = [
     route: "/smart-notes",
     tag: "Learning",
   },
-
   {
     icon: Briefcase,
     title: "Internship Finder",
@@ -48,7 +46,6 @@ const defaultFeatures = [
     route: "/internship-finder",
     tag: "Career",
   },
-
   {
     icon: Map,
     title: "Skill & Career Roadmap",
@@ -57,7 +54,6 @@ const defaultFeatures = [
     route: "/skill-roadmap",
     tag: "Career Growth",
   },
-
   {
     icon: Users,
     title: "Student Community",
@@ -66,7 +62,6 @@ const defaultFeatures = [
     route: "/community",
     tag: "Community",
   },
-
   {
     icon: FileText,
     title: "Resume Builder",
@@ -86,19 +81,16 @@ const defaultPlatformGoals = [
     title: "Learn",
     description: "Build skills faster with intelligent learning tools.",
   },
-
   {
     title: "Discover",
     description:
       "Find internships and opportunities that match your goals.",
   },
-
   {
     title: "Connect",
     description:
       "Learn and collaborate with a growing student community.",
   },
-
   {
     title: "Achieve",
     description:
@@ -192,11 +184,11 @@ function About() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
-        <div className="text-center">
+      <main className="flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 text-white">
+        <div className="w-full max-w-md text-center">
           <div className="mx-auto mb-5 h-12 w-12 animate-spin rounded-full border-4 border-slate-700 border-t-indigo-500" />
 
-          <p className="text-slate-400">
+          <p className="text-sm text-slate-400 sm:text-base">
             Loading About CampusHub AI...
           </p>
         </div>
@@ -210,23 +202,23 @@ function About() {
 
   if (error || !aboutData) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-white">
-        <div className="max-w-md rounded-3xl border border-red-500/20 bg-slate-900 p-10 text-center">
+      <main className="flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 sm:px-6 text-white">
+        <div className="w-full max-w-md rounded-3xl border border-red-500/20 bg-slate-900 p-6 text-center sm:p-10">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10 text-red-400">
             !
           </div>
 
-          <h2 className="mt-5 text-2xl font-bold">
+          <h2 className="mt-5 text-xl font-bold sm:text-2xl">
             Unable to Load About Page
           </h2>
 
-          <p className="mt-3 text-slate-400">
+          <p className="mt-3 text-sm leading-6 text-slate-400 sm:text-base">
             {error || "About page data is not available."}
           </p>
 
           <button
             onClick={() => window.location.reload()}
-            className="mt-6 rounded-xl bg-indigo-600 px-6 py-3 font-semibold transition hover:bg-indigo-500"
+            className="mt-6 w-full rounded-xl bg-indigo-600 px-6 py-3 font-semibold transition hover:bg-indigo-500 sm:w-auto"
           >
             Try Again
           </button>
@@ -243,9 +235,6 @@ function About() {
     aboutData.features?.length > 0
       ? aboutData.features.map((item, index) => ({
           ...item,
-
-          // Backend currently stores feature information,
-          // but icon is not stored in MongoDB.
           icon: defaultFeatures[index]?.icon || Brain,
         }))
       : defaultFeatures;
@@ -261,23 +250,23 @@ function About() {
       : defaultAiEducationPoints;
 
   return (
-    <main className="min-h-screen overflow-hidden bg-slate-950 text-white">
+    <main className="min-h-screen w-full overflow-x-hidden bg-slate-950 text-white">
       {/* ======================================================
           HERO SECTION
       ====================================================== */}
 
-      <section className="relative overflow-hidden py-24 md:py-32">
+      <section className="relative overflow-hidden py-16 sm:py-20 md:py-32">
         {/* Background Glow */}
 
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute left-10 top-20 h-72 w-72 rounded-full bg-indigo-600/20 blur-[140px]" />
+        <div className="absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute left-[-80px] top-20 h-56 w-56 rounded-full bg-indigo-600/20 blur-[110px] sm:left-10 sm:h-72 sm:w-72 sm:blur-[140px]" />
 
-          <div className="absolute bottom-10 right-10 h-72 w-72 rounded-full bg-blue-500/20 blur-[140px]" />
+          <div className="absolute bottom-10 right-[-80px] h-56 w-56 rounded-full bg-blue-500/20 blur-[110px] sm:right-10 sm:h-72 sm:w-72 sm:blur-[140px]" />
 
-          <div className="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-500/5 blur-[160px]" />
+          <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-500/5 blur-[120px] sm:h-96 sm:w-96 sm:blur-[160px]" />
         </div>
 
-        <div className="mx-auto max-w-7xl px-6 text-center">
+        <div className="mx-auto max-w-7xl px-4 text-center sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -285,34 +274,36 @@ function About() {
           >
             {/* Badge */}
 
-            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-indigo-500/40 bg-indigo-500/10 px-5 py-2 text-sm text-indigo-300 backdrop-blur">
-              <Sparkles size={18} />
+            <div className="mx-auto mb-7 inline-flex max-w-full flex-wrap items-center justify-center gap-2 rounded-full border border-indigo-500/40 bg-indigo-500/10 px-3 py-2 text-xs leading-5 text-indigo-300 backdrop-blur sm:mb-8 sm:px-5 sm:text-sm">
+              <Sparkles size={16} className="shrink-0 sm:h-[18px] sm:w-[18px]" />
 
-              Empowering Students With Artificial Intelligence
+              <span>
+                Empowering Students With Artificial Intelligence
+              </span>
             </div>
 
             {/* Heading */}
 
-            <h1 className="text-5xl font-extrabold leading-tight md:text-7xl">
+            <h1 className="break-words text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl md:text-7xl">
               {aboutData.title}
 
-              <span className="block bg-gradient-to-r from-indigo-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
+              <span className="mt-1 block break-words bg-gradient-to-r from-indigo-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent sm:mt-2">
                 {aboutData.subtitle}
               </span>
             </h1>
 
             {/* Description */}
 
-            <p className="mx-auto mt-8 max-w-3xl text-lg leading-relaxed text-slate-400 md:text-xl">
+            <p className="mx-auto mt-6 max-w-3xl text-base leading-7 text-slate-400 sm:mt-8 sm:text-lg sm:leading-relaxed md:text-xl">
               {aboutData.description}
             </p>
 
             {/* CTA */}
 
-            <div className="mt-9 flex flex-col justify-center gap-4 sm:flex-row">
+            <div className="mx-auto mt-8 flex w-full max-w-md flex-col justify-center gap-3 sm:mt-9 sm:max-w-none sm:flex-row sm:gap-4">
               <button
                 onClick={handleGetStarted}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-7 py-3.5 font-semibold transition-all duration-300 hover:-translate-y-1 hover:bg-indigo-500 hover:shadow-xl hover:shadow-indigo-500/30"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3.5 font-semibold transition-all duration-300 hover:-translate-y-1 hover:bg-indigo-500 hover:shadow-xl hover:shadow-indigo-500/30 sm:w-auto sm:px-7"
               >
                 Get Started
 
@@ -321,7 +312,7 @@ function About() {
 
               <a
                 href="#features"
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900/70 px-7 py-3.5 font-semibold text-slate-200 transition-all duration-300 hover:-translate-y-1 hover:border-indigo-500/50"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900/70 px-6 py-3.5 font-semibold text-slate-200 transition-all duration-300 hover:-translate-y-1 hover:border-indigo-500/50 sm:w-auto sm:px-7"
               >
                 Explore Features
 
@@ -334,16 +325,16 @@ function About() {
 
       {/* Divider */}
 
-      <div className="flex justify-center">
-        <div className="h-1 w-24 rounded-full bg-indigo-500 opacity-70" />
+      <div className="flex justify-center px-4">
+        <div className="h-1 w-20 rounded-full bg-indigo-500 opacity-70 sm:w-24" />
       </div>
 
       {/* ======================================================
           WHO WE ARE
       ====================================================== */}
 
-      <section className="py-20">
-        <div className="mx-auto grid max-w-7xl items-center gap-14 px-6 lg:grid-cols-2">
+      <section className="py-16 sm:py-20">
+        <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 sm:gap-14 sm:px-6 lg:grid-cols-2">
           {/* Left */}
 
           <motion.div
@@ -351,37 +342,38 @@ function About() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
+            className="min-w-0"
           >
-            <span className="text-sm font-semibold uppercase tracking-widest text-indigo-400">
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-400 sm:text-sm sm:tracking-widest">
               Who We Are
             </span>
 
-            <h2 className="mt-4 text-4xl font-bold md:text-5xl">
+            <h2 className="mt-3 break-words text-3xl font-bold leading-tight sm:mt-4 sm:text-4xl md:text-5xl">
               {aboutData.whoWeAreTitle}
             </h2>
 
-            <p className="mt-8 leading-8 text-slate-400">
+            <p className="mt-6 text-sm leading-7 text-slate-400 sm:mt-8 sm:text-base sm:leading-8">
               {aboutData.whoWeAreDescription}
             </p>
 
-            <p className="mt-6 leading-8 text-slate-400">
+            <p className="mt-5 text-sm leading-7 text-slate-400 sm:mt-6 sm:text-base sm:leading-8">
               {aboutData.whoWeAreSecondaryDescription}
             </p>
 
             {/* Goals */}
 
-            <div className="mt-8 grid grid-cols-2 gap-4">
+            <div className="mt-7 grid grid-cols-1 gap-3 sm:mt-8 sm:grid-cols-2 sm:gap-4">
               {platformGoals.map((item, index) => (
                 <div
                   key={index}
-                  className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-indigo-500/40"
+                  className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/60 p-4 transition-all duration-300 hover:-translate-y-1 hover:border-indigo-500/40 sm:p-5"
                 >
                   <CheckCircle2
-                    size={22}
+                    size={21}
                     className="text-indigo-400"
                   />
 
-                  <h3 className="mt-3 font-semibold">
+                  <h3 className="mt-3 break-words font-semibold">
                     {item.title}
                   </h3>
 
@@ -400,35 +392,37 @@ function About() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="rounded-3xl border border-slate-800 bg-slate-900 p-10 transition-all duration-300 hover:border-indigo-500 hover:shadow-xl hover:shadow-indigo-500/10"
+            className="min-w-0 rounded-3xl border border-slate-800 bg-slate-900 p-6 transition-all duration-300 hover:border-indigo-500 hover:shadow-xl hover:shadow-indigo-500/10 sm:p-8 md:p-10"
           >
             <Brain
-              size={58}
-              className="mb-6 text-indigo-400"
+              size={48}
+              className="mb-5 text-indigo-400 sm:mb-6 sm:h-[58px] sm:w-[58px]"
             />
 
-            <h3 className="text-3xl font-semibold">
+            <h3 className="break-words text-2xl font-semibold sm:text-3xl">
               {aboutData.aiEducationTitle}
             </h3>
 
-            <p className="mt-5 leading-8 text-slate-400">
+            <p className="mt-4 text-sm leading-7 text-slate-400 sm:mt-5 sm:text-base sm:leading-8">
               {aboutData.aiEducationDescription}
             </p>
 
-            <div className="mt-8 space-y-4">
+            <div className="mt-6 space-y-4 sm:mt-8">
               {aiEducationPoints.map((item, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-3 text-sm text-slate-300"
+                  className="flex min-w-0 items-start gap-3 text-sm leading-6 text-slate-300"
                 >
                   <CheckCircle2
                     size={18}
-                    className="shrink-0 text-indigo-400"
+                    className="mt-1 shrink-0 text-indigo-400"
                   />
 
-                  {typeof item === "string"
-                    ? item
-                    : item.text || item.title || ""}
+                  <span className="min-w-0 break-words">
+                    {typeof item === "string"
+                      ? item
+                      : item.text || item.title || ""}
+                  </span>
                 </div>
               ))}
             </div>
@@ -440,8 +434,8 @@ function About() {
           MISSION & VISION
       ====================================================== */}
 
-      <section className="bg-slate-900/30 py-20">
-        <div className="mx-auto grid max-w-7xl gap-10 px-6 md:grid-cols-2">
+      <section className="bg-slate-900/30 py-16 sm:py-20">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 sm:gap-10 sm:px-6 md:grid-cols-2">
           {/* Mission */}
 
           <motion.div
@@ -449,18 +443,18 @@ function About() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="rounded-3xl border border-slate-800 bg-slate-900 p-10 transition-all duration-300 hover:-translate-y-2 hover:border-indigo-500"
+            className="min-w-0 rounded-3xl border border-slate-800 bg-slate-900 p-6 transition-all duration-300 hover:-translate-y-2 hover:border-indigo-500 sm:p-8 md:p-10"
           >
             <Target
-              size={48}
-              className="mb-6 text-indigo-400"
+              size={42}
+              className="mb-5 text-indigo-400 sm:mb-6 sm:h-12 sm:w-12"
             />
 
-            <h3 className="text-3xl font-bold">
+            <h3 className="text-2xl font-bold sm:text-3xl">
               Our Mission
             </h3>
 
-            <p className="mt-6 leading-8 text-slate-400">
+            <p className="mt-5 text-sm leading-7 text-slate-400 sm:mt-6 sm:text-base sm:leading-8">
               {aboutData.mission}
             </p>
           </motion.div>
@@ -472,18 +466,18 @@ function About() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
-            className="rounded-3xl border border-slate-800 bg-slate-900 p-10 transition-all duration-300 hover:-translate-y-2 hover:border-indigo-500"
+            className="min-w-0 rounded-3xl border border-slate-800 bg-slate-900 p-6 transition-all duration-300 hover:-translate-y-2 hover:border-indigo-500 sm:p-8 md:p-10"
           >
             <Eye
-              size={48}
-              className="mb-6 text-indigo-400"
+              size={42}
+              className="mb-5 text-indigo-400 sm:mb-6 sm:h-12 sm:w-12"
             />
 
-            <h3 className="text-3xl font-bold">
+            <h3 className="text-2xl font-bold sm:text-3xl">
               Our Vision
             </h3>
 
-            <p className="mt-6 leading-8 text-slate-400">
+            <p className="mt-5 text-sm leading-7 text-slate-400 sm:mt-6 sm:text-base sm:leading-8">
               {aboutData.vision}
             </p>
           </motion.div>
@@ -496,17 +490,17 @@ function About() {
 
       <section
         id="features"
-        className="scroll-mt-20 py-24"
+        className="scroll-mt-20 py-16 sm:py-20 md:py-24"
       >
-        <div className="mx-auto max-w-7xl px-6">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
           {/* Heading */}
 
           <div className="mx-auto max-w-3xl text-center">
-            <span className="text-sm font-semibold uppercase tracking-widest text-indigo-400">
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-400 sm:text-sm sm:tracking-widest">
               The CampusHub AI Ecosystem
             </span>
 
-            <h2 className="mt-3 text-4xl font-bold md:text-5xl">
+            <h2 className="mt-3 break-words text-3xl font-bold leading-tight sm:text-4xl md:text-5xl">
               Everything Students Need
 
               <span className="block text-indigo-400">
@@ -514,7 +508,7 @@ function About() {
               </span>
             </h2>
 
-            <p className="mt-5 leading-7 text-slate-400">
+            <p className="mt-4 text-sm leading-7 text-slate-400 sm:mt-5 sm:text-base sm:leading-7">
               From learning and notes to internships, career planning,
               community, and professional tools — CampusHub AI brings
               your student journey together.
@@ -523,7 +517,7 @@ function About() {
 
           {/* Feature Grid */}
 
-          <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 grid gap-4 sm:mt-14 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
             {features.map((item, index) => {
               const Icon = item.icon;
 
@@ -545,27 +539,27 @@ function About() {
                   viewport={{
                     once: true,
                   }}
-                  className="group relative flex flex-col rounded-3xl border border-slate-800 bg-slate-900/70 p-7 backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:border-indigo-500/60 hover:shadow-xl hover:shadow-indigo-500/10"
+                  className="group relative flex min-w-0 flex-col rounded-3xl border border-slate-800 bg-slate-900/70 p-5 backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:border-indigo-500/60 hover:shadow-xl hover:shadow-indigo-500/10 sm:p-7"
                 >
                   {/* Tag */}
 
-                  <div className="flex items-start justify-between">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-400 transition-transform duration-300 group-hover:scale-110">
-                      <Icon size={28} />
+                  <div className="flex min-w-0 items-start justify-between gap-3">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-400 transition-transform duration-300 group-hover:scale-110 sm:h-14 sm:w-14">
+                      <Icon size={25} className="sm:h-7 sm:w-7" />
                     </div>
 
-                    <span className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1 text-xs text-slate-500">
+                    <span className="max-w-[55%] shrink-0 break-words rounded-full border border-slate-700 bg-slate-950 px-2.5 py-1 text-right text-[10px] text-slate-500 sm:px-3 sm:text-xs">
                       {item.tag}
                     </span>
                   </div>
 
                   {/* Content */}
 
-                  <h3 className="mt-6 text-xl font-bold">
+                  <h3 className="mt-5 break-words text-lg font-bold sm:mt-6 sm:text-xl">
                     {item.title}
                   </h3>
 
-                  <p className="mt-4 min-h-[90px] leading-7 text-slate-400">
+                  <p className="mt-3 min-h-0 text-sm leading-6 text-slate-400 sm:mt-4 sm:min-h-[90px] sm:leading-7">
                     {item.description}
                   </p>
 
@@ -575,11 +569,11 @@ function About() {
                     onClick={() =>
                       handleFeatureAccess(item.route)
                     }
-                    className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-5 py-3 font-semibold text-indigo-300 transition-all duration-300 hover:border-indigo-500 hover:bg-indigo-500 hover:text-white"
+                    className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-4 py-3 text-sm font-semibold text-indigo-300 transition-all duration-300 hover:border-indigo-500 hover:bg-indigo-500 hover:text-white sm:mt-7 sm:px-5 sm:text-base"
                   >
                     <Lock size={16} />
 
-                    Explore Feature
+                    <span>Explore Feature</span>
 
                     <ArrowRight
                       size={17}
@@ -593,10 +587,12 @@ function About() {
 
           {/* Access Note */}
 
-          <div className="mx-auto mt-10 flex max-w-2xl items-center justify-center gap-2 text-center text-sm text-slate-500">
-            <Lock size={15} />
+          <div className="mx-auto mt-8 flex max-w-2xl items-start justify-center gap-2 px-2 text-center text-xs leading-5 text-slate-500 sm:mt-10 sm:text-sm">
+            <Lock size={15} className="mt-0.5 shrink-0" />
 
-            Sign in to access the full CampusHub AI experience.
+            <span>
+              Sign in to access the full CampusHub AI experience.
+            </span>
           </div>
         </div>
       </section>
@@ -605,23 +601,23 @@ function About() {
           HOW IT WORKS
       ====================================================== */}
 
-      <section className="bg-slate-900/40 py-24">
-        <div className="mx-auto max-w-6xl px-6">
+      <section className="bg-slate-900/40 py-16 sm:py-20 md:py-24">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="mx-auto max-w-3xl text-center">
-            <span className="text-sm font-semibold uppercase tracking-widest text-indigo-400">
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-400 sm:text-sm sm:tracking-widest">
               Simple Journey
             </span>
 
-            <h2 className="mt-3 text-4xl font-bold md:text-5xl">
+            <h2 className="mt-3 text-3xl font-bold leading-tight sm:text-4xl md:text-5xl">
               Start Your Journey
             </h2>
 
-            <p className="mt-5 text-slate-400">
+            <p className="mt-4 text-sm leading-7 text-slate-400 sm:mt-5 sm:text-base">
               Getting started with CampusHub AI takes just a few simple steps.
             </p>
           </div>
 
-          <div className="mt-14 grid gap-6 md:grid-cols-3">
+          <div className="mt-10 grid gap-4 sm:mt-14 sm:gap-6 md:grid-cols-3">
             {[
               {
                 number: "01",
@@ -629,14 +625,12 @@ function About() {
                 description:
                   "Sign up and create your student profile in a few simple steps.",
               },
-
               {
                 number: "02",
                 title: "Explore Your Tools",
                 description:
                   "Access AI learning, notes, internships, roadmaps, community, and career tools.",
               },
-
               {
                 number: "03",
                 title: "Build Your Future",
@@ -661,17 +655,17 @@ function About() {
                 viewport={{
                   once: true,
                 }}
-                className="rounded-2xl border border-slate-800 bg-slate-950/70 p-7"
+                className="min-w-0 rounded-2xl border border-slate-800 bg-slate-950/70 p-5 sm:p-7"
               >
-                <span className="text-4xl font-extrabold text-indigo-500/40">
+                <span className="text-3xl font-extrabold text-indigo-500/40 sm:text-4xl">
                   {item.number}
                 </span>
 
-                <h3 className="mt-4 text-xl font-bold">
+                <h3 className="mt-3 break-words text-lg font-bold sm:mt-4 sm:text-xl">
                   {item.title}
                 </h3>
 
-                <p className="mt-3 leading-7 text-slate-400">
+                <p className="mt-3 text-sm leading-6 text-slate-400 sm:leading-7">
                   {item.description}
                 </p>
               </motion.div>
@@ -684,10 +678,10 @@ function About() {
           FINAL CTA
       ====================================================== */}
 
-      <section className="relative overflow-hidden py-28">
-        <div className="absolute left-1/2 top-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-600/20 blur-[130px]" />
+      <section className="relative overflow-hidden py-16 sm:py-20 md:py-28">
+        <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-600/20 blur-[100px] sm:h-80 sm:w-80 sm:blur-[130px]" />
 
-        <div className="relative mx-auto max-w-5xl px-6">
+        <div className="relative mx-auto max-w-5xl px-4 sm:px-6">
           <motion.div
             initial={{
               opacity: 0,
@@ -703,18 +697,18 @@ function About() {
             transition={{
               duration: 0.6,
             }}
-            className="rounded-3xl border border-indigo-500/30 bg-gradient-to-r from-indigo-600/20 via-slate-900 to-blue-600/20 p-10 text-center md:p-14"
+            className="rounded-3xl border border-indigo-500/30 bg-gradient-to-r from-indigo-600/20 via-slate-900 to-blue-600/20 p-6 text-center sm:p-10 md:p-14"
           >
             <Sparkles
               className="mx-auto text-cyan-400"
-              size={38}
+              size={34}
             />
 
-            <h2 className="mt-6 text-4xl font-bold md:text-5xl">
+            <h2 className="mt-5 break-words text-3xl font-bold leading-tight sm:mt-6 sm:text-4xl md:text-5xl">
               Ready To Learn Smarter?
             </h2>
 
-            <p className="mx-auto mt-6 max-w-2xl leading-8 text-slate-300">
+            <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-slate-300 sm:mt-6 sm:text-base sm:leading-8">
               Join CampusHub AI and experience a smarter way of learning,
               collaborating, discovering opportunities, and building your
               career with Artificial Intelligence.
@@ -722,14 +716,14 @@ function About() {
 
             <button
               onClick={handleGetStarted}
-              className="mt-10 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-8 py-4 text-lg font-semibold transition-all duration-300 hover:-translate-y-1 hover:bg-indigo-500 hover:shadow-2xl hover:shadow-indigo-500/30 active:scale-95"
+              className="mt-8 inline-flex w-full max-w-sm items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3.5 text-base font-semibold transition-all duration-300 hover:-translate-y-1 hover:bg-indigo-500 hover:shadow-2xl hover:shadow-indigo-500/30 active:scale-95 sm:mt-10 sm:w-auto sm:max-w-none sm:px-8 sm:py-4 sm:text-lg"
             >
               Create Your Account
 
               <ArrowRight size={19} />
             </button>
 
-            <p className="mt-5 text-sm text-slate-500">
+            <p className="mt-4 text-xs text-slate-500 sm:mt-5 sm:text-sm">
               Your smarter student journey starts here.
             </p>
           </motion.div>
