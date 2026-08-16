@@ -1880,7 +1880,7 @@ export const updateRoadmapStepProgress = async (
 
 // ============================================================
 // AI STEP-LEVEL LEARNING TUTOR
-// POST /api/roadmap/learn
+// POST /api/roadmap/:id/steps/:stepIndex/learn
 //
 // Generates a structured, beginner-friendly learning module
 // for ONE specific roadmap step. This is completely separate
@@ -1888,6 +1888,12 @@ export const updateRoadmapStepProgress = async (
 //   - It does NOT touch roadmap.roadmapSteps[index].progress
 //   - It does NOT touch roadmap.roadmapSteps[index].status
 //   - It is never called by "Complete Step" / progress toggling
+//
+// IMPORTANT: roadmapId and stepIndex come from the URL
+// (req.params.id, req.params.stepIndex) — matching the route
+// defined in roadmap.routes.js. career/level/step are OPTIONAL
+// context sent in the body by the frontend; if omitted, they
+// fall back to whatever is already saved on the roadmap.
 // ============================================================
 
 /*
@@ -1960,24 +1966,19 @@ export const generateStepLearning = async (req, res) => {
       });
     }
 
-    const body = req.body || {};
-
-    const { roadmapId, stepIndex, career, level, step } = body;
-
     // --------------------------------------------------------
-    // VALIDATE ROADMAP ID
+    // ROADMAP ID + STEP INDEX COME FROM THE URL
+    // Route: /:id/steps/:stepIndex/learn
     // --------------------------------------------------------
+
+    const { id: roadmapId, stepIndex } = req.params;
 
     if (!roadmapId) {
       return res.status(400).json({
         success: false,
-        message: "roadmapId is required",
+        message: "Roadmap id is required in the URL",
       });
     }
-
-    // --------------------------------------------------------
-    // VALIDATE STEP INDEX
-    // --------------------------------------------------------
 
     if (
       stepIndex === undefined ||
@@ -1986,11 +1987,20 @@ export const generateStepLearning = async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: "stepIndex is required",
+        message: "A valid step index is required in the URL",
       });
     }
 
     const index = Number(stepIndex);
+
+    // --------------------------------------------------------
+    // OPTIONAL CONTEXT FROM THE BODY
+    // (career / level / step details the frontend may send;
+    // all optional — we always fall back to the saved roadmap)
+    // --------------------------------------------------------
+
+    const body = req.body || {};
+    const { career, level, step } = body;
 
     // --------------------------------------------------------
     // LOAD ROADMAP (SCOPED TO THIS USER)
@@ -2030,7 +2040,7 @@ export const generateStepLearning = async (req, res) => {
     // Prefer whatever the frontend sent for this step, fall
     // back to what's actually saved on the roadmap so the
     // AI always has accurate context even if the frontend
-    // sends a partial object.
+    // sends a partial object (or nothing at all).
     // --------------------------------------------------------
 
     const resolvedStep = {

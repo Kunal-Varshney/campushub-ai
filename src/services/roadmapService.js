@@ -219,20 +219,16 @@ export const updateRoadmapStepProgress = async (
    This is completely separate from roadmap progress —
    calling this NEVER changes step completion state.
 
-   Expects:
-   {
-     roadmapId,
-     stepIndex,
-     career,      // display name or id, either is fine
-     level,       // "Beginner" | "Intermediate" | "Advanced"
-     step: {
-       title,
-       description,
-       difficulty,
-       time,
-       topics,    // optional array
-     }
-   }
+   IMPORTANT: roadmapId and stepIndex travel in the URL, NOT
+   the body, because the backend route is:
+     POST /api/roadmap/:id/steps/:stepIndex/learn
+   (see roadmap.routes.js). Only optional context (career,
+   level, step details) goes in the request body.
+
+   Usage:
+     generateStepLearning(roadmapId, stepIndex, {
+       career, level, step
+     })
 
    Resolves to:
    {
@@ -244,13 +240,11 @@ export const updateRoadmapStepProgress = async (
    }
 ============================================================ */
 
-export const generateStepLearning = async ({
+export const generateStepLearning = async (
   roadmapId,
   stepIndex,
-  career,
-  level,
-  step,
-}) => {
+  { career, level, step } = {}
+) => {
   if (!roadmapId) {
     throw new Error(
       "Please generate or load a roadmap first."
@@ -262,13 +256,14 @@ export const generateStepLearning = async ({
   }
 
   try {
-    const response = await API.post("/roadmap/learn", {
-      roadmapId,
-      stepIndex,
-      career,
-      level,
-      step,
-    });
+    const response = await API.post(
+      `/roadmap/${roadmapId}/steps/${stepIndex}/learn`,
+      {
+        career,
+        level,
+        step,
+      }
+    );
 
     return response.data;
   } catch (error) {
