@@ -14,6 +14,7 @@ import {
   FiClock,
   FiShieldOff,
   FiMenu,
+  FiGrid,
 } from "react-icons/fi";
 
 import { useNavigate } from "react-router-dom";
