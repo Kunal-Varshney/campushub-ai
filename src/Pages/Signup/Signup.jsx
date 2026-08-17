@@ -11,7 +11,6 @@ import {
   EyeOff,
   FileText,
   GraduationCap,
-  Layers3,
   Lock,
   Mail,
   Map,
@@ -200,15 +199,17 @@ function Signup() {
   ];
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
+    <main className="relative min-h-screen overflow-x-hidden bg-[#050816] text-white">
       {/* =====================================================
           BACKGROUND
       ====================================================== */}
 
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-40 -top-40 h-[520px] w-[520px] rounded-full bg-blue-600/20 blur-[140px]" />
-        <div className="absolute -bottom-48 -right-40 h-[550px] w-[550px] rounded-full bg-cyan-500/15 blur-[150px]" />
-        <div className="absolute left-[42%] top-[35%] h-[300px] w-[300px] rounded-full bg-indigo-600/10 blur-[120px]" />
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -left-40 -top-40 h-[420px] w-[420px] rounded-full bg-blue-600/20 blur-[120px] sm:h-[520px] sm:w-[520px] sm:blur-[140px]" />
+
+        <div className="absolute -bottom-48 -right-40 h-[450px] w-[450px] rounded-full bg-cyan-500/15 blur-[130px] sm:h-[550px] sm:w-[550px] sm:blur-[150px]" />
+
+        <div className="absolute left-[42%] top-[35%] h-[250px] w-[250px] rounded-full bg-indigo-600/10 blur-[100px] sm:h-[300px] sm:w-[300px] sm:blur-[120px]" />
 
         <div
           className="absolute inset-0 opacity-[0.035]"
@@ -224,17 +225,21 @@ function Signup() {
           TOP BRAND
       ====================================================== */}
 
-      <div className="relative z-20 mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-6 sm:px-8">
-        <Link to="/" className="group flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 shadow-lg shadow-blue-500/20 transition-transform duration-300 group-hover:scale-105">
-            <Sparkles size={20} />
+      <div className="relative z-20 mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-5 sm:px-8 sm:py-6">
+        <Link
+          to="/"
+          className="group flex min-w-0 items-center gap-2.5 sm:gap-3"
+        >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 shadow-lg shadow-blue-500/20 transition-transform duration-300 group-hover:scale-105 sm:h-10 sm:w-10">
+            <Sparkles size={18} className="sm:h-5 sm:w-5" />
           </div>
 
-          <div>
-            <p className="text-lg font-bold tracking-tight">
+          <div className="min-w-0">
+            <p className="truncate text-base font-bold tracking-tight sm:text-lg">
               CampusHub<span className="text-cyan-400"> AI</span>
             </p>
-            <p className="text-[10px] uppercase tracking-[0.22em] text-slate-500">
+
+            <p className="hidden text-[10px] uppercase tracking-[0.22em] text-slate-500 xs:block sm:block">
               Learn • Build • Grow
             </p>
           </div>
@@ -255,7 +260,16 @@ function Signup() {
           MAIN
       ====================================================== */}
 
-      <div className="relative z-10 mx-auto grid min-h-[calc(100vh-88px)] w-full max-w-7xl items-center gap-12 px-5 pb-12 pt-4 sm:px-8 lg:grid-cols-[1.05fr_.95fr] lg:gap-16">
+      <div
+        className="
+          relative z-10 mx-auto flex w-full max-w-7xl flex-col
+          gap-8 px-4 pb-10 pt-2
+          sm:gap-10 sm:px-8 sm:pb-12 sm:pt-4
+          lg:grid lg:min-h-[calc(100vh-88px)]
+          lg:grid-cols-[1.05fr_.95fr]
+          lg:items-center lg:gap-16
+        "
+      >
         {/* =================================================
             LEFT — CAREER EXPERIENCE
         ================================================== */}
@@ -264,17 +278,20 @@ function Signup() {
           initial={{ opacity: 0, x: -35 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.7 }}
-          className="hidden lg:block"
+          className="w-full"
         >
-          <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-500/5 px-4 py-2 text-xs font-semibold text-blue-300 backdrop-blur-xl">
+          {/* Desktop / Tablet heading */}
+
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-500/5 px-3.5 py-2 text-[10px] font-semibold text-blue-300 backdrop-blur-xl sm:mb-7 sm:px-4 sm:text-xs">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-400" />
             </span>
+
             AI-powered student platform
           </div>
 
-          <h1 className="max-w-2xl text-5xl font-black leading-[1.08] tracking-tight xl:text-6xl">
+          <h1 className="max-w-2xl text-4xl font-black leading-[1.08] tracking-tight sm:text-5xl lg:text-5xl xl:text-6xl">
             Your career
             <br />
             <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-blue-500 bg-clip-text text-transparent">
@@ -282,17 +299,19 @@ function Signup() {
             </span>
           </h1>
 
-          <p className="mt-6 max-w-xl text-lg leading-8 text-slate-400">
+          <p className="mt-4 max-w-xl text-sm leading-6 text-slate-400 sm:mt-6 sm:text-lg sm:leading-8">
             One platform to help you learn new skills, discover your career
             path, build projects, prepare for opportunities and grow with AI.
           </p>
 
-          {/* Career journey visual */}
+          {/* =================================================
+              Career journey visual
+          ================================================== */}
 
-          <div className="relative mt-10 max-w-xl">
-            <div className="absolute left-[24px] top-8 h-[calc(100%-64px)] w-px bg-gradient-to-b from-blue-500/60 via-cyan-400/30 to-transparent" />
+          <div className="relative mt-7 max-w-xl sm:mt-10">
+            <div className="absolute left-[21px] top-7 h-[calc(100%-56px)] w-px bg-gradient-to-b from-blue-500/60 via-cyan-400/30 to-transparent sm:left-[24px] sm:top-8 sm:h-[calc(100%-64px)]" />
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {journey.map((item, index) => {
                 const Icon = item.icon;
 
@@ -306,29 +325,34 @@ function Signup() {
                       delay: 0.25 + index * 0.12,
                     }}
                     whileHover={{ x: 8 }}
-                    className="group relative flex items-center gap-5 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4 backdrop-blur-xl transition-all duration-300 hover:border-blue-400/20 hover:bg-white/[0.045]"
+                    className="group relative flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-3 backdrop-blur-xl transition-all duration-300 hover:border-blue-400/20 hover:bg-white/[0.045] sm:gap-5 sm:p-4"
                   >
-                    <div className="relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-blue-400/20 bg-[#091329] shadow-lg shadow-blue-500/10">
-                      <Icon size={21} className="text-cyan-300" />
+                    <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-400/20 bg-[#091329] shadow-lg shadow-blue-500/10 sm:h-12 sm:w-12 sm:rounded-2xl">
+                      <Icon
+                        size={18}
+                        className="text-cyan-300 sm:h-[21px] sm:w-[21px]"
+                      />
                     </div>
 
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-bold tracking-[0.2em] text-blue-400">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <span className="text-[9px] font-bold tracking-[0.2em] text-blue-400 sm:text-[10px]">
                           {item.number}
                         </span>
-                        <h3 className="font-semibold text-white">
+
+                        <h3 className="truncate text-sm font-semibold text-white sm:text-base">
                           {item.title}
                         </h3>
                       </div>
-                      <p className="mt-1 text-sm text-slate-500">
+
+                      <p className="mt-0.5 text-xs leading-5 text-slate-500 sm:mt-1 sm:text-sm">
                         {item.text}
                       </p>
                     </div>
 
                     <ArrowUpRight
-                      size={17}
-                      className="text-slate-700 transition-all group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-cyan-400"
+                      size={15}
+                      className="shrink-0 text-slate-700 transition-all group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-cyan-400 sm:h-[17px] sm:w-[17px]"
                     />
                   </motion.div>
                 );
@@ -336,13 +360,18 @@ function Signup() {
             </div>
           </div>
 
-          {/* Floating ecosystem */}
+          {/* =================================================
+              Floating ecosystem
+          ================================================== */}
 
-          <div className="relative mt-8 h-36 max-w-xl overflow-hidden rounded-3xl border border-white/[0.06] bg-white/[0.02]">
+          <div className="relative mt-5 h-28 max-w-xl overflow-hidden rounded-3xl border border-white/[0.06] bg-white/[0.02] sm:mt-8 sm:h-36">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/[0.04] via-transparent to-cyan-500/[0.04]" />
 
-            <div className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-2xl border border-cyan-400/20 bg-[#0a1429] shadow-2xl shadow-cyan-500/10">
-              <GraduationCap size={28} className="text-cyan-300" />
+            <div className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-xl border border-cyan-400/20 bg-[#0a1429] shadow-2xl shadow-cyan-500/10 sm:h-16 sm:w-16 sm:rounded-2xl">
+              <GraduationCap
+                size={22}
+                className="text-cyan-300 sm:h-7 sm:w-7"
+              />
             </div>
 
             {floatingCards.map((card, index) => {
@@ -360,9 +389,15 @@ function Signup() {
                   className={`absolute ${card.position} hidden items-center gap-2 rounded-xl border border-white/[0.07] bg-[#0b1224]/90 px-3 py-2 backdrop-blur-xl sm:flex`}
                 >
                   <Icon size={14} className="text-cyan-400" />
+
                   <div>
-                    <p className="text-[11px] font-semibold">{card.title}</p>
-                    <p className="text-[9px] text-slate-500">{card.subtitle}</p>
+                    <p className="text-[11px] font-semibold">
+                      {card.title}
+                    </p>
+
+                    <p className="text-[9px] text-slate-500">
+                      {card.subtitle}
+                    </p>
                   </div>
                 </motion.div>
               );
@@ -380,7 +415,7 @@ function Signup() {
           transition={{ duration: 0.65 }}
           className="mx-auto w-full max-w-[500px]"
         >
-          <div className="relative overflow-hidden rounded-[30px] border border-white/[0.09] bg-[#0a1020]/90 p-6 shadow-2xl shadow-blue-950/40 backdrop-blur-2xl sm:p-8">
+          <div className="relative overflow-hidden rounded-[26px] border border-white/[0.09] bg-[#0a1020]/90 p-5 shadow-2xl shadow-blue-950/40 backdrop-blur-2xl sm:rounded-[30px] sm:p-8">
             {/* Card glow */}
 
             <div className="pointer-events-none absolute -right-24 -top-24 h-48 w-48 rounded-full bg-blue-500/10 blur-3xl" />
@@ -388,21 +423,24 @@ function Signup() {
             {/* Heading */}
 
             <div className="relative">
-              <div className="mb-5 flex items-center justify-between">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-blue-400/20 bg-blue-500/10">
-                  <Rocket size={21} className="text-cyan-300" />
+              <div className="mb-4 flex items-center justify-between sm:mb-5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-400/20 bg-blue-500/10 sm:h-11 sm:w-11 sm:rounded-2xl">
+                  <Rocket
+                    size={19}
+                    className="text-cyan-300 sm:h-[21px] sm:w-[21px]"
+                  />
                 </div>
 
-                <span className="rounded-full border border-emerald-400/15 bg-emerald-400/5 px-3 py-1 text-[10px] font-semibold text-emerald-300">
+                <span className="rounded-full border border-emerald-400/15 bg-emerald-400/5 px-2.5 py-1 text-[9px] font-semibold text-emerald-300 sm:px-3 sm:text-[10px]">
                   FREE TO JOIN
                 </span>
               </div>
 
-              <h2 className="text-3xl font-bold tracking-tight">
+              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
                 Create your account
               </h2>
 
-              <p className="mt-2 text-sm leading-6 text-slate-500">
+              <p className="mt-2 text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6">
                 Start building your personalized career journey with
                 CampusHub AI.
               </p>
@@ -416,17 +454,21 @@ function Signup() {
                   initial={{ opacity: 0, height: 0, y: -5 }}
                   animate={{ opacity: 1, height: "auto", y: 0 }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="relative mt-5 overflow-hidden rounded-xl border border-red-400/15 bg-red-500/[0.06] px-4 py-3 text-sm text-red-300"
+                  className="relative mt-4 overflow-hidden rounded-xl border border-red-400/15 bg-red-500/[0.06] px-3.5 py-3 text-xs text-red-300 sm:mt-5 sm:px-4 sm:text-sm"
                 >
                   <div className="flex items-start gap-2">
-                    <X size={17} className="mt-0.5 shrink-0" />
+                    <X size={16} className="mt-0.5 shrink-0" />
+
                     <span>{error}</span>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            <form onSubmit={handleSubmit} className="relative mt-7 space-y-4">
+            <form
+              onSubmit={handleSubmit}
+              className="relative mt-6 space-y-3.5 sm:mt-7 sm:space-y-4"
+            >
               {/* Name */}
 
               <Input
@@ -571,7 +613,7 @@ function Signup() {
                   {accepted && <Check size={11} strokeWidth={3} />}
                 </span>
 
-                <span className="text-[11px] leading-5 text-slate-500">
+                <span className="text-[10px] leading-5 text-slate-500 sm:text-[11px]">
                   I agree to the{" "}
                   <span className="text-slate-300 hover:text-cyan-400">
                     Terms of Service
@@ -591,7 +633,7 @@ function Signup() {
                 disabled={loading}
                 whileHover={!loading ? { y: -2 } : {}}
                 whileTap={!loading ? { scale: 0.98 } : {}}
-                className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-400 py-4 text-sm font-bold shadow-xl shadow-blue-600/20 transition-all duration-300 hover:shadow-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-400 py-3.5 text-sm font-bold shadow-xl shadow-blue-600/20 transition-all duration-300 hover:shadow-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-60 sm:py-4"
               >
                 <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
 
@@ -603,6 +645,7 @@ function Signup() {
                 ) : (
                   <>
                     Create my account
+
                     <ArrowRight
                       size={17}
                       className="transition-transform duration-300 group-hover:translate-x-1"
@@ -613,8 +656,9 @@ function Signup() {
 
               {/* Mobile login */}
 
-              <p className="pt-2 text-center text-xs text-slate-500 sm:hidden">
+              <p className="pt-1 text-center text-xs text-slate-500 sm:hidden">
                 Already have an account?
+
                 <Link
                   to="/login"
                   className="ml-1 font-semibold text-cyan-400"
@@ -626,10 +670,13 @@ function Signup() {
 
             {/* Trust footer */}
 
-            <div className="mt-6 flex items-center justify-center gap-2 border-t border-white/[0.06] pt-5 text-[10px] text-slate-600">
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-1.5 border-t border-white/[0.06] pt-4 text-center text-[9px] text-slate-600 sm:mt-6 sm:gap-2 sm:pt-5 sm:text-[10px]">
               <Lock size={12} />
-              Your account is securely protected
+
+              <span>Your account is securely protected</span>
+
               <span>•</span>
+
               <span>CampusHub AI</span>
             </div>
           </div>
