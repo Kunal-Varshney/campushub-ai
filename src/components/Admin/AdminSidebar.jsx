@@ -16,6 +16,9 @@ import {
   FiMenu,
   FiGrid,
   FiBarChart2,
+  FiSettings,
+  FiZap,
+  FiLogOut,
 } from "react-icons/fi";
 
 import { useNavigate } from "react-router-dom";
