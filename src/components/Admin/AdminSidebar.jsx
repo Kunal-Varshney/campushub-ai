@@ -15,6 +15,7 @@ import {
   FiShieldOff,
   FiMenu,
   FiGrid,
+  FiBarChart2,
 } from "react-icons/fi";
 
 import { useNavigate } from "react-router-dom";
