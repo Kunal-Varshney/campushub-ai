@@ -4,202 +4,181 @@ const AdminStatsCard = ({
   icon: Icon,
   gradient,
 }) => {
+  return (
+    <div
+      className="
+        group
+        relative
+        rounded-3xl
+        transition-all
+        duration-300
+        hover:-translate-y-1
+      "
+    >
+      {/* ======================================================
+          GRADIENT GLOW BORDER
+      ====================================================== */}
 
-return (
+      <div
+        className={`
+          absolute
+          inset-0
+          rounded-3xl
+          bg-gradient-to-br
+          ${gradient}
+          opacity-30
+          blur-sm
+          transition-all
+          duration-300
+          group-hover:opacity-70
+        `}
+      />
 
-<div className="
-relative
-group
-rounded-3xl
-transition-all
-duration-300
-hover:-translate-y-1
-">
+      {/* ======================================================
+          CARD
+      ====================================================== */}
 
+      <div
+        className="
+          relative
+          overflow-hidden
+          rounded-3xl
+          border
+          border-white/10
+          bg-slate-900/90
+          p-5
+          shadow-xl
+          backdrop-blur-xl
+          sm:p-6
+        "
+      >
+        {/* ====================================================
+            BACKGROUND GLOW
+        ==================================================== */}
 
-{/* Gradient Glow Border */}
+        <div
+          className={`
+            absolute
+            -top-10
+            right-0
+            h-36
+            w-36
+            rounded-full
+            bg-gradient-to-br
+            ${gradient}
+            opacity-0
+            blur-3xl
+            transition-all
+            duration-500
+            group-hover:opacity-30
+          `}
+        />
 
-<div
-className={`
-absolute
-inset-0
-rounded-3xl
-bg-gradient-to-br
-${gradient}
-opacity-40
-blur-sm
-group-hover:opacity-80
-transition-all
-duration-300
-`}
-/>
+        {/* ====================================================
+            CONTENT
+        ==================================================== */}
 
+        <div
+          className="
+            relative
+            flex
+            items-start
+            justify-between
+            gap-4
+          "
+        >
+          {/* VALUE */}
 
+          <div className="min-w-0">
+            <p
+              className="
+                mb-2
+                truncate
+                text-sm
+                font-medium
+                text-slate-400
+                sm:mb-3
+              "
+            >
+              {label}
+            </p>
 
-{/* Card */}
+            <h2
+              className="
+                text-3xl
+                font-bold
+                tracking-tight
+                text-white
+                transition-transform
+                duration-300
+                origin-left
+                group-hover:scale-105
+                sm:text-4xl
+              "
+            >
+              {value}
+            </h2>
+          </div>
 
-<div
-className="
-relative
-rounded-3xl
-bg-slate-900/90
-backdrop-blur-xl
-border
-border-white/10
-p-6
-overflow-hidden
-shadow-xl
-"
->
+          {/* ICON */}
 
+          <div
+            className={`
+              flex
+              h-12
+              w-12
+              shrink-0
+              items-center
+              justify-center
+              rounded-2xl
+              bg-gradient-to-br
+              ${gradient}
+              text-xl
+              text-white
+              shadow-lg
+              transition-all
+              duration-300
+              group-hover:scale-110
+              group-hover:rotate-6
+              sm:h-14
+              sm:w-14
+              sm:text-2xl
+            `}
+          >
+            {Icon && <Icon />}
+          </div>
+        </div>
 
+        {/* ====================================================
+            BOTTOM PROGRESS GLOW
+        ==================================================== */}
 
-{/* Background Glow */}
-
-<div
-className={`
-absolute
--webkit-top-10
-right-0
-h-36
-w-36
-rounded-full
-bg-gradient-to-br
-${gradient}
-blur-3xl
-opacity-0
-group-hover:opacity-30
-transition-all
-duration-500
-`}
-/>
-
-
-
-
-<div className="
-relative
-flex
-items-start
-justify-between
-gap-5
-">
-
-
-<div>
-
-
-<p className="
-text-slate-400
-text-sm
-font-medium
-mb-3
-">
-
-{label}
-
-</p>
-
-
-
-<h2 className="
-text-4xl
-font-bold
-text-white
-tracking-tight
-group-hover:scale-105
-transition-transform
-origin-left
-">
-
-{value}
-
-</h2>
-
-
-</div>
-
-
-
-
-
-<div
-className={`
-h-14
-w-14
-rounded-2xl
-flex
-items-center
-justify-center
-text-white
-text-2xl
-bg-gradient-to-br
-${gradient}
-shadow-lg
-transition-all
-duration-300
-group-hover:scale-110
-group-hover:rotate-6
-`}
->
-
-{
-Icon &&
-<Icon/>
-}
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-{/* Bottom Progress Glow */}
-
-<div className="
-mt-6
-h-1
-rounded-full
-bg-white/10
-overflow-hidden
-">
-
-
-<div
-
-className={`
-h-full
-w-2/3
-rounded-full
-bg-gradient-to-r
-${gradient}
-group-hover:w-full
-transition-all
-duration-500
-`}
-
-/>
-
-
-</div>
-
-
-
-
-</div>
-
-
-</div>
-
-
-);
-
-
+        <div
+          className="
+            mt-5
+            h-1
+            overflow-hidden
+            rounded-full
+            bg-white/10
+            sm:mt-6
+          "
+        >
+          <div
+            className={`
+              h-full
+              w-2/3
+              rounded-full
+              bg-gradient-to-r
+              ${gradient}
+              transition-all
+              duration-500
+              group-hover:w-full
+            `}
+          />
+        </div>
+      </div>
+    </div>
+  );
 };
-
 
 export default AdminStatsCard;

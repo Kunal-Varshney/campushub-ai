@@ -434,17 +434,17 @@ const AdminDashboard = () => {
   // ============================================================
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen overflow-x-hidden bg-slate-950 text-white">
 
       <AdminSidebar
         active={activeTab}
         setActive={setActiveTab}
       />
 
-      <div className="lg:ml-64">
+      <div className="min-w-0 lg:ml-64">
         <AdminTopbar />
 
-        <main className="p-6 lg:p-10">
+        <main className="p-4 sm:p-6 lg:p-10">
 
           {/* ERROR */}
 
@@ -460,15 +460,15 @@ const AdminDashboard = () => {
 
           {activeTab === "dashboard" && (
             <div>
-              <h1 className="text-3xl font-bold">
+              <h1 className="text-2xl font-bold sm:text-3xl">
                 Admin Dashboard
               </h1>
 
-              <p className="mt-2 mb-8 text-slate-400">
+              <p className="mb-6 mt-2 text-sm text-slate-400 sm:mb-8 sm:text-base">
                 CampusHub AI platform overview
               </p>
 
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:gap-5 xl:grid-cols-4">
                 {statCards.map((card) => (
                   <AdminStatsCard
                     key={card.label}
@@ -494,11 +494,11 @@ const AdminDashboard = () => {
 
           {activeTab === "users" && (
             <div>
-              <h1 className="mb-6 text-3xl font-bold">
+              <h1 className="mb-4 text-2xl font-bold sm:mb-6 sm:text-3xl">
                 Users Management
               </h1>
 
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+              <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-3 backdrop-blur-xl sm:p-5 lg:p-6">
 
                 {loading ? (
                   <p className="text-slate-400">
@@ -559,11 +559,11 @@ const AdminDashboard = () => {
 
       {selectedUser && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md"
+          className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/70 p-2 backdrop-blur-md sm:items-center sm:p-4"
           onClick={closeUserDetails}
         >
           <div
-            className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-3xl border border-white/10 bg-slate-950 shadow-2xl"
+            className="max-h-[96vh] w-full max-w-5xl overflow-y-auto rounded-2xl border border-white/10 bg-slate-950 shadow-2xl sm:max-h-[92vh] sm:rounded-3xl"
             onClick={(e) =>
               e.stopPropagation()
             }
@@ -571,7 +571,7 @@ const AdminDashboard = () => {
 
             {/* HEADER */}
 
-            <div className="sticky top-0 z-20 flex items-center justify-between border-b border-white/10 bg-slate-950/95 px-6 py-5 backdrop-blur-xl">
+            <div className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-white/10 bg-slate-950/95 px-4 py-4 backdrop-blur-xl sm:px-6 sm:py-5">
 
               <div>
                 <h2 className="text-xl font-bold text-white">
@@ -610,13 +610,13 @@ const AdminDashboard = () => {
                 </div>
               </div>
             ) : (
-              <div className="space-y-6 p-6">
+              <div className="space-y-5 p-4 sm:space-y-6 sm:p-6">
 
                 {/* ==================================================
                     PROFILE HEADER
                 ================================================== */}
 
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-6">
 
                   <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
 
@@ -687,7 +687,7 @@ const AdminDashboard = () => {
 
                     {/* QUICK ACTION */}
 
-                    <div className="flex gap-2">
+                    <div className="flex w-full flex-wrap gap-2 sm:w-auto">
 
                       {selectedUser.isBlocked ? (
                         <button

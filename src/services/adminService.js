@@ -1,4 +1,3 @@
-
 import axios from "axios";
 
 // ============================================================
@@ -25,6 +24,7 @@ api.interceptors.request.use(
     const token = localStorage.getItem("token");
 
     if (token) {
+      config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
     }
 
@@ -111,6 +111,13 @@ export const getUsers = async (params = {}) => {
 
 export const getUserById = async (id) => {
   try {
+    if (!id) {
+      return {
+        success: false,
+        message: "User ID is required.",
+      };
+    }
+
     const response = await api.get(
       `/admin/users/${id}`
     );
@@ -138,6 +145,13 @@ export const getUserById = async (id) => {
 
 export const getUserActivity = async (id) => {
   try {
+    if (!id) {
+      return {
+        success: false,
+        message: "User ID is required.",
+      };
+    }
+
     const response = await api.get(
       `/admin/users/${id}/activity`
     );
@@ -171,6 +185,13 @@ export const getUserActivity = async (id) => {
 
 export const blockUser = async (id) => {
   try {
+    if (!id) {
+      return {
+        success: false,
+        message: "User ID is required.",
+      };
+    }
+
     const response = await api.patch(
       `/admin/users/${id}/block`
     );
@@ -198,6 +219,13 @@ export const blockUser = async (id) => {
 
 export const unblockUser = async (id) => {
   try {
+    if (!id) {
+      return {
+        success: false,
+        message: "User ID is required.",
+      };
+    }
+
     const response = await api.patch(
       `/admin/users/${id}/unblock`
     );
@@ -225,6 +253,13 @@ export const unblockUser = async (id) => {
 
 export const deleteUser = async (id) => {
   try {
+    if (!id) {
+      return {
+        success: false,
+        message: "User ID is required.",
+      };
+    }
+
     const response = await api.delete(
       `/admin/users/${id}`
     );
@@ -255,6 +290,13 @@ export const updateUserPermissions = async (
   permissions
 ) => {
   try {
+    if (!id) {
+      return {
+        success: false,
+        message: "User ID is required.",
+      };
+    }
+
     const response = await api.patch(
       `/admin/users/${id}/permissions`,
       permissions
@@ -301,6 +343,7 @@ export const getNotes = async (params = {}) => {
         "Failed to load notes"
       ),
       notes: [],
+      totalNotes: 0,
     };
   }
 };
@@ -339,6 +382,13 @@ export const getNoteCategories = async () => {
 
 export const approveNote = async (id) => {
   try {
+    if (!id) {
+      return {
+        success: false,
+        message: "Note ID is required.",
+      };
+    }
+
     const response = await api.patch(
       `/admin/notes/${id}/approve`
     );
@@ -366,6 +416,13 @@ export const approveNote = async (id) => {
 
 export const rejectNote = async (id) => {
   try {
+    if (!id) {
+      return {
+        success: false,
+        message: "Note ID is required.",
+      };
+    }
+
     const response = await api.patch(
       `/admin/notes/${id}/reject`
     );
@@ -396,6 +453,13 @@ export const updateNote = async (
   payload
 ) => {
   try {
+    if (!id) {
+      return {
+        success: false,
+        message: "Note ID is required.",
+      };
+    }
+
     const response = await api.put(
       `/admin/notes/${id}`,
       payload
@@ -424,6 +488,13 @@ export const updateNote = async (
 
 export const deleteNote = async (id) => {
   try {
+    if (!id) {
+      return {
+        success: false,
+        message: "Note ID is required.",
+      };
+    }
+
     const response = await api.delete(
       `/admin/notes/${id}`
     );
