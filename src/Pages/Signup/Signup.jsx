@@ -333,14 +333,6 @@ function Signup() {
               })}
             </div>
           </div>
-
-          {/* =================================================
-              Floating ecosystem
-          ================================================== */}
-
-          <div className="relative mt-5 h-28 max-w-xl overflow-hidden rounded-3xl border border-white/[0.06] bg-white/[0.02] sm:mt-8 sm:h-36">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/[0.04] via-transparent to-cyan-500/[0.04]" />
-          </div>
         </motion.section>
 
         {/* =================================================
