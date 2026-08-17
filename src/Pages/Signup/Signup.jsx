@@ -171,32 +171,6 @@ function Signup() {
     },
   ];
 
-  const floatingCards = [
-    {
-      icon: Brain,
-      title: "AI Assistant",
-      subtitle: "Ready to help",
-      position: "top-[6%] left-[4%]",
-    },
-    {
-      icon: Map,
-      title: "Career Roadmap",
-      subtitle: "Your path is clear",
-      position: "top-[24%] right-[2%]",
-    },
-    {
-      icon: FileText,
-      title: "Resume Builder",
-      subtitle: "ATS optimized",
-      position: "top-[48%] left-[1%]",
-    },
-    {
-      icon: Zap,
-      title: "Skill Progress",
-      subtitle: "Keep moving forward",
-      position: "bottom-[9%] right-[4%]",
-    },
-  ];
 
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-[#050816] text-white">
@@ -373,35 +347,6 @@ function Signup() {
                 className="text-cyan-300 sm:h-7 sm:w-7"
               />
             </div>
-
-            {floatingCards.map((card, index) => {
-              const Icon = card.icon;
-
-              return (
-                <motion.div
-                  key={card.title}
-                  animate={{ y: [0, -5, 0] }}
-                  transition={{
-                    duration: 4 + index * 0.4,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                  className={`absolute ${card.position} hidden items-center gap-2 rounded-xl border border-white/[0.07] bg-[#0b1224]/90 px-3 py-2 backdrop-blur-xl sm:flex`}
-                >
-                  <Icon size={14} className="text-cyan-400" />
-
-                  <div>
-                    <p className="text-[11px] font-semibold">
-                      {card.title}
-                    </p>
-
-                    <p className="text-[9px] text-slate-500">
-                      {card.subtitle}
-                    </p>
-                  </div>
-                </motion.div>
-              );
-            })}
           </div>
         </motion.section>
 
