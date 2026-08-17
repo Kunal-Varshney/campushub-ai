@@ -8,15 +8,11 @@ import {
   Check,
   Eye,
   EyeOff,
-  FileText,
-  GraduationCap,
   Lock,
   Mail,
-  Map,
   Rocket,
   Sparkles,
   Target,
-  TrendingUp,
   Zap,
   ShieldCheck,
   X,
@@ -122,33 +118,6 @@ function Login() {
     },
   ];
 
-  const floatingCards = [
-    {
-      icon: Brain,
-      title: "AI Assistant",
-      subtitle: "Ready to help",
-      position: "top-[7%] left-[4%]",
-    },
-    {
-      icon: Map,
-      title: "Career Roadmap",
-      subtitle: "3 milestones ahead",
-      position: "top-[25%] right-[2%]",
-    },
-    {
-      icon: FileText,
-      title: "Resume Builder",
-      subtitle: "ATS optimized",
-      position: "top-[49%] left-[1%]",
-    },
-    {
-      icon: TrendingUp,
-      title: "Learning Progress",
-      subtitle: "80% completed",
-      position: "bottom-[9%] right-[4%]",
-    },
-  ];
-
   return (
     <main className="relative min-h-screen min-h-[100dvh] overflow-x-hidden bg-[#050816] text-white">
       {/* =====================================================
@@ -156,11 +125,11 @@ function Login() {
       ====================================================== */}
 
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -left-40 -top-40 h-[420px] w-[420px] sm:h-[520px] sm:w-[520px] rounded-full bg-blue-600/20 blur-[120px] sm:blur-[140px]" />
+        <div className="absolute -left-40 -top-40 h-[420px] w-[420px] rounded-full bg-blue-600/20 blur-[120px] sm:h-[520px] sm:w-[520px] sm:blur-[140px]" />
 
-        <div className="absolute -bottom-40 -right-40 h-[430px] w-[430px] sm:h-[550px] sm:w-[550px] rounded-full bg-cyan-500/15 blur-[130px] sm:blur-[150px]" />
+        <div className="absolute -bottom-40 -right-40 h-[430px] w-[430px] rounded-full bg-cyan-500/15 blur-[130px] sm:h-[550px] sm:w-[550px] sm:blur-[150px]" />
 
-        <div className="absolute left-[42%] top-[35%] h-[250px] w-[250px] sm:h-[300px] sm:w-[300px] rounded-full bg-indigo-600/10 blur-[100px] sm:blur-[120px]" />
+        <div className="absolute left-[42%] top-[35%] h-[250px] w-[250px] rounded-full bg-indigo-600/10 blur-[100px] sm:h-[300px] sm:w-[300px] sm:blur-[120px]" />
 
         <div
           className="absolute inset-0 opacity-[0.025] sm:opacity-[0.035]"
@@ -191,7 +160,7 @@ function Login() {
               CampusHub<span className="text-cyan-400"> AI</span>
             </p>
 
-            <p className="hidden text-[10px] uppercase tracking-[0.22em] text-slate-500 xs:block sm:block">
+            <p className="hidden text-[10px] uppercase tracking-[0.22em] text-slate-500 sm:block">
               Learn • Build • Grow
             </p>
           </div>
@@ -299,45 +268,6 @@ function Login() {
               })}
             </div>
           </div>
-
-          {/* Floating ecosystem */}
-
-          <div className="relative mt-8 h-36 max-w-xl overflow-hidden rounded-3xl border border-white/[0.06] bg-white/[0.02]">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/[0.04] via-transparent to-cyan-500/[0.04]" />
-
-            <div className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-2xl border border-cyan-400/20 bg-[#0a1429] shadow-2xl shadow-cyan-500/10">
-              <GraduationCap size={28} className="text-cyan-300" />
-            </div>
-
-            {floatingCards.map((card, index) => {
-              const Icon = card.icon;
-
-              return (
-                <motion.div
-                  key={card.title}
-                  animate={{ y: [0, -5, 0] }}
-                  transition={{
-                    duration: 4 + index * 0.4,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                  className={`absolute ${card.position} hidden items-center gap-2 rounded-xl border border-white/[0.07] bg-[#0b1224]/90 px-3 py-2 backdrop-blur-xl sm:flex`}
-                >
-                  <Icon size={14} className="text-cyan-400" />
-
-                  <div>
-                    <p className="text-[11px] font-semibold">
-                      {card.title}
-                    </p>
-
-                    <p className="text-[9px] text-slate-500">
-                      {card.subtitle}
-                    </p>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
         </motion.section>
 
         {/* =================================================
@@ -361,6 +291,7 @@ function Login() {
               <div className="mb-4 flex items-center justify-between gap-3 sm:mb-5">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-blue-400/20 bg-blue-500/10 sm:h-11 sm:w-11">
                   <Rocket size={20} className="text-cyan-300 sm:hidden" />
+
                   <Rocket
                     size={21}
                     className="hidden text-cyan-300 sm:block"
@@ -369,7 +300,12 @@ function Login() {
 
                 <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-400/15 bg-emerald-400/5 px-2.5 py-1 text-[9px] font-semibold text-emerald-300 sm:px-3 sm:text-[10px]">
                   <ShieldCheck size={11} className="sm:hidden" />
-                  <ShieldCheck size={12} className="hidden sm:block" />
+
+                  <ShieldCheck
+                    size={12}
+                    className="hidden sm:block"
+                  />
+
                   SECURE LOGIN
                 </span>
               </div>
@@ -396,6 +332,7 @@ function Login() {
                 >
                   <div className="flex items-start gap-2">
                     <X size={17} className="mt-0.5 shrink-0" />
+
                     <span className="break-words">{error}</span>
                   </div>
                 </motion.div>
@@ -479,7 +416,9 @@ function Login() {
                     )}
                   </span>
 
-                  <span className="whitespace-nowrap">Remember me</span>
+                  <span className="whitespace-nowrap">
+                    Remember me
+                  </span>
                 </button>
 
                 <Link
@@ -560,6 +499,7 @@ function Login() {
 
             <div className="mt-5 flex flex-wrap items-center justify-center gap-2 border-t border-white/[0.06] pt-4 text-center text-[9px] text-slate-600 sm:mt-6 sm:pt-5 sm:text-[10px]">
               <Zap size={12} />
+
               <span>Learn smarter</span>
               <span>•</span>
               <span>Build faster</span>

@@ -340,13 +340,6 @@ function Signup() {
 
           <div className="relative mt-5 h-28 max-w-xl overflow-hidden rounded-3xl border border-white/[0.06] bg-white/[0.02] sm:mt-8 sm:h-36">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/[0.04] via-transparent to-cyan-500/[0.04]" />
-
-            <div className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-xl border border-cyan-400/20 bg-[#0a1429] shadow-2xl shadow-cyan-500/10 sm:h-16 sm:w-16 sm:rounded-2xl">
-              <GraduationCap
-                size={22}
-                className="text-cyan-300 sm:h-7 sm:w-7"
-              />
-            </div>
           </div>
         </motion.section>
 
