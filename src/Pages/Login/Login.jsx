@@ -183,7 +183,8 @@ function Login() {
           MAIN CONTENT
       ====================================================== */}
 
-      <div className="relative z-10 mx-auto grid w-full max-w-7xl items-center gap-8 px-4 pb-8 pt-3 sm:gap-12 sm:px-8 sm:pb-12 sm:pt-4 lg:min-h-[calc(100vh-88px)] lg:min-h-[calc(100dvh-88px)] lg:grid-cols-[1.05fr_.95fr] lg:gap-16">
+      <div className="relative z-10 mx-auto grid w-full max-w-7xl items-start gap-8 px-4 pb-8 pt-3 sm:gap-12 sm:px-8 sm:pb-12 sm:pt-4 lg:min-h-[calc(100vh-88px)] lg:min-h-[calc(100dvh-88px)] lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:gap-16">
+
         {/* =================================================
             LEFT SIDE
         ================================================== */}
@@ -192,10 +193,12 @@ function Login() {
           initial={{ opacity: 0, x: -35 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.7 }}
-          className="hidden lg:block"
+          className="block w-full lg:block"
         >
-          <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-500/5 px-4 py-2 text-xs font-semibold text-blue-300 backdrop-blur-xl">
-            <span className="relative flex h-2 w-2">
+          {/* Intro badge */}
+
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-500/5 px-3.5 py-2 text-[10px] font-semibold text-blue-300 backdrop-blur-xl sm:mb-7 sm:px-4 sm:text-xs">
+            <span className="relative flex h-2 w-2 shrink-0">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-400" />
             </span>
@@ -203,7 +206,9 @@ function Login() {
             Welcome back to CampusHub AI
           </div>
 
-          <h1 className="max-w-2xl text-5xl font-black leading-[1.08] tracking-tight xl:text-6xl">
+          {/* Heading */}
+
+          <h1 className="max-w-2xl text-3xl font-black leading-[1.08] tracking-tight sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl">
             Continue your
             <br />
 
@@ -212,18 +217,24 @@ function Login() {
             </span>
           </h1>
 
-          <p className="mt-6 max-w-xl text-lg leading-8 text-slate-400">
+          {/* Description */}
+
+          <p className="mt-4 max-w-xl text-sm leading-6 text-slate-400 sm:mt-6 sm:text-base sm:leading-7 lg:text-lg lg:leading-8">
             Everything you need to learn, build skills, prepare for
             opportunities and move closer to your career goals — all in one
             place.
           </p>
 
-          {/* Career journey */}
+          {/* =================================================
+              CAREER JOURNEY
+          ================================================== */}
 
-          <div className="relative mt-10 max-w-xl">
-            <div className="absolute left-[24px] top-8 h-[calc(100%-64px)] w-px bg-gradient-to-b from-blue-500/60 via-cyan-400/30 to-transparent" />
+          <div className="relative mt-6 w-full max-w-xl sm:mt-8 lg:mt-10">
+            {/* Connecting line */}
 
-            <div className="space-y-4">
+            <div className="absolute left-[21px] top-7 h-[calc(100%-56px)] w-px bg-gradient-to-b from-blue-500/60 via-cyan-400/30 to-transparent sm:left-[24px] sm:top-8 sm:h-[calc(100%-64px)]" />
+
+            <div className="space-y-3 sm:space-y-4">
               {journey.map((item, index) => {
                 const Icon = item.icon;
 
@@ -236,32 +247,46 @@ function Login() {
                       duration: 0.5,
                       delay: 0.25 + index * 0.12,
                     }}
-                    whileHover={{ x: 8 }}
-                    className="group relative flex items-center gap-5 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4 backdrop-blur-xl transition-all duration-300 hover:border-blue-400/20 hover:bg-white/[0.045]"
+                    whileHover={{ x: 6 }}
+                    className="group relative flex w-full items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-3 backdrop-blur-xl transition-all duration-300 hover:border-blue-400/20 hover:bg-white/[0.045] sm:gap-5 sm:p-4"
                   >
-                    <div className="relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-blue-400/20 bg-[#091329] shadow-lg shadow-blue-500/10">
-                      <Icon size={21} className="text-cyan-300" />
+                    {/* Icon */}
+
+                    <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-400/20 bg-[#091329] shadow-lg shadow-blue-500/10 sm:h-12 sm:w-12 sm:rounded-2xl">
+                      <Icon
+                        size={18}
+                        className="text-cyan-300 sm:hidden"
+                      />
+
+                      <Icon
+                        size={21}
+                        className="hidden text-cyan-300 sm:block"
+                      />
                     </div>
 
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-bold tracking-[0.2em] text-blue-400">
+                    {/* Content */}
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <span className="text-[9px] font-bold tracking-[0.2em] text-blue-400 sm:text-[10px]">
                           {item.number}
                         </span>
 
-                        <h3 className="font-semibold text-white">
+                        <h3 className="text-sm font-semibold text-white sm:text-base">
                           {item.title}
                         </h3>
                       </div>
 
-                      <p className="mt-1 text-sm text-slate-500">
+                      <p className="mt-1 text-[11px] leading-4 text-slate-500 sm:text-sm sm:leading-5">
                         {item.text}
                       </p>
                     </div>
 
+                    {/* Arrow */}
+
                     <ArrowUpRight
-                      size={17}
-                      className="text-slate-700 transition-all group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-cyan-400"
+                      size={15}
+                      className="hidden shrink-0 text-slate-700 transition-all group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-cyan-400 sm:block sm:h-[17px] sm:w-[17px]"
                     />
                   </motion.div>
                 );
@@ -290,7 +315,10 @@ function Login() {
             <div className="relative">
               <div className="mb-4 flex items-center justify-between gap-3 sm:mb-5">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-blue-400/20 bg-blue-500/10 sm:h-11 sm:w-11">
-                  <Rocket size={20} className="text-cyan-300 sm:hidden" />
+                  <Rocket
+                    size={20}
+                    className="text-cyan-300 sm:hidden"
+                  />
 
                   <Rocket
                     size={21}
@@ -299,7 +327,10 @@ function Login() {
                 </div>
 
                 <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-400/15 bg-emerald-400/5 px-2.5 py-1 text-[9px] font-semibold text-emerald-300 sm:px-3 sm:text-[10px]">
-                  <ShieldCheck size={11} className="sm:hidden" />
+                  <ShieldCheck
+                    size={11}
+                    className="sm:hidden"
+                  />
 
                   <ShieldCheck
                     size={12}
@@ -331,13 +362,20 @@ function Login() {
                   className="relative mt-4 overflow-hidden rounded-xl border border-red-400/15 bg-red-500/[0.06] px-3.5 py-3 text-sm text-red-300 sm:mt-5 sm:px-4"
                 >
                   <div className="flex items-start gap-2">
-                    <X size={17} className="mt-0.5 shrink-0" />
+                    <X
+                      size={17}
+                      className="mt-0.5 shrink-0"
+                    />
 
                     <span className="break-words">{error}</span>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {/* =================================================
+                LOGIN FORM
+            ================================================== */}
 
             <form
               onSubmit={handleSubmit}
@@ -382,10 +420,14 @@ function Login() {
 
                 <button
                   type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
+                  onClick={() =>
+                    setShowPassword((prev) => !prev)
+                  }
                   className="absolute right-3.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/[0.04] hover:text-cyan-400 sm:right-4"
                   aria-label={
-                    showPassword ? "Hide password" : "Show password"
+                    showPassword
+                      ? "Hide password"
+                      : "Show password"
                   }
                 >
                   {showPassword ? (
@@ -401,7 +443,9 @@ function Login() {
               <div className="flex items-center justify-between gap-3 text-[11px] sm:text-sm">
                 <button
                   type="button"
-                  onClick={() => setRememberMe((prev) => !prev)}
+                  onClick={() =>
+                    setRememberMe((prev) => !prev)
+                  }
                   className="flex min-w-0 cursor-pointer items-center gap-2 text-left text-slate-500 transition-colors hover:text-slate-300"
                 >
                   <span
@@ -412,7 +456,10 @@ function Login() {
                     }`}
                   >
                     {rememberMe && (
-                      <Check size={11} strokeWidth={3} />
+                      <Check
+                        size={11}
+                        strokeWidth={3}
+                      />
                     )}
                   </span>
 
@@ -429,7 +476,7 @@ function Login() {
                 </Link>
               </div>
 
-              {/* Login */}
+              {/* Login Button */}
 
               <motion.button
                 type="submit"
@@ -469,7 +516,7 @@ function Login() {
                 <div className="h-px flex-1 bg-white/[0.06]" />
               </div>
 
-              {/* Security note */}
+              {/* Security Note */}
 
               <div className="flex items-center justify-center gap-2 rounded-2xl border border-white/[0.05] bg-white/[0.02] px-3 py-3 text-center text-[10px] leading-4 text-slate-500 sm:px-4 sm:text-[11px]">
                 <Lock
@@ -482,10 +529,11 @@ function Login() {
                 </span>
               </div>
 
-              {/* Mobile signup */}
+              {/* Mobile Signup */}
 
               <p className="pt-1 text-center text-xs text-slate-500 sm:hidden">
                 Don't have an account?
+
                 <Link
                   to="/signup"
                   className="ml-1 font-semibold text-cyan-400"
