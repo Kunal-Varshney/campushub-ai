@@ -1,19 +1,7 @@
 import {
   FiUsers,
-  FiUserCheck,
-  FiShield,
   FiFileText,
   FiX,
-  FiUser,
-  FiMail,
-  FiBookOpen,
-  FiCalendar,
-  FiActivity,
-  FiDownload,
-  FiMessageSquare,
-  FiClock,
-  FiShieldOff,
-  FiMenu,
   FiGrid,
   FiBarChart2,
   FiSettings,
@@ -85,7 +73,17 @@ const AdminSidebar = ({
   const handleNavigation = (id) => {
     setActive(id);
 
-    // Close sidebar on mobile
+    // Close sidebar after selecting a page on mobile
+    if (setMobileOpen) {
+      setMobileOpen(false);
+    }
+  };
+
+  // ============================================================
+  // CLOSE MOBILE SIDEBAR
+  // ============================================================
+
+  const handleCloseSidebar = () => {
     if (setMobileOpen) {
       setMobileOpen(false);
     }
@@ -107,7 +105,8 @@ const AdminSidebar = ({
             backdrop-blur-sm
             lg:hidden
           "
-          onClick={() => setMobileOpen(false)}
+          onClick={handleCloseSidebar}
+          aria-hidden="true"
         />
       )}
 
@@ -122,14 +121,16 @@ const AdminSidebar = ({
           top-0
           z-50
           flex
-          h-screen
-          w-72
+          h-[100dvh]
+          w-[min(18rem,85vw)]
           flex-col
+          overflow-hidden
           border-r
           border-white/10
           bg-slate-950/95
           shadow-2xl
           backdrop-blur-xl
+
           transition-transform
           duration-300
           ease-in-out
@@ -145,28 +146,35 @@ const AdminSidebar = ({
         `}
       >
         {/* ====================================================
-            LOGO
+            LOGO / HEADER
         ==================================================== */}
 
         <div
           className="
             flex
+            min-h-[76px]
+            shrink-0
             items-center
             justify-between
             border-b
             border-white/10
-            px-5
-            py-5
+            px-4
+            py-4
+            sm:px-5
+            lg:min-h-[80px]
             lg:px-6
-            lg:py-6
           "
         >
-          <div className="flex items-center gap-3">
+          {/* BRAND */}
+
+          <div className="flex min-w-0 items-center gap-3">
+            {/* LOGO */}
+
             <div
               className="
                 flex
-                h-11
-                w-11
+                h-10
+                w-10
                 shrink-0
                 items-center
                 justify-center
@@ -176,31 +184,54 @@ const AdminSidebar = ({
                 to-purple-500
                 text-white
                 shadow-lg
+                sm:h-11
+                sm:w-11
               "
             >
-              <FiZap size={22} />
+              <FiZap className="text-lg sm:text-xl" />
             </div>
 
-            <div>
-              <h1 className="text-lg font-bold text-white">
+            {/* BRAND TEXT */}
+
+            <div className="min-w-0">
+              <h1
+                className="
+                  truncate
+                  text-base
+                  font-bold
+                  text-white
+                  sm:text-lg
+                "
+              >
                 CampusHub AI
               </h1>
 
-              <p className="text-xs text-slate-400">
+              <p
+                className="
+                  truncate
+                  text-[11px]
+                  text-slate-400
+                  sm:text-xs
+                "
+              >
                 Admin Panel
               </p>
             </div>
           </div>
 
-          {/* MOBILE CLOSE */}
+          {/* ==================================================
+              MOBILE CLOSE BUTTON
+          ================================================== */}
 
           <button
             type="button"
-            onClick={() => setMobileOpen(false)}
+            onClick={handleCloseSidebar}
+            aria-label="Close admin menu"
             className="
               flex
               h-9
               w-9
+              shrink-0
               items-center
               justify-center
               rounded-lg
@@ -209,8 +240,10 @@ const AdminSidebar = ({
               bg-white/5
               text-slate-400
               transition
+              duration-200
               hover:bg-white/10
               hover:text-white
+              active:scale-95
               lg:hidden
             "
           >
@@ -224,17 +257,21 @@ const AdminSidebar = ({
 
         <nav
           className="
+            min-h-0
             flex-1
-            space-y-2
+            space-y-1.5
             overflow-y-auto
-            px-4
-            py-6
+            overscroll-contain
+            px-3
+            py-5
+            sm:space-y-2
+            sm:px-4
+            sm:py-6
           "
         >
           {navItems.map((item) => {
             const Icon = item.icon;
-            const activeBtn =
-              active === item.id;
+            const activeBtn = active === item.id;
 
             return (
               <button
@@ -243,22 +280,32 @@ const AdminSidebar = ({
                 onClick={() =>
                   handleNavigation(item.id)
                 }
+                aria-current={
+                  activeBtn
+                    ? "page"
+                    : undefined
+                }
                 className={`
+                  group
                   flex
+                  min-h-[46px]
                   w-full
                   items-center
                   gap-3
                   rounded-xl
-                  px-4
+                  border
+                  px-3
                   py-3
                   text-left
                   transition-all
-                  duration-300
+                  duration-200
+                  active:scale-[0.98]
+
+                  sm:px-4
 
                   ${
                     activeBtn
                       ? `
-                        border
                         border-blue-400/30
                         bg-gradient-to-r
                         from-blue-500/20
@@ -267,27 +314,42 @@ const AdminSidebar = ({
                         shadow-lg
                       `
                       : `
+                        border-transparent
                         text-slate-400
+                        hover:border-white/5
                         hover:bg-white/5
                         hover:text-white
                       `
                   }
                 `}
               >
+                {/* ICON */}
+
                 <Icon
                   className={`
                     shrink-0
                     text-lg
+                    transition-colors
+                    duration-200
 
                     ${
                       activeBtn
                         ? "text-blue-400"
-                        : ""
+                        : "text-slate-500 group-hover:text-slate-300"
                     }
                   `}
                 />
 
-                <span className="text-sm font-medium">
+                {/* LABEL */}
+
+                <span
+                  className="
+                    min-w-0
+                    truncate
+                    text-sm
+                    font-medium
+                  "
+                >
                   {item.label}
                 </span>
               </button>
@@ -301,17 +363,22 @@ const AdminSidebar = ({
 
         <div
           className="
+            shrink-0
             border-t
             border-white/10
-            p-4
+            p-3
+            sm:p-4
           "
         >
-          {/* PROFILE */}
+          {/* ==================================================
+              PROFILE
+          ================================================== */}
 
           <div
             className="
-              mb-3
+              mb-2
               flex
+              min-w-0
               items-center
               gap-3
               rounded-xl
@@ -321,11 +388,13 @@ const AdminSidebar = ({
               p-3
             "
           >
+            {/* AVATAR */}
+
             <div
               className="
                 flex
-                h-10
-                w-10
+                h-9
+                w-9
                 shrink-0
                 items-center
                 justify-center
@@ -333,47 +402,77 @@ const AdminSidebar = ({
                 bg-gradient-to-br
                 from-blue-500
                 to-purple-500
+                text-sm
                 font-bold
                 text-white
+                shadow-lg
+                sm:h-10
+                sm:w-10
               "
             >
               K
             </div>
 
-            <div className="min-w-0">
-              <p className="truncate text-sm text-white">
+            {/* USER INFO */}
+
+            <div className="min-w-0 flex-1">
+              <p
+                className="
+                  truncate
+                  text-sm
+                  font-medium
+                  text-white
+                "
+              >
                 Kunal
               </p>
 
-              <p className="truncate text-xs text-slate-400">
+              <p
+                className="
+                  truncate
+                  text-[11px]
+                  text-slate-400
+                  sm:text-xs
+                "
+              >
                 Administrator
               </p>
             </div>
           </div>
 
-          {/* LOGOUT */}
+          {/* ==================================================
+              LOGOUT
+          ================================================== */}
 
           <button
             type="button"
             onClick={handleLogout}
             className="
               flex
+              min-h-[44px]
               w-full
               items-center
               gap-3
               rounded-xl
-              px-4
+              px-3
               py-3
               text-red-400
               transition-all
               duration-200
               hover:bg-red-500/10
               hover:text-red-300
+              active:scale-[0.98]
+              sm:px-4
             "
           >
-            <FiLogOut />
+            <FiLogOut className="shrink-0 text-base" />
 
-            <span className="text-sm font-medium">
+            <span
+              className="
+                text-sm
+                font-medium
+              "
+            >
               Logout
             </span>
           </button>

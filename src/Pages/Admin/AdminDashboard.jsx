@@ -39,6 +39,9 @@ import {
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
 
+  // Mobile sidebar state
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   const [stats, setStats] = useState({
     totalUsers: 0,
     students: 0,

@@ -1,9 +1,10 @@
 import {
   FiShield,
   FiZap,
+  FiMenu,
 } from "react-icons/fi";
 
-const AdminTopbar = () => {
+const AdminTopbar = ({ onMenuClick }) => {
   // ============================================================
   // CURRENT ADMIN
   // ============================================================
@@ -40,11 +41,12 @@ const AdminTopbar = () => {
         sticky
         top-0
         z-30
-        h-20
+        h-16
         border-b
         border-white/10
-        bg-slate-950/80
+        bg-slate-950/90
         backdrop-blur-xl
+        sm:h-20
       "
     >
       <div
@@ -53,13 +55,13 @@ const AdminTopbar = () => {
           h-full
           items-center
           justify-between
-          gap-3
-          px-4
+          gap-2
+          px-3
+          sm:gap-3
           sm:px-6
           lg:px-10
         "
       >
-
         {/* ====================================================
             LEFT
         ==================================================== */}
@@ -69,17 +71,50 @@ const AdminTopbar = () => {
             flex
             min-w-0
             items-center
-            gap-3
+            gap-2
+            sm:gap-3
           "
         >
+          {/* ==================================================
+              MOBILE MENU
+          ================================================== */}
 
-          {/* LOGO */}
-
-          <div
+          <button
+            type="button"
+            onClick={onMenuClick}
+            aria-label="Open admin menu"
             className="
               flex
               h-10
               w-10
+              shrink-0
+              items-center
+              justify-center
+              rounded-xl
+              border
+              border-white/10
+              bg-white/5
+              text-slate-300
+              transition-all
+              duration-200
+              hover:bg-white/10
+              hover:text-white
+              active:scale-95
+              lg:hidden
+            "
+          >
+            <FiMenu size={20} />
+          </button>
+
+          {/* ==================================================
+              LOGO
+          ================================================== */}
+
+          <div
+            className="
+              flex
+              h-9
+              w-9
               shrink-0
               items-center
               justify-center
@@ -89,30 +124,37 @@ const AdminTopbar = () => {
               to-purple-500
               text-white
               shadow-lg
+              sm:h-10
+              sm:w-10
             "
           >
-            <FiZap size={19} />
+            <FiZap
+              size={18}
+              className="sm:h-[19px] sm:w-[19px]"
+            />
           </div>
 
-          {/* BRAND */}
+          {/* ==================================================
+              BRAND
+          ================================================== */}
 
           <div className="min-w-0">
-
             <div
               className="
                 flex
+                min-w-0
                 items-center
                 gap-2
               "
             >
-
               <h1
                 className="
                   truncate
-                  text-base
+                  text-sm
                   font-bold
                   text-white
-                  sm:text-lg
+                  sm:text-base
+                  lg:text-lg
                 "
               >
                 CampusHub
@@ -141,10 +183,8 @@ const AdminTopbar = () => {
                 "
               >
                 <FiShield size={11} />
-
                 Admin
               </span>
-
             </div>
 
             {/* SUBTITLE */}
@@ -152,6 +192,7 @@ const AdminTopbar = () => {
             <p
               className="
                 hidden
+                truncate
                 text-xs
                 text-slate-500
                 sm:block
@@ -159,9 +200,7 @@ const AdminTopbar = () => {
             >
               Platform Management Console
             </p>
-
           </div>
-
         </div>
 
         {/* ====================================================
@@ -173,12 +212,13 @@ const AdminTopbar = () => {
             flex
             shrink-0
             items-center
-            gap-3
+            gap-2
             sm:gap-4
           "
         >
-
-          {/* WELCOME TEXT */}
+          {/* ==================================================
+              WELCOME TEXT
+          ================================================== */}
 
           <div
             className="
@@ -188,7 +228,6 @@ const AdminTopbar = () => {
               md:flex
             "
           >
-
             <p
               className="
                 max-w-[220px]
@@ -209,30 +248,31 @@ const AdminTopbar = () => {
             >
               Admin Control Panel
             </p>
-
           </div>
 
-          {/* PROFILE */}
+          {/* ==================================================
+              PROFILE
+          ================================================== */}
 
           <div
             className="
               flex
               items-center
-              gap-3
+              gap-2
               border-l
               border-white/10
-              pl-3
+              pl-2
+              sm:gap-3
               sm:pl-4
             "
           >
-
             {/* AVATAR */}
 
             <div
               className="
                 flex
-                h-10
-                w-10
+                h-9
+                w-9
                 shrink-0
                 items-center
                 justify-center
@@ -240,11 +280,13 @@ const AdminTopbar = () => {
                 bg-gradient-to-br
                 from-blue-500
                 to-purple-500
+                text-sm
                 font-bold
                 text-white
                 shadow-lg
                 sm:h-11
                 sm:w-11
+                sm:text-base
               "
             >
               {initial}
@@ -252,8 +294,13 @@ const AdminTopbar = () => {
 
             {/* NAME */}
 
-            <div className="hidden min-w-0 sm:block">
-
+            <div
+              className="
+                hidden
+                min-w-0
+                sm:block
+              "
+            >
               <p
                 className="
                   max-w-[120px]
@@ -282,13 +329,9 @@ const AdminTopbar = () => {
               >
                 Administrator
               </span>
-
             </div>
-
           </div>
-
         </div>
-
       </div>
     </header>
   );
