@@ -4,7 +4,10 @@ import {
   FiMenu,
 } from "react-icons/fi";
 
-const AdminTopbar = ({ onMenuClick }) => {
+const AdminTopbar = ({
+  mobileOpen,
+  setMobileOpen,
+}) => {
   // ============================================================
   // CURRENT ADMIN
   // ============================================================
@@ -23,13 +26,10 @@ const AdminTopbar = ({ onMenuClick }) => {
     );
   }
 
-  const name =
-    user.name || "Admin";
+  const name = user.name || "Admin";
 
   const initial =
-    name
-      .charAt(0)
-      .toUpperCase() || "A";
+    name.charAt(0).toUpperCase() || "A";
 
   // ============================================================
   // RENDER
@@ -41,12 +41,11 @@ const AdminTopbar = ({ onMenuClick }) => {
         sticky
         top-0
         z-30
-        h-16
+        h-20
         border-b
         border-white/10
-        bg-slate-950/90
+        bg-slate-950/80
         backdrop-blur-xl
-        sm:h-20
       "
     >
       <div
@@ -55,13 +54,13 @@ const AdminTopbar = ({ onMenuClick }) => {
           h-full
           items-center
           justify-between
-          gap-2
-          px-3
-          sm:gap-3
+          gap-3
+          px-4
           sm:px-6
           lg:px-10
         "
       >
+
         {/* ====================================================
             LEFT
         ==================================================== */}
@@ -71,18 +70,19 @@ const AdminTopbar = ({ onMenuClick }) => {
             flex
             min-w-0
             items-center
-            gap-2
-            sm:gap-3
+            gap-3
           "
         >
-          {/* ==================================================
-              MOBILE MENU
-          ================================================== */}
+
+          {/* MOBILE MENU BUTTON */}
 
           <button
             type="button"
-            onClick={onMenuClick}
-            aria-label="Open admin menu"
+            onClick={() => {
+              if (typeof setMobileOpen === "function") {
+                setMobileOpen((prev) => !prev);
+              }
+            }}
             className="
               flex
               h-10
@@ -102,19 +102,22 @@ const AdminTopbar = ({ onMenuClick }) => {
               active:scale-95
               lg:hidden
             "
+            aria-label={
+              mobileOpen
+                ? "Close admin menu"
+                : "Open admin menu"
+            }
           >
             <FiMenu size={20} />
           </button>
 
-          {/* ==================================================
-              LOGO
-          ================================================== */}
+          {/* LOGO */}
 
           <div
             className="
               flex
-              h-9
-              w-9
+              h-10
+              w-10
               shrink-0
               items-center
               justify-center
@@ -124,37 +127,24 @@ const AdminTopbar = ({ onMenuClick }) => {
               to-purple-500
               text-white
               shadow-lg
-              sm:h-10
-              sm:w-10
             "
           >
-            <FiZap
-              size={18}
-              className="sm:h-[19px] sm:w-[19px]"
-            />
+            <FiZap size={19} />
           </div>
 
-          {/* ==================================================
-              BRAND
-          ================================================== */}
+          {/* BRAND */}
 
           <div className="min-w-0">
-            <div
-              className="
-                flex
-                min-w-0
-                items-center
-                gap-2
-              "
-            >
+
+            <div className="flex items-center gap-2">
+
               <h1
                 className="
                   truncate
-                  text-sm
+                  text-base
                   font-bold
                   text-white
-                  sm:text-base
-                  lg:text-lg
+                  sm:text-lg
                 "
               >
                 CampusHub
@@ -185,6 +175,7 @@ const AdminTopbar = ({ onMenuClick }) => {
                 <FiShield size={11} />
                 Admin
               </span>
+
             </div>
 
             {/* SUBTITLE */}
@@ -192,7 +183,6 @@ const AdminTopbar = ({ onMenuClick }) => {
             <p
               className="
                 hidden
-                truncate
                 text-xs
                 text-slate-500
                 sm:block
@@ -200,7 +190,9 @@ const AdminTopbar = ({ onMenuClick }) => {
             >
               Platform Management Console
             </p>
+
           </div>
+
         </div>
 
         {/* ====================================================
@@ -212,13 +204,12 @@ const AdminTopbar = ({ onMenuClick }) => {
             flex
             shrink-0
             items-center
-            gap-2
+            gap-3
             sm:gap-4
           "
         >
-          {/* ==================================================
-              WELCOME TEXT
-          ================================================== */}
+
+          {/* WELCOME TEXT */}
 
           <div
             className="
@@ -228,6 +219,7 @@ const AdminTopbar = ({ onMenuClick }) => {
               md:flex
             "
           >
+
             <p
               className="
                 max-w-[220px]
@@ -240,39 +232,33 @@ const AdminTopbar = ({ onMenuClick }) => {
               Welcome back, {name}
             </p>
 
-            <p
-              className="
-                text-xs
-                text-slate-500
-              "
-            >
+            <p className="text-xs text-slate-500">
               Admin Control Panel
             </p>
+
           </div>
 
-          {/* ==================================================
-              PROFILE
-          ================================================== */}
+          {/* PROFILE */}
 
           <div
             className="
               flex
               items-center
-              gap-2
+              gap-3
               border-l
               border-white/10
-              pl-2
-              sm:gap-3
+              pl-3
               sm:pl-4
             "
           >
+
             {/* AVATAR */}
 
             <div
               className="
                 flex
-                h-9
-                w-9
+                h-10
+                w-10
                 shrink-0
                 items-center
                 justify-center
@@ -280,13 +266,11 @@ const AdminTopbar = ({ onMenuClick }) => {
                 bg-gradient-to-br
                 from-blue-500
                 to-purple-500
-                text-sm
                 font-bold
                 text-white
                 shadow-lg
                 sm:h-11
                 sm:w-11
-                sm:text-base
               "
             >
               {initial}
@@ -294,13 +278,8 @@ const AdminTopbar = ({ onMenuClick }) => {
 
             {/* NAME */}
 
-            <div
-              className="
-                hidden
-                min-w-0
-                sm:block
-              "
-            >
+            <div className="hidden min-w-0 sm:block">
+
               <p
                 className="
                   max-w-[120px]
@@ -329,9 +308,13 @@ const AdminTopbar = ({ onMenuClick }) => {
               >
                 Administrator
               </span>
+
             </div>
+
           </div>
+
         </div>
+
       </div>
     </header>
   );
