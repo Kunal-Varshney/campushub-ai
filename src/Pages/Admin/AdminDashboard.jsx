@@ -442,10 +442,15 @@ const AdminDashboard = () => {
       <AdminSidebar
         active={activeTab}
         setActive={setActiveTab}
+        mobileOpen={mobileOpen}
+        setMobileOpen={setMobileOpen}
       />
 
       <div className="min-w-0 lg:ml-64">
-        <AdminTopbar />
+        <AdminTopbar
+          mobileOpen={mobileOpen}
+          setMobileOpen={setMobileOpen}
+        />
 
         <main className="p-4 sm:p-6 lg:p-10">
 
