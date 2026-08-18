@@ -8,6 +8,7 @@ import {
   FiEdit2,
   FiSave,
 } from "react-icons/fi";
+
 import {
   getNotes,
   approveNote,
@@ -16,18 +17,85 @@ import {
   deleteNote,
 } from "../../services/adminService";
 
-const CATEGORIES = ["DSA", "Machine Learning", "DBMS", "Web Development", "Programming"];
+const CATEGORIES = [
+  "DSA",
+  "Machine Learning",
+  "DBMS",
+  "Web Development",
+  "Programming",
+];
 
 const StatusBadge = ({ status }) => {
+  const normalizedStatus = status || "pending";
+
   const styles = {
-    approved: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30",
-    rejected: "bg-red-500/10 text-red-300 border-red-500/30",
-    pending: "bg-amber-500/10 text-amber-300 border-amber-500/30",
+    approved:
+      "bg-emerald-500/10 text-emerald-300 border-emerald-500/30",
+    rejected:
+      "bg-red-500/10 text-red-300 border-red-500/30",
+    pending:
+      "bg-amber-500/10 text-amber-300 border-amber-500/30",
   };
+
   return (
-    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${styles[status] || styles.pending}`}>
-      {status || "pending"}
+    <span
+      className={`
+        inline-flex
+        items-center
+        rounded-full
+        border
+        px-3
+        py-1
+        text-[11px]
+        font-semibold
+        capitalize
+        whitespace-nowrap
+        ${styles[normalizedStatus] || styles.pending}
+      `}
+    >
+      {normalizedStatus}
     </span>
+  );
+};
+
+const ActionButton = ({
+  onClick,
+  title,
+  children,
+  className = "",
+}) => {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (typeof onClick === "function") {
+          onClick();
+        }
+      }}
+      title={title}
+      aria-label={title}
+      className={`
+        flex
+        h-9
+        w-9
+        shrink-0
+        cursor-pointer
+        items-center
+        justify-center
+        rounded-lg
+        border
+        transition-all
+        duration-200
+        hover:scale-105
+        active:scale-95
+        ${className}
+      `}
+    >
+      {children}
+    </button>
   );
 };
 
@@ -42,32 +110,53 @@ const Notes = () => {
   const [status, setStatus] = useState("");
 
   const [editingId, setEditingId] = useState(null);
-  const [editDraft, setEditDraft] = useState({ title: "", description: "", category: "" });
+  const [editDraft, setEditDraft] = useState({
+    title: "",
+    description: "",
+    category: "",
+  });
 
   const showToast = (text) => {
     setMessage(text);
-    setTimeout(() => setMessage(""), 3000);
+
+    setTimeout(() => {
+      setMessage("");
+    }, 3000);
   };
 
   const fetchNotes = useCallback(async () => {
     setLoading(true);
     setError("");
-    const res = await getNotes({ search, category, status });
-    if (res?.success) {
-      setNotes(res.notes);
-    } else {
-      setError(res?.message || "Failed to load notes");
+
+    try {
+      const res = await getNotes({
+        search,
+        category,
+        status,
+      });
+
+      if (res?.success) {
+        setNotes(res.notes || []);
+      } else {
+        setError(res?.message || "Failed to load notes");
+      }
+    } catch (err) {
+      console.error("Failed to fetch notes:", err);
+      setError("Failed to load notes");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [search, category, status]);
 
   useEffect(() => {
     const timer = setTimeout(fetchNotes, 350);
+
     return () => clearTimeout(timer);
   }, [fetchNotes]);
 
   const handleApprove = async (note) => {
     const res = await approveNote(note._id);
+
     if (res?.success) {
       showToast(`"${note.title}" approved`);
       fetchNotes();
@@ -78,6 +167,7 @@ const Notes = () => {
 
   const handleReject = async (note) => {
     const res = await rejectNote(note._id);
+
     if (res?.success) {
       showToast(`"${note.title}" rejected`);
       fetchNotes();
@@ -87,8 +177,16 @@ const Notes = () => {
   };
 
   const handleDelete = async (note) => {
-    if (!window.confirm(`Delete "${note.title}"? This cannot be undone.`)) return;
+    if (
+      !window.confirm(
+        `Delete "${note.title}"? This cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
     const res = await deleteNote(note._id);
+
     if (res?.success) {
       showToast("Note deleted");
       fetchNotes();
@@ -99,16 +197,27 @@ const Notes = () => {
 
   const startEdit = (note) => {
     setEditingId(note._id);
-    setEditDraft({ title: note.title, description: note.description || "", category: note.category });
+
+    setEditDraft({
+      title: note.title,
+      description: note.description || "",
+      category: note.category,
+    });
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setEditDraft({ title: "", description: "", category: "" });
+
+    setEditDraft({
+      title: "",
+      description: "",
+      category: "",
+    });
   };
 
   const saveEdit = async (note) => {
     const res = await updateNote(note._id, editDraft);
+
     if (res?.success) {
       showToast("Note updated");
       cancelEdit();
@@ -119,168 +228,1021 @@ const Notes = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-slate-950 relative overflow-hidden">
+    <div className="relative min-h-screen w-full overflow-hidden bg-slate-950">
+      {/* BACKGROUND */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-orange-500/10 blur-3xl" />
-        <div className="absolute top-1/3 -right-40 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
+        <div className="absolute -left-40 -top-40 h-96 w-96 rounded-full bg-orange-500/10 blur-3xl" />
+
+        <div className="absolute -right-40 top-1/3 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
       </div>
 
-      <main className="relative z-10 px-4 sm:px-6 lg:px-10 py-8 max-w-[1600px] mx-auto">
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Notes Management</h1>
-          <p className="text-slate-400 text-sm sm:text-base mt-1">
+      <main
+        className="
+          relative
+          z-10
+          mx-auto
+          w-full
+          max-w-[1600px]
+          px-4
+          py-6
+          sm:px-6
+          sm:py-8
+          lg:px-10
+        "
+      >
+        {/* =====================================================
+            HEADER
+        ====================================================== */}
+
+        <div className="mb-6 sm:mb-8">
+          <h1
+            className="
+              text-2xl
+              font-bold
+              tracking-tight
+              text-white
+              sm:text-3xl
+            "
+          >
+            Notes Management
+          </h1>
+
+          <p
+            className="
+              mt-1
+              max-w-2xl
+              text-sm
+              leading-relaxed
+              text-slate-400
+              sm:text-base
+            "
+          >
             Review, approve and manage uploaded notes
           </p>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3 mb-6">
-          <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 flex-1 min-w-[220px]">
-            <FiSearch className="text-slate-400 shrink-0" />
+        {/* =====================================================
+            FILTERS
+        ====================================================== */}
+
+        <div
+          className="
+            mb-6
+            grid
+            grid-cols-1
+            gap-3
+            sm:grid-cols-2
+            lg:flex
+            lg:flex-wrap
+            lg:items-center
+          "
+        >
+          {/* SEARCH */}
+
+          <div
+            className="
+              flex
+              min-w-0
+              w-full
+              items-center
+              gap-3
+              rounded-2xl
+              border
+              border-white/10
+              bg-white/5
+              px-4
+              py-3
+              sm:col-span-2
+              lg:w-auto
+              lg:min-w-[280px]
+              lg:flex-1
+            "
+          >
+            <FiSearch className="shrink-0 text-slate-400" />
+
             <input
+              type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search notes..."
-              className="bg-transparent outline-none text-white w-full placeholder:text-slate-500 text-sm"
+              className="
+                min-w-0
+                w-full
+                bg-transparent
+                text-sm
+                text-white
+                outline-none
+                placeholder:text-slate-500
+              "
             />
           </div>
+
+          {/* CATEGORY */}
 
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50"
+            className="
+              w-full
+              min-w-0
+              rounded-2xl
+              border
+              border-white/10
+              bg-slate-900
+              px-4
+              py-3
+              text-sm
+              text-white
+              outline-none
+              transition
+              focus:border-blue-500/50
+              lg:w-auto
+              lg:min-w-[190px]
+            "
           >
-            <option value="" className="bg-slate-900">All categories</option>
+            <option value="" className="bg-slate-900">
+              All categories
+            </option>
+
             {CATEGORIES.map((c) => (
-              <option key={c} value={c} className="bg-slate-900">{c}</option>
+              <option
+                key={c}
+                value={c}
+                className="bg-slate-900"
+              >
+                {c}
+              </option>
             ))}
           </select>
+
+          {/* STATUS */}
 
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50"
+            className="
+              w-full
+              min-w-0
+              rounded-2xl
+              border
+              border-white/10
+              bg-slate-900
+              px-4
+              py-3
+              text-sm
+              text-white
+              outline-none
+              transition
+              focus:border-blue-500/50
+              lg:w-auto
+              lg:min-w-[170px]
+            "
           >
-            <option value="" className="bg-slate-900">All statuses</option>
-            <option value="pending" className="bg-slate-900">Pending</option>
-            <option value="approved" className="bg-slate-900">Approved</option>
-            <option value="rejected" className="bg-slate-900">Rejected</option>
+            <option value="" className="bg-slate-900">
+              All statuses
+            </option>
+
+            <option value="pending" className="bg-slate-900">
+              Pending
+            </option>
+
+            <option value="approved" className="bg-slate-900">
+              Approved
+            </option>
+
+            <option value="rejected" className="bg-slate-900">
+              Rejected
+            </option>
           </select>
         </div>
 
+        {/* ERROR */}
+
         {error && (
-          <div className="mb-6 rounded-2xl border border-red-500/30 bg-red-500/10 backdrop-blur-xl px-5 py-4 text-red-300 text-sm">
+          <div
+            className="
+              mb-6
+              rounded-2xl
+              border
+              border-red-500/30
+              bg-red-500/10
+              px-4
+              py-4
+              text-sm
+              leading-relaxed
+              text-red-300
+              sm:px-5
+            "
+          >
             {error}
           </div>
         )}
 
-        {/* Notes table */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
+        {/* =====================================================
+            NOTES CONTAINER
+        ====================================================== */}
+
+        <div
+          className="
+            overflow-hidden
+            rounded-2xl
+            border
+            border-white/10
+            bg-white/5
+            backdrop-blur-xl
+          "
+        >
+          {/* LOADING */}
+
           {loading ? (
-            <div className="p-6 space-y-3">
+            <div className="space-y-3 p-4 sm:p-6">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-14 rounded-xl bg-white/5 animate-pulse" />
+                <div
+                  key={i}
+                  className="
+                    h-20
+                    animate-pulse
+                    rounded-xl
+                    bg-white/5
+                    sm:h-14
+                  "
+                />
               ))}
             </div>
           ) : notes.length === 0 ? (
-            <div className="py-16 text-center text-slate-400">No notes found.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead>
-                  <tr className="border-b border-white/10 bg-white/5">
-                    {["Note", "Category", "Uploaded By", "Status", "Downloads", "Actions"].map((col) => (
-                      <th key={col} className="px-5 py-4 font-medium text-slate-400 uppercase tracking-wide text-xs whitespace-nowrap">
-                        {col}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {notes.map((note) => (
-                    <tr key={note._id} className="border-b border-white/5 last:border-b-0 hover:bg-white/5 transition-colors duration-200">
-                      {editingId === note._id ? (
-                        <>
-                          <td className="px-5 py-4">
-                            <input
-                              value={editDraft.title}
-                              onChange={(e) => setEditDraft((p) => ({ ...p, title: e.target.value }))}
-                              className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/10 text-white text-sm outline-none focus:border-blue-500/50"
-                            />
-                          </td>
-                          <td className="px-5 py-4">
-                            <select
-                              value={editDraft.category}
-                              onChange={(e) => setEditDraft((p) => ({ ...p, category: e.target.value }))}
-                              className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/10 text-white text-sm outline-none"
-                            >
-                              {CATEGORIES.map((c) => (
-                                <option key={c} value={c} className="bg-slate-900">{c}</option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="px-5 py-4 text-slate-400" colSpan={2}>
-                            editing...
-                          </td>
-                          <td className="px-5 py-4 text-slate-400">{note.downloads ?? 0}</td>
-                          <td className="px-5 py-4">
-                            <div className="flex items-center gap-2">
-                              <button onClick={() => saveEdit(note)} className="flex items-center justify-center h-8 w-8 rounded-lg text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20">
-                                <FiSave className="text-sm" />
-                              </button>
-                              <button onClick={cancelEdit} className="flex items-center justify-center h-8 w-8 rounded-lg text-slate-300 bg-white/5 border border-white/10 hover:bg-white/10">
-                                <FiX className="text-sm" />
-                              </button>
-                            </div>
-                          </td>
-                        </>
-                      ) : (
-                        <>
-                          <td className="px-5 py-4">
-                            <div className="flex items-center gap-3 min-w-0">
-                              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center text-white shrink-0">
-                                <FiFileText className="text-sm" />
-                              </div>
-                              <span className="text-white font-medium truncate">{note.title}</span>
-                            </div>
-                          </td>
-                          <td className="px-5 py-4 text-blue-300 whitespace-nowrap">{note.category}</td>
-                          <td className="px-5 py-4 text-slate-300 whitespace-nowrap">{note.uploadedBy?.name || "—"}</td>
-                          <td className="px-5 py-4 whitespace-nowrap"><StatusBadge status={note.status} /></td>
-                          <td className="px-5 py-4 text-slate-400 whitespace-nowrap">{note.downloads ?? 0}</td>
-                          <td className="px-5 py-4">
-                            <div className="flex items-center gap-2">
-                              <button onClick={() => handleApprove(note)} title="Approve" className="flex items-center justify-center h-8 w-8 rounded-lg text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20">
-                                <FiCheck className="text-sm" />
-                              </button>
-                              <button onClick={() => handleReject(note)} title="Reject" className="flex items-center justify-center h-8 w-8 rounded-lg text-amber-300 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20">
-                                <FiX className="text-sm" />
-                              </button>
-                              <button onClick={() => startEdit(note)} title="Edit" className="flex items-center justify-center h-8 w-8 rounded-lg text-blue-300 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20">
-                                <FiEdit2 className="text-sm" />
-                              </button>
-                              <button onClick={() => handleDelete(note)} title="Delete" className="flex items-center justify-center h-8 w-8 rounded-lg text-red-300 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20">
-                                <FiTrash2 className="text-sm" />
-                              </button>
-                            </div>
-                          </td>
-                        </>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            /* EMPTY */
+
+            <div
+              className="
+                flex
+                min-h-[220px]
+                flex-col
+                items-center
+                justify-center
+                px-5
+                py-16
+                text-center
+              "
+            >
+              <div
+                className="
+                  mb-4
+                  flex
+                  h-14
+                  w-14
+                  items-center
+                  justify-center
+                  rounded-2xl
+                  bg-white/5
+                  text-slate-500
+                "
+              >
+                <FiFileText size={24} />
+              </div>
+
+              <p className="text-sm font-medium text-slate-300">
+                No notes found.
+              </p>
+
+              <p className="mt-1 text-xs text-slate-500">
+                Try changing your search or filters.
+              </p>
             </div>
+          ) : (
+            <>
+              {/* =================================================
+                  DESKTOP TABLE
+              ================================================== */}
+
+              <div className="hidden overflow-x-auto md:block">
+                <table className="w-full min-w-[900px] text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-white/10 bg-white/5">
+                      {[
+                        "Note",
+                        "Category",
+                        "Uploaded By",
+                        "Status",
+                        "Downloads",
+                        "Actions",
+                      ].map((col) => (
+                        <th
+                          key={col}
+                          className="
+                            whitespace-nowrap
+                            px-5
+                            py-4
+                            text-xs
+                            font-medium
+                            uppercase
+                            tracking-wide
+                            text-slate-400
+                          "
+                        >
+                          {col}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {notes.map((note) => (
+                      <tr
+                        key={note._id}
+                        className="
+                          border-b
+                          border-white/5
+                          transition-colors
+                          duration-200
+                          last:border-b-0
+                          hover:bg-white/5
+                        "
+                      >
+                        {editingId === note._id ? (
+                          <>
+                            {/* EDIT TITLE */}
+
+                            <td className="px-5 py-4">
+                              <input
+                                value={editDraft.title}
+                                onChange={(e) =>
+                                  setEditDraft((p) => ({
+                                    ...p,
+                                    title: e.target.value,
+                                  }))
+                                }
+                                className="
+                                  w-full
+                                  min-w-[180px]
+                                  rounded-lg
+                                  border
+                                  border-white/10
+                                  bg-white/10
+                                  px-3
+                                  py-2
+                                  text-sm
+                                  text-white
+                                  outline-none
+                                  focus:border-blue-500/50
+                                "
+                              />
+                            </td>
+
+                            {/* EDIT CATEGORY */}
+
+                            <td className="px-5 py-4">
+                              <select
+                                value={editDraft.category}
+                                onChange={(e) =>
+                                  setEditDraft((p) => ({
+                                    ...p,
+                                    category: e.target.value,
+                                  }))
+                                }
+                                className="
+                                  w-full
+                                  min-w-[160px]
+                                  rounded-lg
+                                  border
+                                  border-white/10
+                                  bg-slate-900
+                                  px-3
+                                  py-2
+                                  text-sm
+                                  text-white
+                                  outline-none
+                                "
+                              >
+                                {CATEGORIES.map((c) => (
+                                  <option
+                                    key={c}
+                                    value={c}
+                                    className="bg-slate-900"
+                                  >
+                                    {c}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+
+                            <td
+                              className="px-5 py-4 text-slate-400"
+                              colSpan={2}
+                            >
+                              Editing...
+                            </td>
+
+                            <td className="whitespace-nowrap px-5 py-4 text-slate-400">
+                              {note.downloads ?? 0}
+                            </td>
+
+                            <td className="px-5 py-4">
+                              <div className="flex items-center gap-2">
+                                <ActionButton
+                                  onClick={() =>
+                                    saveEdit(note)
+                                  }
+                                  title="Save"
+                                  className="
+                                    border-emerald-500/20
+                                    bg-emerald-500/10
+                                    text-emerald-300
+                                    hover:bg-emerald-500/20
+                                  "
+                                >
+                                  <FiSave />
+                                </ActionButton>
+
+                                <ActionButton
+                                  onClick={cancelEdit}
+                                  title="Cancel"
+                                  className="
+                                    border-white/10
+                                    bg-white/5
+                                    text-slate-300
+                                    hover:bg-white/10
+                                  "
+                                >
+                                  <FiX />
+                                </ActionButton>
+                              </div>
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            {/* NOTE */}
+
+                            <td className="px-5 py-4">
+                              <div className="flex min-w-0 items-center gap-3">
+                                <div
+                                  className="
+                                    flex
+                                    h-9
+                                    w-9
+                                    shrink-0
+                                    items-center
+                                    justify-center
+                                    rounded-xl
+                                    bg-gradient-to-br
+                                    from-orange-500
+                                    to-amber-400
+                                    text-white
+                                  "
+                                >
+                                  <FiFileText className="text-sm" />
+                                </div>
+
+                                <span
+                                  className="
+                                    max-w-[260px]
+                                    truncate
+                                    font-medium
+                                    text-white
+                                  "
+                                >
+                                  {note.title}
+                                </span>
+                              </div>
+                            </td>
+
+                            {/* CATEGORY */}
+
+                            <td className="whitespace-nowrap px-5 py-4 text-blue-300">
+                              {note.category}
+                            </td>
+
+                            {/* UPLOADED BY */}
+
+                            <td className="whitespace-nowrap px-5 py-4 text-slate-300">
+                              {note.uploadedBy?.name || "—"}
+                            </td>
+
+                            {/* STATUS */}
+
+                            <td className="whitespace-nowrap px-5 py-4">
+                              <StatusBadge
+                                status={note.status}
+                              />
+                            </td>
+
+                            {/* DOWNLOADS */}
+
+                            <td className="whitespace-nowrap px-5 py-4 text-slate-400">
+                              {note.downloads ?? 0}
+                            </td>
+
+                            {/* ACTIONS */}
+
+                            <td className="px-5 py-4">
+                              <div className="flex items-center gap-2">
+                                <ActionButton
+                                  onClick={() =>
+                                    handleApprove(note)
+                                  }
+                                  title="Approve"
+                                  className="
+                                    border-emerald-500/20
+                                    bg-emerald-500/10
+                                    text-emerald-300
+                                    hover:bg-emerald-500/20
+                                  "
+                                >
+                                  <FiCheck />
+                                </ActionButton>
+
+                                <ActionButton
+                                  onClick={() =>
+                                    handleReject(note)
+                                  }
+                                  title="Reject"
+                                  className="
+                                    border-amber-500/20
+                                    bg-amber-500/10
+                                    text-amber-300
+                                    hover:bg-amber-500/20
+                                  "
+                                >
+                                  <FiX />
+                                </ActionButton>
+
+                                <ActionButton
+                                  onClick={() =>
+                                    startEdit(note)
+                                  }
+                                  title="Edit"
+                                  className="
+                                    border-blue-500/20
+                                    bg-blue-500/10
+                                    text-blue-300
+                                    hover:bg-blue-500/20
+                                  "
+                                >
+                                  <FiEdit2 />
+                                </ActionButton>
+
+                                <ActionButton
+                                  onClick={() =>
+                                    handleDelete(note)
+                                  }
+                                  title="Delete"
+                                  className="
+                                    border-red-500/20
+                                    bg-red-500/10
+                                    text-red-300
+                                    hover:bg-red-500/20
+                                  "
+                                >
+                                  <FiTrash2 />
+                                </ActionButton>
+                              </div>
+                            </td>
+                          </>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* =================================================
+                  MOBILE CARDS
+              ================================================== */}
+
+              <div className="space-y-3 p-3 md:hidden">
+                {notes.map((note) => (
+                  <div
+                    key={note._id}
+                    className="
+                      overflow-hidden
+                      rounded-2xl
+                      border
+                      border-white/10
+                      bg-white/[0.03]
+                      p-4
+                    "
+                  >
+                    {editingId === note._id ? (
+                      /* ===============================
+                         MOBILE EDIT
+                      ================================ */
+
+                      <div className="space-y-4">
+                        <div>
+                          <label
+                            className="
+                              mb-2
+                              block
+                              text-[11px]
+                              font-semibold
+                              uppercase
+                              tracking-wide
+                              text-slate-500
+                            "
+                          >
+                            Note Title
+                          </label>
+
+                          <input
+                            value={editDraft.title}
+                            onChange={(e) =>
+                              setEditDraft((p) => ({
+                                ...p,
+                                title: e.target.value,
+                              }))
+                            }
+                            className="
+                              w-full
+                              rounded-xl
+                              border
+                              border-white/10
+                              bg-white/5
+                              px-3
+                              py-3
+                              text-sm
+                              text-white
+                              outline-none
+                              focus:border-blue-500/50
+                            "
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            className="
+                              mb-2
+                              block
+                              text-[11px]
+                              font-semibold
+                              uppercase
+                              tracking-wide
+                              text-slate-500
+                            "
+                          >
+                            Category
+                          </label>
+
+                          <select
+                            value={editDraft.category}
+                            onChange={(e) =>
+                              setEditDraft((p) => ({
+                                ...p,
+                                category: e.target.value,
+                              }))
+                            }
+                            className="
+                              w-full
+                              rounded-xl
+                              border
+                              border-white/10
+                              bg-slate-900
+                              px-3
+                              py-3
+                              text-sm
+                              text-white
+                              outline-none
+                            "
+                          >
+                            {CATEGORIES.map((c) => (
+                              <option
+                                key={c}
+                                value={c}
+                                className="bg-slate-900"
+                              >
+                                {c}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="flex gap-2 border-t border-white/5 pt-4">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              saveEdit(note)
+                            }
+                            className="
+                              flex
+                              min-h-10
+                              flex-1
+                              items-center
+                              justify-center
+                              gap-2
+                              rounded-xl
+                              border
+                              border-emerald-500/20
+                              bg-emerald-500/10
+                              px-4
+                              text-sm
+                              font-medium
+                              text-emerald-300
+                              transition
+                              hover:bg-emerald-500/20
+                            "
+                          >
+                            <FiSave />
+                            Save
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={cancelEdit}
+                            className="
+                              flex
+                              min-h-10
+                              flex-1
+                              items-center
+                              justify-center
+                              gap-2
+                              rounded-xl
+                              border
+                              border-white/10
+                              bg-white/5
+                              px-4
+                              text-sm
+                              font-medium
+                              text-slate-300
+                              transition
+                              hover:bg-white/10
+                            "
+                          >
+                            <FiX />
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* ===============================
+                         MOBILE NOTE CARD
+                      ================================ */
+
+                      <>
+                        {/* CARD HEADER */}
+
+                        <div className="flex items-start gap-3">
+                          <div
+                            className="
+                              flex
+                              h-11
+                              w-11
+                              shrink-0
+                              items-center
+                              justify-center
+                              rounded-xl
+                              bg-gradient-to-br
+                              from-orange-500
+                              to-amber-400
+                              text-white
+                              shadow-lg
+                            "
+                          >
+                            <FiFileText size={18} />
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <h3
+                              className="
+                                break-words
+                                text-sm
+                                font-semibold
+                                leading-5
+                                text-white
+                              "
+                            >
+                              {note.title || "Untitled Note"}
+                            </h3>
+
+                            <p className="mt-1 break-words text-xs text-slate-500">
+                              Uploaded by{" "}
+                              <span className="text-slate-400">
+                                {note.uploadedBy?.name ||
+                                  "Unknown"}
+                              </span>
+                            </p>
+                          </div>
+
+                          <StatusBadge
+                            status={note.status}
+                          />
+                        </div>
+
+                        {/* DETAILS */}
+
+                        <div
+                          className="
+                            mt-4
+                            grid
+                            grid-cols-2
+                            gap-2
+                          "
+                        >
+                          <div
+                            className="
+                              min-w-0
+                              rounded-xl
+                              border
+                              border-white/5
+                              bg-white/[0.03]
+                              p-3
+                            "
+                          >
+                            <p
+                              className="
+                                mb-1
+                                text-[10px]
+                                font-semibold
+                                uppercase
+                                tracking-wide
+                                text-slate-500
+                              "
+                            >
+                              Category
+                            </p>
+
+                            <p
+                              className="
+                                break-words
+                                text-xs
+                                font-medium
+                                text-blue-300
+                              "
+                            >
+                              {note.category || "—"}
+                            </p>
+                          </div>
+
+                          <div
+                            className="
+                              min-w-0
+                              rounded-xl
+                              border
+                              border-white/5
+                              bg-white/[0.03]
+                              p-3
+                            "
+                          >
+                            <p
+                              className="
+                                mb-1
+                                text-[10px]
+                                font-semibold
+                                uppercase
+                                tracking-wide
+                                text-slate-500
+                              "
+                            >
+                              Downloads
+                            </p>
+
+                            <p className="text-xs font-medium text-slate-300">
+                              {note.downloads ?? 0}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* ACTIONS */}
+
+                        <div
+                          className="
+                            mt-4
+                            flex
+                            items-center
+                            justify-between
+                            gap-2
+                            border-t
+                            border-white/5
+                            pt-4
+                          "
+                        >
+                          <span className="text-[11px] text-slate-500">
+                            Manage note
+                          </span>
+
+                          <div className="flex items-center gap-2">
+                            <ActionButton
+                              onClick={() =>
+                                handleApprove(note)
+                              }
+                              title="Approve"
+                              className="
+                                border-emerald-500/20
+                                bg-emerald-500/10
+                                text-emerald-300
+                                hover:bg-emerald-500/20
+                              "
+                            >
+                              <FiCheck />
+                            </ActionButton>
+
+                            <ActionButton
+                              onClick={() =>
+                                handleReject(note)
+                              }
+                              title="Reject"
+                              className="
+                                border-amber-500/20
+                                bg-amber-500/10
+                                text-amber-300
+                                hover:bg-amber-500/20
+                              "
+                            >
+                              <FiX />
+                            </ActionButton>
+
+                            <ActionButton
+                              onClick={() =>
+                                startEdit(note)
+                              }
+                              title="Edit"
+                              className="
+                                border-blue-500/20
+                                bg-blue-500/10
+                                text-blue-300
+                                hover:bg-blue-500/20
+                              "
+                            >
+                              <FiEdit2 />
+                            </ActionButton>
+
+                            <ActionButton
+                              onClick={() =>
+                                handleDelete(note)
+                              }
+                              title="Delete"
+                              className="
+                                border-red-500/20
+                                bg-red-500/10
+                                text-red-300
+                                hover:bg-red-500/20
+                              "
+                            >
+                              <FiTrash2 />
+                            </ActionButton>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </main>
 
+      {/* =====================================================
+          TOAST
+      ====================================================== */}
+
       {message && (
-        <div className="fixed bottom-6 right-6 z-50">
-          <div className="relative rounded-xl p-[1px] overflow-hidden shadow-2xl shadow-black/40">
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500" />
-            <div className="relative rounded-xl bg-slate-900/90 backdrop-blur-xl px-5 py-3.5 min-w-[240px]">
-              <span className="text-white text-sm font-medium">{message}</span>
+        <div
+          className="
+            fixed
+            bottom-4
+            left-4
+            right-4
+            z-50
+            sm:bottom-6
+            sm:left-auto
+            sm:right-6
+          "
+        >
+          <div
+            className="
+              relative
+              overflow-hidden
+              rounded-xl
+              p-[1px]
+              shadow-2xl
+              shadow-black/40
+            "
+          >
+            <div
+              className="
+                absolute
+                inset-0
+                rounded-xl
+                bg-gradient-to-r
+                from-blue-500
+                to-purple-500
+              "
+            />
+
+            <div
+              className="
+                relative
+                rounded-xl
+                bg-slate-900/95
+                px-4
+                py-3
+                backdrop-blur-xl
+                sm:min-w-[240px]
+                sm:px-5
+                sm:py-3.5
+              "
+            >
+              <span className="break-words text-sm font-medium text-white">
+                {message}
+              </span>
             </div>
           </div>
         </div>
