@@ -656,6 +656,24 @@ export const deleteNotification = async (id) => {
 };
 
 // ============================================================
+// LOGOUT
+// POST /api/auth/logout
+// ============================================================
+
+export const logoutUser = async () => {
+  try {
+    const { data } = await api.post("/auth/logout");
+
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to logout"
+    );
+  }
+};
+
+// ============================================================
 // DEFAULT EXPORT
 // ============================================================
 

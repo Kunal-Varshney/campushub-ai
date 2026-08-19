@@ -1,12 +1,15 @@
 import express from "express";
 import passport from "passport";
 
+import authMiddleware from "../middleware/auth.middleware.js";
+
 import {
   registerUser,
   loginUser,
   forgotPassword,
   resetPassword,
   googleLoginSuccess,
+  logoutUser,
 } from "../controllers/auth.controller.js";
 
 const router = express.Router();
@@ -24,6 +27,13 @@ router.post("/register", registerUser);
 // ============================================================
 
 router.post("/login", loginUser);
+
+// ============================================================
+// LOGOUT
+// POST /api/auth/logout
+// ============================================================
+
+router.post("/logout", authMiddleware, logoutUser);
 
 // ============================================================
 // FORGOT PASSWORD

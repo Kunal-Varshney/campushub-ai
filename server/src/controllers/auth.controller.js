@@ -502,3 +502,30 @@ export const googleLoginSuccess = async (req, res) => {
     );
   }
 };
+
+// ============================================================
+// LOGOUT USER
+// ============================================================
+
+export const logoutUser = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    await User.findByIdAndUpdate(userId, {
+      activeSessionId: null,
+      activeSessionExpires: null,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Logout Successful",
+    });
+  } catch (error) {
+    console.error("Logout Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Logout failed.",
+    });
+  }
+};
