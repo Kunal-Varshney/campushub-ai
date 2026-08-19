@@ -10,7 +10,7 @@ import {
 } from "react-icons/fi";
 
 import { useNavigate } from "react-router-dom";
-import { logoutUser } from "../../services/api";
+import API from "../../services/api";
 
 const navItems = [
   {
@@ -52,26 +52,34 @@ const AdminSidebar = ({
   // LOGOUT
   // ============================================================
 
-  const handleLogout = async () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to logout?"
-    );
+  // ============================================================
+// LOGOUT
+// ============================================================
 
-    if (!confirmed) return;
+const handleLogout = async () => {
+  const confirmed = window.confirm(
+    "Are you sure you want to logout?"
+  );
 
-    try {
-      await logoutUser();
-    } catch (error) {
-      console.error("Admin Logout Error:", error);
-    } finally {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+  if (!confirmed) return;
 
-      navigate("/login", {
-        replace: true,
-      });
-    }
-  };
+  try {
+    // Clear active session from backend/database
+    await API.post("/auth/logout");
+
+    console.log("Admin logout successful");
+  } catch (error) {
+    console.error("Admin Logout Error:", error);
+  } finally {
+    // Always clear local authentication
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    navigate("/login", {
+      replace: true,
+    });
+  }
+};
 
   // ============================================================
   // NAVIGATION
