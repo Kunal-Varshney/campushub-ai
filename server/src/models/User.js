@@ -100,6 +100,20 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    // ==========================
+    // ACTIVE LOGIN SESSION
+    // ==========================
+
+    activeSessionId: {
+      type: String,
+      default: null,
+    },
+
+    activeSessionExpires: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -110,7 +124,7 @@ const userSchema = new mongoose.Schema(
 // HASH PASSWORD BEFORE SAVE
 // ============================================================
 
-  userSchema.pre("save", async function () {
+userSchema.pre("save", async function () {
   if (!this.isModified("password") || !this.password) {
     return;
   }

@@ -28,6 +28,35 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
+    // ========================================================
+    // ACTIVE SESSION CHECK
+    // ========================================================
+
+    if (
+      !decoded.sessionId ||
+      !user.activeSessionId ||
+      decoded.sessionId !== user.activeSessionId
+    ) {
+      return res.status(401).json({
+        success: false,
+        message: "Your session is no longer active.",
+      });
+    }
+
+    // ========================================================
+    // SESSION EXPIRY CHECK
+    // ========================================================
+
+    if (
+      !user.activeSessionExpires ||
+      user.activeSessionExpires <= new Date()
+    ) {
+      return res.status(401).json({
+        success: false,
+        message: "Your session has expired. Please login again.",
+      });
+    }
+
     req.user = user;
 
     next();

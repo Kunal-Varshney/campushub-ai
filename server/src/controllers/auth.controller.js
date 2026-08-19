@@ -157,6 +157,38 @@ export const loginUser = async (req, res) => {
       });
     }
 
+        // ========================================================
+        // CHECK ACTIVE LOGIN SESSION
+        // ========================================================
+
+        const now = new Date();
+
+        if (
+          user.activeSessionId &&
+          user.activeSessionExpires &&
+          user.activeSessionExpires > now
+        ) {
+          return res.status(409).json({
+            success: false,
+            message:
+              "This account is already logged in on another device. Please log out from that device before logging in here.",
+          });
+        }
+
+        // ========================================================
+        // CREATE NEW LOGIN SESSION
+        // ========================================================
+
+        const sessionId = crypto.randomUUID();
+
+        user.activeSessionId = sessionId;
+
+        // Session validity: 7 days
+        user.activeSessionExpires = new Date(
+          Date.now() + 7 * 24 * 60 * 60 * 1000
+        );
+        await user.save();
+
     // Admin email
     if (user.email === "kunalvarshney187@gmail.com") {
       user.role = "admin";
@@ -164,7 +196,7 @@ export const loginUser = async (req, res) => {
     }
 
     // Generate JWT
-    const token = generateToken(user._id);
+    const token = generateToken(user._id, sessionId);
 
     return res.status(200).json({
       success: true,
