@@ -512,27 +512,28 @@ export const logoutUser = async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(200).json({
-        success: true,
-        message: "Logout Successful",
-      });
-    }
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.split(" ")[1];
 
-    const token = authHeader.split(" ")[1];
+      try {
+        const decoded = jwt.verify(
+          token,
+          process.env.JWT_SECRET,
+          {
+            ignoreExpiration: true,
+          }
+        );
 
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET,
-      {
-        ignoreExpiration: true,
+        await User.findByIdAndUpdate(decoded.id, {
+          $set: {
+            activeSessionId: null,
+            activeSessionExpires: null,
+          },
+        });
+      } catch (tokenError) {
+        console.error("Logout token error:", tokenError.message);
       }
-    );
-
-    await User.findByIdAndUpdate(decoded.id, {
-      activeSessionId: null,
-      activeSessionExpires: null,
-    });
+    }
 
     return res.status(200).json({
       success: true,
@@ -541,7 +542,6 @@ export const logoutUser = async (req, res) => {
   } catch (error) {
     console.error("Logout Error:", error);
 
-    // Logout should always allow the frontend to clear local session
     return res.status(200).json({
       success: true,
       message: "Logout Successful",
