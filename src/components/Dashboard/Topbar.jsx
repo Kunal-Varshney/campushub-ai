@@ -7,6 +7,7 @@ import {
   getNotifications,
   markNotificationRead,
   markAllNotificationsRead,
+  logoutUser,
 } from "../../services/api";
 
 import {
@@ -240,15 +241,23 @@ function Topbar({ user }) {
   // LOGOUT
   // ======================================================
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+  try {
+    await logoutUser();
+  } catch (error) {
+    console.error("Logout Error:", error);
+  } finally {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
 
     setDropdownOpen(false);
     setNotificationOpen(false);
 
-    navigate("/login");
-  };
+    navigate("/login", {
+      replace: true,
+    });
+  }
+};
 
   // ======================================================
   // MARK ALL NOTIFICATIONS AS READ
