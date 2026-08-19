@@ -74,22 +74,30 @@ function SidebarContent({ pathname, onNavigate }) {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-  try {
-    await api.post("/auth/logout");
-  } catch (error) {
-    console.error(
-      "Logout Error:",
-      error?.response?.data?.message || error.message
-    );
-  } finally {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    try {
+      console.log("LOGOUT: Request started");
 
-    navigate("/login", {
-      replace: true,
-    });
-  }
-};
+      const response = await api.post("/auth/logout");
+
+      console.log("LOGOUT: Backend response:", response.data);
+    } catch (error) {
+      console.error(
+        "LOGOUT ERROR:",
+        error?.response?.status,
+        error?.response?.data,
+        error.message
+      );
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      console.log("LOGOUT: Local storage cleared");
+
+      navigate("/login", {
+        replace: true,
+      });
+    }
+  };
 
   return (
     <div className="flex h-full flex-col">
