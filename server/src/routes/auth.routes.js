@@ -1,8 +1,6 @@
 import express from "express";
 import passport from "passport";
 
-import authMiddleware from "../middleware/auth.middleware.js";
-
 import {
   registerUser,
   loginUser,
@@ -33,7 +31,7 @@ router.post("/login", loginUser);
 // POST /api/auth/logout
 // ============================================================
 
-router.post("/logout", authMiddleware, logoutUser);
+router.post("/logout", logoutUser);
 
 // ============================================================
 // FORGOT PASSWORD

@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 
 import User from "../models/User.js";
@@ -509,9 +510,26 @@ export const googleLoginSuccess = async (req, res) => {
 
 export const logoutUser = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const authHeader = req.headers.authorization;
 
-    await User.findByIdAndUpdate(userId, {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(200).json({
+        success: true,
+        message: "Logout Successful",
+      });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET,
+      {
+        ignoreExpiration: true,
+      }
+    );
+
+    await User.findByIdAndUpdate(decoded.id, {
       activeSessionId: null,
       activeSessionExpires: null,
     });
@@ -523,9 +541,10 @@ export const logoutUser = async (req, res) => {
   } catch (error) {
     console.error("Logout Error:", error);
 
-    return res.status(500).json({
-      success: false,
-      message: "Logout failed.",
+    // Logout should always allow the frontend to clear local session
+    return res.status(200).json({
+      success: true,
+      message: "Logout Successful",
     });
   }
 };
