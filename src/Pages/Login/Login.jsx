@@ -23,7 +23,11 @@ function Login() {
   const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+
+  const [rememberMe, setRememberMe] = useState(() => {
+    return localStorage.getItem("rememberMe") === "true";
+  });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -43,6 +47,9 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (loading) return;
+
     setError("");
 
     const email = formData.email.trim().toLowerCase();
@@ -61,16 +68,29 @@ function Login() {
         password,
       });
 
-      console.log("LOGIN SUCCESS:", response.data);
-
-      const { token, user } = response.data;
+      const { token, user } = response.data || {};
 
       if (!token || !user) {
-        throw new Error("Invalid login response from server");
+        throw new Error("Invalid login response from server.");
       }
+
+      // -------------------------------------------------------
+      // Clear any old authentication state first
+      // -------------------------------------------------------
+
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      // -------------------------------------------------------
+      // Store current authenticated session
+      // -------------------------------------------------------
 
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
+
+      // -------------------------------------------------------
+      // Remember Me
+      // -------------------------------------------------------
 
       if (rememberMe) {
         localStorage.setItem("rememberMe", "true");
@@ -78,20 +98,47 @@ function Login() {
         localStorage.removeItem("rememberMe");
       }
 
+      // -------------------------------------------------------
+      // Role based redirect
+      // -------------------------------------------------------
+
       if (user.role === "admin") {
-        navigate("/admin/dashboard");
+        navigate("/admin/dashboard", { replace: true });
       } else {
-        navigate("/dashboard");
+        navigate("/dashboard", { replace: true });
       }
     } catch (error) {
       console.error("LOGIN ERROR:", error);
-      console.error("STATUS:", error.response?.status);
-      console.error("SERVER RESPONSE:", error.response?.data);
 
-      setError(
-        error.response?.data?.message ||
-          "Login failed. Please check your email and password."
-      );
+      const status = error.response?.status;
+      const serverMessage = error.response?.data?.message;
+
+      // -------------------------------------------------------
+      // Clear invalid authentication state
+      // -------------------------------------------------------
+
+      if (status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+
+        setError(
+          "Invalid email or password. Please check your credentials and try again."
+        );
+      } else if (status === 403) {
+        setError(
+          serverMessage ||
+            "Your account does not have permission to access CampusHub AI."
+        );
+      } else if (status >= 500) {
+        setError(
+          "Something went wrong on the server. Please try again later."
+        );
+      } else {
+        setError(
+          serverMessage ||
+            "Login failed. Please check your email and password."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -166,8 +213,6 @@ function Login() {
           </div>
         </Link>
 
-        {/* Desktop signup */}
-
         <p className="hidden text-sm text-slate-400 sm:block">
           New to CampusHub AI?
           <Link
@@ -195,8 +240,6 @@ function Login() {
           transition={{ duration: 0.7 }}
           className="block w-full lg:block"
         >
-          {/* Intro badge */}
-
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-500/5 px-3.5 py-2 text-[10px] font-semibold text-blue-300 backdrop-blur-xl sm:mb-7 sm:px-4 sm:text-xs">
             <span className="relative flex h-2 w-2 shrink-0">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
@@ -205,8 +248,6 @@ function Login() {
 
             Welcome back to CampusHub AI
           </div>
-
-          {/* Heading */}
 
           <h1 className="max-w-2xl text-3xl font-black leading-[1.08] tracking-tight sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl">
             Continue your
@@ -217,21 +258,13 @@ function Login() {
             </span>
           </h1>
 
-          {/* Description */}
-
           <p className="mt-4 max-w-xl text-sm leading-6 text-slate-400 sm:mt-6 sm:text-base sm:leading-7 lg:text-lg lg:leading-8">
             Everything you need to learn, build skills, prepare for
             opportunities and move closer to your career goals — all in one
             place.
           </p>
 
-          {/* =================================================
-              CAREER JOURNEY
-          ================================================== */}
-
           <div className="relative mt-6 w-full max-w-xl sm:mt-8 lg:mt-10">
-            {/* Connecting line */}
-
             <div className="absolute left-[21px] top-7 h-[calc(100%-56px)] w-px bg-gradient-to-b from-blue-500/60 via-cyan-400/30 to-transparent sm:left-[24px] sm:top-8 sm:h-[calc(100%-64px)]" />
 
             <div className="space-y-3 sm:space-y-4">
@@ -250,8 +283,6 @@ function Login() {
                     whileHover={{ x: 6 }}
                     className="group relative flex w-full items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-3 backdrop-blur-xl transition-all duration-300 hover:border-blue-400/20 hover:bg-white/[0.045] sm:gap-5 sm:p-4"
                   >
-                    {/* Icon */}
-
                     <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-400/20 bg-[#091329] shadow-lg shadow-blue-500/10 sm:h-12 sm:w-12 sm:rounded-2xl">
                       <Icon
                         size={18}
@@ -263,8 +294,6 @@ function Login() {
                         className="hidden text-cyan-300 sm:block"
                       />
                     </div>
-
-                    {/* Content */}
 
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -281,8 +310,6 @@ function Login() {
                         {item.text}
                       </p>
                     </div>
-
-                    {/* Arrow */}
 
                     <ArrowUpRight
                       size={15}
@@ -306,11 +333,8 @@ function Login() {
           className="mx-auto w-full max-w-[500px]"
         >
           <div className="relative overflow-hidden rounded-[24px] border border-white/[0.09] bg-[#0a1020]/90 p-5 shadow-2xl shadow-blue-950/40 backdrop-blur-2xl sm:rounded-[30px] sm:p-8">
-            {/* Card glow */}
 
             <div className="pointer-events-none absolute -right-24 -top-24 h-48 w-48 rounded-full bg-blue-500/10 blur-3xl" />
-
-            {/* Header */}
 
             <div className="relative">
               <div className="mb-4 flex items-center justify-between gap-3 sm:mb-5">
@@ -351,8 +375,6 @@ function Login() {
               </p>
             </div>
 
-            {/* Error */}
-
             <AnimatePresence>
               {error && (
                 <motion.div
@@ -373,10 +395,6 @@ function Login() {
               )}
             </AnimatePresence>
 
-            {/* =================================================
-                LOGIN FORM
-            ================================================== */}
-
             <form
               onSubmit={handleSubmit}
               className="relative mt-6 space-y-4 sm:mt-7 sm:space-y-5"
@@ -396,7 +414,9 @@ function Login() {
                   onChange={handleChange}
                   placeholder="Email address"
                   autoComplete="email"
-                  className="w-full rounded-2xl border border-white/[0.08] bg-[#070d1b] py-3.5 pl-11 pr-4 text-sm text-white placeholder:text-slate-600 outline-none transition-all duration-300 hover:border-white/[0.14] focus:border-cyan-400/40 focus:bg-[#0a1121] focus:ring-4 focus:ring-cyan-400/[0.06]"
+                  required
+                  disabled={loading}
+                  className="w-full rounded-2xl border border-white/[0.08] bg-[#070d1b] py-3.5 pl-11 pr-4 text-sm text-white placeholder:text-slate-600 outline-none transition-all duration-300 hover:border-white/[0.14] focus:border-cyan-400/40 focus:bg-[#0a1121] focus:ring-4 focus:ring-cyan-400/[0.06] disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
 
@@ -415,7 +435,9 @@ function Login() {
                   onChange={handleChange}
                   placeholder="Password"
                   autoComplete="current-password"
-                  className="w-full rounded-2xl border border-white/[0.08] bg-[#070d1b] py-3.5 pl-11 pr-12 text-sm text-white placeholder:text-slate-600 outline-none transition-all duration-300 hover:border-white/[0.14] focus:border-cyan-400/40 focus:bg-[#0a1121] focus:ring-4 focus:ring-cyan-400/[0.06]"
+                  required
+                  disabled={loading}
+                  className="w-full rounded-2xl border border-white/[0.08] bg-[#070d1b] py-3.5 pl-11 pr-12 text-sm text-white placeholder:text-slate-600 outline-none transition-all duration-300 hover:border-white/[0.14] focus:border-cyan-400/40 focus:bg-[#0a1121] focus:ring-4 focus:ring-cyan-400/[0.06] disabled:cursor-not-allowed disabled:opacity-60"
                 />
 
                 <button
@@ -423,7 +445,8 @@ function Login() {
                   onClick={() =>
                     setShowPassword((prev) => !prev)
                   }
-                  className="absolute right-3.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/[0.04] hover:text-cyan-400 sm:right-4"
+                  disabled={loading}
+                  className="absolute right-3.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/[0.04] hover:text-cyan-400 disabled:cursor-not-allowed disabled:opacity-50 sm:right-4"
                   aria-label={
                     showPassword
                       ? "Hide password"
@@ -443,10 +466,21 @@ function Login() {
               <div className="flex items-center justify-between gap-3 text-[11px] sm:text-sm">
                 <button
                   type="button"
-                  onClick={() =>
-                    setRememberMe((prev) => !prev)
-                  }
-                  className="flex min-w-0 cursor-pointer items-center gap-2 text-left text-slate-500 transition-colors hover:text-slate-300"
+                  onClick={() => {
+                    setRememberMe((prev) => {
+                      const nextValue = !prev;
+
+                      if (nextValue) {
+                        localStorage.setItem("rememberMe", "true");
+                      } else {
+                        localStorage.removeItem("rememberMe");
+                      }
+
+                      return nextValue;
+                    });
+                  }}
+                  disabled={loading}
+                  className="flex min-w-0 cursor-pointer items-center gap-2 text-left text-slate-500 transition-colors hover:text-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <span
                     className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-all ${
