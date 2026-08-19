@@ -37,7 +37,6 @@ import MainLayout from "./layouts/MainLayout";
 // Admin
 import AdminDashboard from "./Pages/Admin/AdminDashboard";
 
-
 // ============================================================
 // AUTH HELPERS
 // ============================================================
@@ -47,6 +46,51 @@ function PublicRoute({ children }) {
   const token = localStorage.getItem("token");
 
   if (token) {
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+
+    if (user?.role === "admin") {
+      return <Navigate to="/admin/dashboard" replace />;
+    }
+
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+}
+
+
+// ============================================================
+// PROTECTED ROUTE
+// ============================================================
+
+// Sirf authenticated users ke liye
+function ProtectedRoute({ children }) {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
+
+// ============================================================
+// ADMIN ROUTE
+// ============================================================
+
+// Sirf authenticated admin users ke liye
+function AdminRoute({ children }) {
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+
+  // Login nahi hai
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Logged-in user admin nahi hai
+  if (user?.role !== "admin") {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -78,7 +122,6 @@ function App() {
 
         <Route path="/terms" element={<Terms />} />
 
-
         {/* ==================================================
             DISCOVER
         ================================================== */}
@@ -88,54 +131,13 @@ function App() {
           element={<Discover />}
         />
 
-
         {/* ==================================================
-            FEATURES
+            PUBLIC FEATURES
         ================================================== */}
-
-        <Route
-          path="/ai-assistant"
-          element={<AIAssistant />}
-        />
-
-        <Route
-          path="/smart-notes"
-          element={<SmartNotes />}
-        />
-
-        <Route
-          path="/resume-builder"
-          element={<ResumeBuilder />}
-        />
-
-        <Route
-          path="/mock-interview"
-          element={<MockInterview />}
-        />
-
-        <Route
-          path="/internship-finder"
-          element={<InternshipFinder />}
-        />
-
-        <Route
-          path="/skill-roadmap"
-          element={<SkillRoadmap />}
-        />
-
-        <Route
-          path="/certificates"
-          element={<Certificates />}
-        />
 
         <Route
           path="/certificates/verify/:credentialId"
           element={<VerifyCertificate />}
-        />
-
-        <Route
-          path="/community"
-          element={<Community />}
         />
 
       </Route>
@@ -145,7 +147,6 @@ function App() {
           AUTHENTICATION
       ==================================================== */}
 
-      {/* Logged-in user -> Dashboard */}
       <Route
         path="/signup"
         element={
@@ -155,7 +156,6 @@ function App() {
         }
       />
 
-      {/* Logged-in user -> Dashboard */}
       <Route
         path="/login"
         element={
@@ -178,27 +178,120 @@ function App() {
 
 
       {/* ====================================================
-          STUDENT DASHBOARD
+          PROTECTED STUDENT AREA
       ==================================================== */}
 
       <Route
         path="/dashboard"
-        element={<StudentDashboard />}
+        element={
+          <ProtectedRoute>
+            <StudentDashboard />
+          </ProtectedRoute>
+        }
       />
 
       <Route
         path="/notifications"
-        element={<NotificationCenter />}
+        element={
+          <ProtectedRoute>
+            <NotificationCenter />
+          </ProtectedRoute>
+        }
       />
 
       <Route
         path="/settings"
-        element={<Settings />}
+        element={
+          <ProtectedRoute>
+            <Settings />
+          </ProtectedRoute>
+        }
       />
 
       <Route
         path="/profile"
-        element={<Profile />}
+        element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
+
+
+      {/* ====================================================
+          PROTECTED FEATURES
+      ==================================================== */}
+
+      <Route
+        path="/ai-assistant"
+        element={
+          <ProtectedRoute>
+            <AIAssistant />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/smart-notes"
+        element={
+          <ProtectedRoute>
+            <SmartNotes />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/resume-builder"
+        element={
+          <ProtectedRoute>
+            <ResumeBuilder />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/mock-interview"
+        element={
+          <ProtectedRoute>
+            <MockInterview />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/internship-finder"
+        element={
+          <ProtectedRoute>
+            <InternshipFinder />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/skill-roadmap"
+        element={
+          <ProtectedRoute>
+            <SkillRoadmap />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/certificates"
+        element={
+          <ProtectedRoute>
+            <Certificates />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/community"
+        element={
+          <ProtectedRoute>
+            <Community />
+          </ProtectedRoute>
+        }
       />
 
 
@@ -208,7 +301,11 @@ function App() {
 
       <Route
         path="/admin/dashboard"
-        element={<AdminDashboard />}
+        element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
+        }
       />
 
     </Routes>
