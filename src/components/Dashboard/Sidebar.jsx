@@ -1,4 +1,5 @@
 // src/components/Dashboard/Sidebar.jsx
+import api from "../../services/api";
 
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -72,12 +73,23 @@ const menuItems = [
 function SidebarContent({ pathname, onNavigate }) {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+  try {
+    await api.post("/auth/logout");
+  } catch (error) {
+    console.error(
+      "Logout Error:",
+      error?.response?.data?.message || error.message
+    );
+  } finally {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
 
-    navigate("/login");
-  };
+    navigate("/login", {
+      replace: true,
+    });
+  }
+};
 
   return (
     <div className="flex h-full flex-col">
