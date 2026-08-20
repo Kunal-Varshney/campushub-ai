@@ -46,6 +46,13 @@ app.use(
 
 app.use(express.json());
 
+app.get("/healthz", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    message: "CampusHub AI server is healthy",
+  });
+});
+
 // ============================================================
 // HEALTH CHECK
 // GET /
