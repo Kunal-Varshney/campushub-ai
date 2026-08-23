@@ -7,6 +7,7 @@ import {
   Sparkles,
   ArrowRight,
   UploadCloud,
+  Save,
   FileText,
   Wand2,
   BookOpen,
@@ -131,6 +132,8 @@ function SmartNotes() {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedNotes, setGeneratedNotes] = useState(null);
   const [savedNotes, setSavedNotes] = useState([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isCurrentNoteSaved, setIsCurrentNoteSaved] = useState(false);
 
   // ============================================================
   // FETCH PREVIOUS NOTES
@@ -255,6 +258,7 @@ function SmartNotes() {
     try {
       setIsLoading(true);
       setGeneratedNotes(null);
+      setIsCurrentNoteSaved(false);
 
       const response = await API.post("/notes/generate", {
         description: inputText.trim(),
@@ -301,9 +305,11 @@ function SmartNotes() {
         keyPoints,
         keywords,
         examTips,
+        quickRevision: Array.isArray(note.quickRevision)
+          ? note.quickRevision
+          : [],
       });
 
-      fetchNotes();
     } catch (error) {
       console.log(
         "NOTE ERROR:",
@@ -319,6 +325,74 @@ function SmartNotes() {
       setIsLoading(false);
     }
   };
+
+  // ============================================================
+  // SAVE GENERATED NOTE
+  // ============================================================
+
+  const handleSaveNote = async () => {
+    if (!generatedNotes || isSaving || isCurrentNoteSaved) return;
+
+    try {
+      setIsSaving(true);
+
+      const response = await API.post("/notes/create", {
+        title: generatedNotes.title,
+        description: inputText.trim(),
+        subject: generatedNotes.subject,
+        topic: inputText.trim(),
+        category: generatedNotes.subject,
+        branch: "AI & ML",
+        year: 2,
+        summary: generatedNotes.introduction,
+
+        answer: {
+          introduction: generatedNotes.introduction,
+          sections: generatedNotes.sections,
+        },
+
+        points: generatedNotes.keyPoints,
+        keywords: generatedNotes.keywords,
+        examTips: generatedNotes.examTips,
+        quickRevision: generatedNotes.quickRevision,
+
+        fileUrl: "ai-generated",
+      });
+
+      console.log("SAVE NOTE RESPONSE:", response.data);
+
+      if (!response.data?.success) {
+        throw new Error(
+          response.data?.message || "Failed to save note"
+        );
+      }
+
+      setIsCurrentNoteSaved(true);
+
+      // Refresh saved notes
+      fetchNotes();
+
+      alert(
+        response.data?.alreadySaved
+          ? "This note is already saved."
+          : "Note saved successfully 💾"
+      );
+
+    } catch (error) {
+      console.log(
+        "SAVE NOTE ERROR:",
+        error?.response?.data || error.message
+      );
+
+      alert(
+        error?.response?.data?.message ||
+          error.message ||
+          "Failed to save note"
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }; 
 
   // ============================================================
   // RENDER SECTION
@@ -872,7 +946,7 @@ Binary Search with example`}
 
                     <div className="bg-gradient-to-r from-blue-600/20 to-cyan-500/10 p-4 sm:p-6">
 
-                      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start">
+                      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:flex-wrap">
 
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500">
                           <FileText size={23} />
@@ -897,6 +971,36 @@ Binary Search with example`}
                         <span className="w-fit max-w-full shrink-0 break-words rounded-full border border-blue-500/30 bg-blue-600/10 px-3 py-1.5 text-xs font-medium text-blue-400">
                           {generatedNotes.difficulty}
                         </span>
+                        <button
+                          type="button"
+                          onClick={handleSaveNote}
+                          disabled={isSaving || isCurrentNoteSaved}
+                          className={`flex w-fit shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-300 ${
+                            isCurrentNoteSaved
+                              ? "cursor-default border border-green-500/30 bg-green-500/10 text-green-400"
+                              : "border border-blue-500/30 bg-blue-600/10 text-blue-400 hover:border-blue-500 hover:bg-blue-600/20 hover:-translate-y-0.5"
+                          } disabled:opacity-70`}
+                        >
+                          {isSaving ? (
+                            <>
+                              <RefreshCw
+                                size={17}
+                                className="animate-spin"
+                              />
+                              Saving...
+                            </>
+                          ) : isCurrentNoteSaved ? (
+                            <>
+                              <CheckCircle2 size={17} />
+                              Saved
+                            </>
+                          ) : (
+                            <>
+                              <Save size={17} />
+                              Save Note
+                            </>
+                          )}
+                        </button>
 
                       </div>
 
@@ -1094,8 +1198,11 @@ Binary Search with example`}
                   {/* QUICK REVISION */}
                   {/* ================================================== */}
 
-                  {(generatedNotes.keyPoints.length > 0 ||
-                    generatedNotes.sections.length > 0) && (
+                  {(
+                    generatedNotes.quickRevision?.length > 0 ||
+                    generatedNotes.keyPoints.length > 0 ||
+                    generatedNotes.sections.length > 0
+                  ) && (
 
                     <div className="mt-7 min-w-0 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-4 sm:p-6">
 
@@ -1114,39 +1221,51 @@ Binary Search with example`}
 
                       <div className="space-y-2 text-sm leading-7 text-gray-300">
 
-                        {generatedNotes.keyPoints.length > 0 ? (
+                       {generatedNotes.quickRevision?.length > 0 ? (
 
-                          generatedNotes.keyPoints
-                            .slice(0, 5)
-                            .map((point, index) => (
-                              <p
-                                key={index}
-                                className="break-words"
-                              >
-                                • {point}
-                              </p>
-                            ))
+                        generatedNotes.quickRevision
+                          .map((point, index) => (
+                            <p
+                              key={index}
+                              className="break-words"
+                            >
+                              • {point}
+                            </p>
+                          ))
 
-                        ) : (
+                      ) : generatedNotes.keyPoints.length > 0 ? (
 
-                          generatedNotes.sections
-                            .slice(0, 5)
-                            .map((section, index) => (
-                              <p
-                                key={index}
-                                className="break-words"
-                              >
-                                • {section.heading}
-                              </p>
-                            ))
+                        generatedNotes.keyPoints
+                          .slice(0, 5)
+                          .map((point, index) => (
+                            <p
+                              key={index}
+                              className="break-words"
+                            >
+                              • {point}
+                            </p>
+                          ))
 
-                        )}
+                      ) : (
 
-                      </div>
+                        generatedNotes.sections
+                          .slice(0, 5)
+                          .map((section, index) => (
+                            <p
+                              key={index}
+                              className="break-words"
+                            >
+                              • {section.heading}
+                            </p>
+                          ))
+
+                      )}
 
                     </div>
 
-                  )}
+                  </div>
+
+                )}
 
                 </motion.div>
 

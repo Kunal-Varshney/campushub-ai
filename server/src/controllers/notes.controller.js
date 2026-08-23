@@ -452,7 +452,9 @@ FINAL RULES
 
     const completion =
       await groq.chat.completions.create({
-        model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
+        model:
+          process.env.GROQ_MODEL ||
+          "openai/gpt-oss-120b",
 
         messages: [
           {
@@ -583,52 +585,53 @@ Return valid JSON only.
         : [];
 
     // ==========================================================
-    // SAVE COMPLETE AI NOTE
+    // IMPORTANT
+    // ==========================================================
+    // NOTE IS NOT SAVED HERE.
+    //
+    // Generate Notes only generates the note.
+    // The frontend will call POST /api/notes/create
+    // when the student clicks "Save Note".
     // ==========================================================
 
-    const note =
-      await Note.create({
-        title: finalTitle,
+    const note = {
+      title: finalTitle,
 
-        description: userRequirement,
+      description: userRequirement,
 
-        subject: finalSubject,
+      subject: finalSubject,
 
-        topic: finalTopic,
+      topic: finalTopic,
 
-        category: finalCategory,
+      category: finalCategory,
 
-        branch: branch || "",
+      branch: branch || "",
 
-        year: year || "",
+      year: year || "",
 
-        summary: introduction,
+      summary: introduction,
 
-        answer: {
-          introduction,
-          sections,
-        },
+      answer: {
+        introduction,
+        sections,
+      },
 
-        points: keyPoints,
+      points: keyPoints,
 
-        keywords,
+      keywords,
 
-        examTips,
+      examTips,
 
-        quickRevision,
+      quickRevision,
 
-        fileUrl: "ai-generated",
-
-        uploadedBy: req.user.id,
-
-        status: "approved",
-      });
+      fileUrl: "ai-generated",
+    };
 
     // ==========================================================
     // RESPONSE
     // ==========================================================
 
-    return res.status(201).json({
+    return res.status(200).json({
       success: true,
 
       message:
@@ -654,7 +657,7 @@ Return valid JSON only.
 
 
 // ============================================================
-// CREATE / UPLOAD NOTE
+// CREATE / SAVE NOTE
 // POST /api/notes/create
 // ============================================================
 
@@ -689,7 +692,30 @@ export const createNote = async (req, res) => {
     }
 
     // ==========================================================
-    // CREATE NOTE
+    // DUPLICATE CHECK
+    // ==========================================================
+    // Same student + same title + same topic
+    // will not be saved twice.
+    // ==========================================================
+
+    const existingNote =
+      await Note.findOne({
+        uploadedBy: req.user.id,
+        title: title.trim(),
+        topic: topic?.trim() || "",
+      });
+
+    if (existingNote) {
+      return res.status(200).json({
+        success: true,
+        alreadySaved: true,
+        message: "Note is already saved",
+        note: existingNote,
+      });
+    }
+
+    // ==========================================================
+    // CREATE SAVED NOTE
     // ==========================================================
 
     const note =
@@ -706,7 +732,9 @@ export const createNote = async (req, res) => {
           topic?.trim() || "",
 
         category:
-          category?.trim() || subject?.trim() || "General",
+          category?.trim() ||
+          subject?.trim() ||
+          "General",
 
         branch:
           branch || "",
@@ -744,13 +772,13 @@ export const createNote = async (req, res) => {
             : [],
 
         fileUrl:
-          fileUrl || "",
+          fileUrl || "ai-generated",
 
         uploadedBy:
           req.user.id,
 
         status:
-          "pending",
+          "approved",
       });
 
     // ==========================================================
@@ -760,15 +788,17 @@ export const createNote = async (req, res) => {
     return res.status(201).json({
       success: true,
 
+      alreadySaved: false,
+
       message:
-        "Note created successfully",
+        "Note saved successfully 💾",
 
       note,
     });
 
   } catch (error) {
     console.error(
-      "CREATE NOTE ERROR:",
+      "SAVE NOTE ERROR:",
       error
     );
 
@@ -776,14 +806,14 @@ export const createNote = async (req, res) => {
       success: false,
       message:
         error?.message ||
-        "Failed to create note",
+        "Failed to save note",
     });
   }
 };
 
 
 // ============================================================
-// GET MY NOTES
+// GET MY SAVED NOTES
 // GET /api/notes
 // ============================================================
 
