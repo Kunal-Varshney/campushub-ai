@@ -295,10 +295,11 @@ function SmartNotes() {
 
     loadSavedNote();
   }, [
-    location.state?.savedNoteId,
-    navigate,
-    location.pathname,
-  ]);
+  location.state?.savedNote,
+  location.state?.savedNoteId,
+  navigate,
+  location.pathname,
+]);
 
   // ============================================================
   // FETCH PREVIOUS NOTES
