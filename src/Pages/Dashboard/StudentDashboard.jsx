@@ -12,7 +12,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import Sidebar from "../../components/Dashboard/Sidebar";
 import Topbar from "../../components/Dashboard/Topbar";
@@ -58,29 +58,33 @@ function SavedNotesCard({ notes, loading, onRefresh }) {
   // This is NOT "latest notes".
   const displayedNotes = savedNotes.slice(0, 6);
 
-    // ----------------------------------------------------------
-    // OPEN SAVED NOTE
-    // ----------------------------------------------------------
+  // ----------------------------------------------------------
+  // OPEN SAVED NOTE
+  // ----------------------------------------------------------
 
-    const handleOpenNote = (note) => {
-      if (!note) return;
+  const handleOpenNote = (note) => {
+    if (!note) return;
 
-      const noteId =
-        note?._id ||
-        note?.id ||
-        note?.noteId;
+    const noteId =
+      note?._id ||
+      note?.id ||
+      note?.noteId;
 
-      if (!noteId) {
-        console.error("Saved note does not have an ID:", note);
-        return;
-      }
+    if (!noteId) {
+      console.error(
+        "Saved note does not have an ID:",
+        note
+      );
+      return;
+    }
 
-      navigate("/smart-notes", {
-        state: {
-          savedNoteId: noteId,
-        },
-      });
-    };
+    navigate("/smart-notes", {
+      state: {
+        savedNoteId: noteId,
+      },
+    });
+  };
+
   return (
     <section className="min-w-0 overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/70 shadow-xl">
       {/* ======================================================
@@ -216,7 +220,10 @@ function SavedNotesCard({ notes, loading, onRefresh }) {
               return (
                 <button
                   type="button"
-                  key={noteId || `${note.title}-${note.createdAt}`}
+                  key={
+                    noteId ||
+                    `${note?.title}-${note?.createdAt}`
+                  }
                   onClick={() => handleOpenNote(note)}
                   className="group w-full min-w-0 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/50 p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/30 hover:bg-slate-950 hover:shadow-lg hover:shadow-cyan-950/10"
                 >
@@ -298,7 +305,7 @@ function SavedNotesCard({ notes, loading, onRefresh }) {
       )}
     </section>
   );
-
+}
 
 // ============================================================
 // TIME CONTEXT
@@ -730,6 +737,6 @@ function StudentDashboard() {
       </div>
     </div>
   );
-}}
+}
 
 export default StudentDashboard;
