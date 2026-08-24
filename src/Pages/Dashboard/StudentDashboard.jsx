@@ -1,12 +1,17 @@
 // src/pages/StudentDashboard.jsx
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
 import {
   BookOpen,
   FileText,
   ArrowRight,
   Clock,
+  RefreshCw,
+  Sparkles,
 } from "lucide-react";
+
+import { Link } from "react-router-dom";
 
 import Sidebar from "../../components/Dashboard/Sidebar";
 import Topbar from "../../components/Dashboard/Topbar";
@@ -19,12 +24,18 @@ import API from "../../services/api";
 // SAVED NOTES CARD
 // ============================================================
 
-function SavedNotesCard({ notes, loading }) {
+function SavedNotesCard({ notes, loading, onRefresh }) {
   const formatDate = (date) => {
     if (!date) return "";
 
     try {
-      return new Date(date).toLocaleDateString("en-IN", {
+      const parsedDate = new Date(date);
+
+      if (Number.isNaN(parsedDate.getTime())) {
+        return "";
+      }
+
+      return parsedDate.toLocaleDateString("en-IN", {
         day: "2-digit",
         month: "short",
         year: "numeric",
@@ -34,145 +45,196 @@ function SavedNotesCard({ notes, loading }) {
     }
   };
 
-  return (
-    <section className="h-fit min-w-0 overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/70 shadow-xl">
-      
-      {/* ==================================================
-          HEADER
-      ================================================== */}
+  const latestNotes = Array.isArray(notes)
+    ? notes.slice(0, 6)
+    : [];
 
-      <div className="flex items-center justify-between border-b border-slate-800 p-5">
-        
+  return (
+    <section className="min-w-0 overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/70 shadow-xl">
+      {/* ======================================================
+          HEADER
+      ====================================================== */}
+
+      <div className="flex flex-col gap-4 border-b border-slate-800 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div className="flex min-w-0 items-center gap-3">
-          
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400">
-            <BookOpen size={20} />
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400">
+            <BookOpen size={21} />
           </div>
 
           <div className="min-w-0">
-            <h2 className="truncate text-base font-bold text-white">
+            <h2 className="truncate text-lg font-bold text-white">
               Saved Notes
             </h2>
 
-            <p className="text-xs text-gray-500">
-              Your notes history
+            <p className="mt-0.5 text-xs text-gray-500 sm:text-sm">
+              Your saved study notes
             </p>
           </div>
 
+          <span className="shrink-0 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-xs font-semibold text-cyan-400">
+            {notes.length}
+          </span>
         </div>
 
-        <span className="shrink-0 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-xs font-medium text-cyan-400">
-          {notes.length}
-        </span>
+        {/* REFRESH */}
 
+        <button
+          type="button"
+          onClick={onRefresh}
+          disabled={loading}
+          className="group inline-flex w-fit items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-xs font-semibold text-gray-400 transition-all duration-300 hover:border-cyan-500/30 hover:bg-cyan-500/5 hover:text-cyan-400 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <RefreshCw
+            size={15}
+            className={loading ? "animate-spin" : ""}
+          />
+
+          <span>
+            {loading ? "Refreshing..." : "Refresh"}
+          </span>
+        </button>
       </div>
 
-      {/* ==================================================
-          NOTES CONTENT
-      ================================================== */}
+      {/* ======================================================
+          CONTENT
+      ====================================================== */}
 
-      <div className="p-4">
+      <div className="p-4 sm:p-6">
+        {/* LOADING */}
 
         {loading ? (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {[1, 2, 3].map((item) => (
               <div
                 key={item}
-                className="animate-pulse rounded-2xl border border-slate-800 bg-slate-950/60 p-4"
+                className="animate-pulse rounded-2xl border border-slate-800 bg-slate-950/60 p-5"
               >
-                <div className="h-4 w-3/4 rounded bg-slate-800" />
+                <div className="flex items-start gap-3">
+                  <div className="h-10 w-10 shrink-0 rounded-xl bg-slate-800" />
 
-                <div className="mt-3 h-3 w-1/2 rounded bg-slate-800" />
+                  <div className="min-w-0 flex-1">
+                    <div className="h-4 w-3/4 rounded bg-slate-800" />
 
-                <div className="mt-3 h-3 w-1/3 rounded bg-slate-800" />
+                    <div className="mt-3 h-3 w-1/2 rounded bg-slate-800" />
+
+                    <div className="mt-3 h-3 w-1/3 rounded bg-slate-800" />
+                  </div>
+                </div>
               </div>
             ))}
           </div>
-        ) : notes.length === 0 ? (
-          
-          <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-950/40 px-4 py-8 text-center">
-            
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-slate-800 text-gray-500">
-              <FileText size={22} />
+        ) : latestNotes.length === 0 ? (
+          /* EMPTY STATE */
+
+          <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-950/40 px-5 py-10 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-800 text-gray-500">
+              <FileText size={24} />
             </div>
 
-            <h3 className="mt-4 text-sm font-semibold text-gray-300">
+            <h3 className="mt-4 text-base font-semibold text-gray-200">
               No saved notes yet
             </h3>
 
-            <p className="mt-2 text-xs leading-5 text-gray-500">
-              Generate notes from Smart Notes and save them here.
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-500">
+              Generate notes from Smart Notes and save them here for
+              quick access from your dashboard.
             </p>
 
-            <a
-              href="/smart-notes"
-              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-cyan-500/10 px-4 py-2.5 text-xs font-semibold text-cyan-400 transition hover:bg-cyan-500/20"
+            <Link
+              to="/smart-notes"
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-cyan-500/10 px-4 py-2.5 text-sm font-semibold text-cyan-400 transition-all duration-300 hover:bg-cyan-500/20 hover:text-cyan-300"
             >
               Create Notes
-              <ArrowRight size={15} />
-            </a>
 
+              <ArrowRight
+                size={16}
+                className="transition-transform duration-300 group-hover:translate-x-1"
+              />
+            </Link>
           </div>
-
         ) : (
+          /* NOTES */
 
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {latestNotes.map((note) => {
+              const noteId =
+                note?._id ||
+                note?.id ||
+                note?.noteId;
 
-            {notes.slice(0, 6).map((note) => (
+              return (
+                <div
+                  key={noteId || `${note.title}-${note.createdAt}`}
+                  className="group min-w-0 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/50 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/30 hover:bg-slate-950 hover:shadow-lg hover:shadow-cyan-950/10"
+                >
+                  {/* TOP */}
 
-              <div
-                key={note._id}
-                className="group min-w-0 rounded-2xl border border-slate-800 bg-slate-950/50 p-4 transition-all duration-300 hover:border-cyan-500/30 hover:bg-slate-950"
-              >
+                  <div className="flex min-w-0 items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400">
+                      <FileText size={18} />
+                    </div>
 
-                <div className="flex min-w-0 gap-3">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="break-words text-sm font-semibold leading-5 text-gray-200 transition-colors group-hover:text-white">
+                        {note?.title || "Untitled Note"}
+                      </h3>
 
-                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
-                    <FileText size={17} />
+                      <p className="mt-1 truncate text-xs text-gray-500">
+                        {note?.subject ||
+                          note?.category ||
+                          "General"}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="min-w-0 flex-1">
+                  {/* SUMMARY */}
 
-                    <h3 className="truncate text-sm font-semibold text-gray-200 group-hover:text-white">
-                      {note.title || "Untitled Note"}
-                    </h3>
-
-                    <p className="mt-1 truncate text-xs text-gray-500">
-                      {note.subject || "General"}
+                  {(note?.summary ||
+                    note?.description ||
+                    note?.topic) && (
+                    <p className="mt-4 line-clamp-2 text-xs leading-5 text-gray-500">
+                      {note?.summary ||
+                        note?.description ||
+                        note?.topic}
                     </p>
+                  )}
 
-                    <div className="mt-2 flex items-center gap-1.5 text-[11px] text-gray-600">
-                      <Clock size={12} />
+                  {/* FOOTER */}
 
-                      <span>
+                  <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-800 pt-4">
+                    <div className="flex min-w-0 items-center gap-1.5 text-[11px] text-gray-600">
+                      <Clock
+                        size={12}
+                        className="shrink-0"
+                      />
+
+                      <span className="truncate">
                         {formatDate(
-                          note.createdAt
-                        )}
+                          note?.createdAt ||
+                            note?.updatedAt
+                        ) || "Recently saved"}
                       </span>
                     </div>
 
+                    <span className="shrink-0 rounded-full border border-slate-700 bg-slate-900 px-2 py-1 text-[10px] font-medium text-gray-500">
+                      Saved
+                    </span>
                   </div>
-
                 </div>
-
-              </div>
-
-            ))}
-
+              );
+            })}
           </div>
-
         )}
-
       </div>
 
-      {/* ==================================================
+      {/* ======================================================
           VIEW ALL
-      ================================================== */}
+      ====================================================== */}
 
-      {notes.length > 0 && (
-        <div className="border-t border-slate-800 p-4">
-          <a
-            href="/smart-notes"
+      {notes.length > 0 && !loading && (
+        <div className="border-t border-slate-800 p-4 sm:p-5">
+          <Link
+            to="/smart-notes"
             className="group flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-gray-300 transition-all duration-300 hover:border-cyan-500/40 hover:bg-cyan-500/5 hover:text-cyan-400"
           >
             View All Saved Notes
@@ -181,10 +243,9 @@ function SavedNotesCard({ notes, loading }) {
               size={16}
               className="transition-transform duration-300 group-hover:translate-x-1"
             />
-          </a>
+          </Link>
         </div>
       )}
-
     </section>
   );
 }
@@ -237,6 +298,7 @@ function getTimeContext() {
 
 function StudentDashboard() {
   const [dashboardData, setDashboardData] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -253,51 +315,90 @@ function StudentDashboard() {
   );
 
   // ==========================================================
-// FETCH SAVED NOTES
-// ==========================================================
+  // FETCH SAVED NOTES
+  // ==========================================================
 
-useEffect(() => {
-  let mounted = true;
-
-  const fetchSavedNotes = async () => {
+  const fetchSavedNotes = useCallback(async () => {
     try {
       setNotesLoading(true);
 
       const response = await API.get("/notes");
 
-      if (!mounted) return;
+      console.log(
+        "STUDENT DASHBOARD - SAVED NOTES:",
+        response.data
+      );
 
       if (response?.data?.success) {
-        setSavedNotes(
-          Array.isArray(response.data.notes)
-            ? response.data.notes
-            : []
-        );
+        const notes = Array.isArray(
+          response?.data?.notes
+        )
+          ? response.data.notes
+          : [];
+
+        setSavedNotes(notes);
       } else {
         setSavedNotes([]);
       }
     } catch (err) {
       console.error(
-        "Saved Notes Error:",
-        err?.response?.data || err.message
+        "Student Dashboard Saved Notes Error:",
+        err?.response?.data || err?.message
       );
 
-      if (mounted) {
-        setSavedNotes([]);
-      }
+      setSavedNotes([]);
     } finally {
-      if (mounted) {
-        setNotesLoading(false);
-      }
+      setNotesLoading(false);
     }
-  };
+  }, []);
 
-  fetchSavedNotes();
+  // ==========================================================
+  // INITIAL SAVED NOTES FETCH
+  // ==========================================================
 
-  return () => {
-    mounted = false;
-  };
-}, []);
+  useEffect(() => {
+    fetchSavedNotes();
+  }, [fetchSavedNotes]);
+
+  // ==========================================================
+  // REFRESH NOTES WHEN USER RETURNS TO DASHBOARD
+  // ==========================================================
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (
+        document.visibilityState === "visible"
+      ) {
+        fetchSavedNotes();
+      }
+    };
+
+    const handleWindowFocus = () => {
+      fetchSavedNotes();
+    };
+
+    document.addEventListener(
+      "visibilitychange",
+      handleVisibilityChange
+    );
+
+    window.addEventListener(
+      "focus",
+      handleWindowFocus
+    );
+
+    return () => {
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange
+      );
+
+      window.removeEventListener(
+        "focus",
+        handleWindowFocus
+      );
+    };
+  }, [fetchSavedNotes]);
 
   // ==========================================================
   // FETCH DASHBOARD DATA
@@ -315,6 +416,11 @@ useEffect(() => {
           "/user/dashboard"
         );
 
+        console.log(
+          "STUDENT DASHBOARD DATA:",
+          response.data
+        );
+
         if (!mounted) return;
 
         if (response?.data?.success) {
@@ -323,11 +429,21 @@ useEffect(() => {
 
           setDashboardData({
             ...dashboard,
-            
+
+            // ------------------------------------------------
+            // SAFE USER
+            // ------------------------------------------------
+
+            user:
+              dashboard?.user &&
+              typeof dashboard.user === "object"
+                ? dashboard.user
+                : {},
 
             // ------------------------------------------------
             // SAFE STATS
             // ------------------------------------------------
+
             stats:
               dashboard?.stats &&
               typeof dashboard.stats === "object"
@@ -337,6 +453,7 @@ useEffect(() => {
             // ------------------------------------------------
             // SAFE OVERVIEW
             // ------------------------------------------------
+
             overview:
               dashboard?.overview &&
               typeof dashboard.overview === "object"
@@ -346,12 +463,14 @@ useEffect(() => {
             // ------------------------------------------------
             // SAFE LEARNING
             // ------------------------------------------------
+
             learning:
               dashboard?.learning || null,
 
             // ------------------------------------------------
             // SAFE ACTIVITIES
             // ------------------------------------------------
+
             activities:
               Array.isArray(
                 dashboard?.activities
@@ -362,11 +481,16 @@ useEffect(() => {
             // ------------------------------------------------
             // SAFE NOTIFICATIONS
             // ------------------------------------------------
+
             notifications:
-              dashboard?.notifications || {
-                unreadCount: 0,
-                latest: [],
-              },
+              dashboard?.notifications &&
+              typeof dashboard.notifications ===
+                "object"
+                ? dashboard.notifications
+                : {
+                    unreadCount: 0,
+                    latest: [],
+                  },
           });
         } else {
           setError(
@@ -408,13 +532,11 @@ useEffect(() => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
         <div className="text-center">
-
           <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-400" />
 
           <p className="mt-4 text-sm text-gray-400">
             Preparing your workspace...
           </p>
-
         </div>
       </div>
     );
@@ -437,8 +559,6 @@ useEffect(() => {
       ...(dashboardData?.user || {}),
     },
 
-    // Backend currently returns stats as an object.
-    // Keep it as an object so StatsGrid can use it safely.
     stats:
       dashboardData?.stats &&
       typeof dashboardData.stats === "object"
@@ -462,10 +582,14 @@ useEffect(() => {
         : [],
 
     notifications:
-      dashboardData?.notifications || {
-        unreadCount: 0,
-        latest: [],
-      },
+      dashboardData?.notifications &&
+      typeof dashboardData.notifications ===
+        "object"
+        ? dashboardData.notifications
+        : {
+            unreadCount: 0,
+            latest: [],
+          },
   };
 
   const user =
@@ -477,9 +601,7 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
-
       <div className="flex">
-
         {/* ====================================================
             SIDEBAR
         ==================================================== */}
@@ -487,7 +609,6 @@ useEffect(() => {
         <Sidebar />
 
         <div className="min-w-0 flex-1">
-
           {/* ==================================================
               TOPBAR
           ================================================== */}
@@ -495,13 +616,11 @@ useEffect(() => {
           <Topbar user={user} />
 
           <main className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
-
             {/* =================================================
                 PERSONALIZED HERO
             ================================================= */}
 
             <section className="relative mb-8 overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950/30 p-6 sm:p-8">
-
               {/* Background Glow */}
 
               <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
@@ -509,10 +628,11 @@ useEffect(() => {
               <div className="pointer-events-none absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-blue-600/10 blur-3xl" />
 
               <div className="relative max-w-3xl">
-
                 {/* Time Badge */}
 
-                <div className="mb-3 inline-flex items-center rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-300">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-300">
+                  <Sparkles size={13} />
+
                   {timeContext.label} mode
                 </div>
 
@@ -520,6 +640,7 @@ useEffect(() => {
 
                 <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
                   {timeContext.title}
+
                   <span className="text-cyan-400">
                     .
                   </span>
@@ -549,48 +670,38 @@ useEffect(() => {
                     </span>
                   </p>
                 )}
-
               </div>
             </section>
 
             {/* =================================================
-                DASHBOARD CONTENT
-
-                StatsGrid is rendered inside DashboardCards
-                so it appears only once.
+                DASHBOARD CARDS
             ================================================= */}
 
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-  
-              {/* =================================================
-                  EXISTING DASHBOARD CARDS
-              ================================================= */}
+            <section className="min-w-0">
+              <DashboardCards
+                dashboardData={safeDashboardData}
+              />
+            </section>
 
-              <div className="min-w-0">
-                <DashboardCards
-                  dashboardData={safeDashboardData}
-                />
-              </div>
+            {/* =================================================
+                SAVED NOTES
+            ================================================= */}
 
-              {/* =================================================
-                  SAVED NOTES
-              ================================================= */}
-
+            <section className="mt-8 min-w-0">
               <SavedNotesCard
                 notes={savedNotes}
                 loading={notesLoading}
+                onRefresh={fetchSavedNotes}
               />
-
-            </div>
+            </section>
 
             {/* =================================================
                 AI COMMAND CENTER
             ================================================= */}
 
-            <div className="mt-8">
+            <section className="mt-8 min-w-0">
               <AIAssistant />
-            </div>
-
+            </section>
           </main>
         </div>
       </div>
