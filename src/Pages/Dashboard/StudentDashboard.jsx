@@ -81,9 +81,6 @@ function SavedNotesCard({ notes, loading, onRefresh }) {
         },
       });
     };
-  }
-
-
   return (
     <section className="min-w-0 overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/70 shadow-xl">
       {/* ======================================================
@@ -733,6 +730,6 @@ function StudentDashboard() {
       </div>
     </div>
   );
-}
+}}
 
 export default StudentDashboard;
