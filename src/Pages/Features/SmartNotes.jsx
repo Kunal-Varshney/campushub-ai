@@ -1483,6 +1483,139 @@ Binary Search with example`}
       </section>
 
       {/* ====================================================== */}
+      {/* SAVED NOTES */}
+      {/* ====================================================== */}
+
+      <section className="relative px-4 py-16 sm:px-6 sm:py-20">
+
+        <div className="relative mx-auto w-full max-w-7xl">
+
+          <div className="mb-10 text-center sm:mb-12">
+
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-slate-900/80 px-3 py-2 text-xs text-blue-400 backdrop-blur sm:mb-6 sm:px-4 sm:text-sm">
+              <Save size={16} />
+              My Saved Notes
+            </div>
+
+            <h2 className="text-2xl font-extrabold tracking-tight sm:text-4xl">
+              Your{" "}
+              <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
+                Saved Notes
+              </span>
+            </h2>
+
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-gray-400 sm:text-lg">
+              Open your previously generated notes and continue learning.
+            </p>
+
+          </div>
+
+          {savedNotes.length === 0 ? (
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-8 text-center sm:rounded-3xl sm:p-12">
+
+              <FileText
+                size={42}
+                className="mx-auto mb-4 text-slate-600"
+              />
+
+              <h3 className="text-lg font-bold text-white sm:text-xl">
+                No saved notes yet
+              </h3>
+
+              <p className="mt-2 text-sm text-gray-400">
+                Generate and save your first note to see it here.
+              </p>
+
+            </div>
+
+          ) : (
+
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+
+              {savedNotes.map((note) => (
+
+                <motion.button
+                  key={note._id}
+                  type="button"
+                  onClick={() => {
+                    navigate("/smart-notes", {
+                      state: {
+                        savedNote: note._id,
+                      },
+                    });
+                  }}
+                  whileHover={{
+                    y: -4,
+                  }}
+                  className="group min-w-0 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/70 p-5 text-left transition-all duration-300 hover:border-blue-500/50 hover:bg-slate-900 sm:rounded-3xl sm:p-6"
+                >
+
+                  {/* ICON */}
+
+                  <div className="mb-5 flex items-start justify-between gap-4">
+
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500">
+                      <FileText size={21} />
+                    </div>
+
+                    <ArrowRight
+                      size={19}
+                      className="mt-2 shrink-0 text-slate-600 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-blue-400"
+                    />
+
+                  </div>
+
+                  {/* TITLE */}
+
+                  <h3 className="break-words text-base font-bold leading-6 text-white sm:text-lg">
+                    {note.title || "Saved Notes"}
+                  </h3>
+
+                  {/* SUBJECT */}
+
+                  <p className="mt-2 break-words text-sm text-blue-400">
+                    {note.subject || note.category || "General"}
+                  </p>
+
+                  {/* DESCRIPTION */}
+
+                  <p className="mt-3 line-clamp-3 break-words text-sm leading-6 text-gray-400">
+                    {note.summary ||
+                      note.description ||
+                      note.topic ||
+                      "Saved study notes"}
+                  </p>
+
+                  {/* META */}
+
+                  <div className="mt-5 flex flex-wrap items-center gap-2">
+
+                    <span className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs text-gray-400">
+                      {note.difficulty || "Intermediate"}
+                    </span>
+
+                    {note.branch && (
+                      <span className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs text-gray-400">
+                        {note.branch}
+                      </span>
+                    )}
+
+                  </div>
+
+                </motion.button>
+
+              ))}
+
+            </div>
+
+          )}
+
+        </div>
+
+      </section>
+
+      {/* ====================================================== */}
       {/* FEATURES */}
       {/* ====================================================== */}
 
