@@ -1,5 +1,5 @@
 import API from "../../services/api";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { saveLastVisited } from "../../utils/lastVisited";
 import { useEffect, useState } from "react";
 
@@ -122,6 +122,7 @@ const benefits = [
 
 function SmartNotes() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [inputText, setInputText] = useState("");
   const [subject, setSubject] = useState("Computer Science");
@@ -136,6 +137,125 @@ function SmartNotes() {
   const [isCurrentNoteSaved, setIsCurrentNoteSaved] = useState(false);
 
   // ============================================================
+  // OPEN SAVED NOTE FROM STUDENT DASHBOARD
+  // ============================================================
+
+  useEffect(() => {
+    const savedNote = location.state?.savedNote;
+
+    if (!savedNote) return;
+
+    console.log("OPENING SAVED NOTE:", savedNote);
+
+    const answer =
+      savedNote?.answer &&
+      typeof savedNote.answer === "object"
+        ? savedNote.answer
+        : {};
+
+    const sections = Array.isArray(answer?.sections)
+      ? answer.sections
+      : Array.isArray(savedNote?.sections)
+      ? savedNote.sections
+      : [];
+
+    const keyPoints = Array.isArray(savedNote?.points)
+      ? savedNote.points
+      : [];
+
+    const keywords = Array.isArray(savedNote?.keywords)
+      ? savedNote.keywords
+      : [];
+
+    const examTips = Array.isArray(savedNote?.examTips)
+      ? savedNote.examTips
+      : [];
+
+    const quickRevision = Array.isArray(savedNote?.quickRevision)
+      ? savedNote.quickRevision
+      : [];
+
+    // ==========================================================
+    // RESTORE INPUT VALUES
+    // ==========================================================
+
+    setInputText(
+      savedNote?.topic ||
+        savedNote?.description ||
+        ""
+    );
+
+    setSubject(
+      savedNote?.subject ||
+        savedNote?.category ||
+        "Computer Science"
+    );
+
+    setDifficulty(
+      savedNote?.difficulty ||
+        "Intermediate"
+    );
+
+    // ==========================================================
+    // RESTORE SAVED NOTE
+    // ==========================================================
+
+    setGeneratedNotes({
+      _id:
+        savedNote?._id ||
+        savedNote?.id ||
+        savedNote?.noteId ||
+        null,
+
+      title:
+        savedNote?.title ||
+        "Saved Notes",
+
+      subject:
+        savedNote?.subject ||
+        savedNote?.category ||
+        "General",
+
+      difficulty:
+        savedNote?.difficulty ||
+        "Intermediate",
+
+      introduction:
+        savedNote?.summary ||
+        answer?.introduction ||
+        "",
+
+      sections,
+
+      keyPoints,
+
+      keywords,
+
+      examTips,
+
+      quickRevision,
+    });
+
+    // ==========================================================
+    // NOTE IS ALREADY SAVED
+    // ==========================================================
+
+    setIsCurrentNoteSaved(true);
+
+    // ==========================================================
+    // CLEAR ROUTER LOCATION STATE
+    // Prevent the same saved note from reopening after refresh/
+    // returning to this page.
+    // ==========================================================
+
+    window.history.replaceState(
+      null,
+      "",
+      window.location.pathname + window.location.search
+    );
+  }, [location.state]);
+
+  // ============================================================
   // FETCH PREVIOUS NOTES
   // ============================================================
 
@@ -143,16 +263,27 @@ function SmartNotes() {
     try {
       const response = await API.get("/notes");
 
-      console.log("SAVED NOTES:", response.data);
+      console.log(
+        "SMART NOTES - SAVED NOTES:",
+        response.data
+      );
 
-      if (response.data?.success) {
-        setSavedNotes(response.data.notes || []);
+      if (response?.data?.success) {
+        setSavedNotes(
+          Array.isArray(response?.data?.notes)
+            ? response.data.notes
+            : []
+        );
+      } else {
+        setSavedNotes([]);
       }
     } catch (error) {
-      console.log(
+      console.error(
         "FETCH NOTES ERROR:",
-        error?.response?.data || error.message
+        error?.response?.data || error?.message
       );
+
+      setSavedNotes([]);
     }
   };
 
@@ -245,8 +376,6 @@ function SmartNotes() {
     // Allow selecting the same file again
     event.target.value = "";
   };
-
-
 
   // ============================================================
   // GENERATE NOTES
@@ -370,7 +499,7 @@ function SmartNotes() {
       setIsCurrentNoteSaved(true);
 
       // Refresh saved notes
-      fetchNotes();
+      await fetchNotes();
 
       alert(
         response.data?.alreadySaved

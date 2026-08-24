@@ -9,9 +9,10 @@ import {
   Clock,
   RefreshCw,
   Sparkles,
+  ChevronRight,
 } from "lucide-react";
 
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import Sidebar from "../../components/Dashboard/Sidebar";
 import Topbar from "../../components/Dashboard/Topbar";
@@ -25,6 +26,8 @@ import API from "../../services/api";
 // ============================================================
 
 function SavedNotesCard({ notes, loading, onRefresh }) {
+  const navigate = useNavigate();
+
   const formatDate = (date) => {
     if (!date) return "";
 
@@ -45,9 +48,40 @@ function SavedNotesCard({ notes, loading, onRefresh }) {
     }
   };
 
-  const latestNotes = Array.isArray(notes)
-    ? notes.slice(0, 6)
-    : [];
+  // ----------------------------------------------------------
+  // ONLY USER-SAVED NOTES
+  // ----------------------------------------------------------
+
+  const savedNotes = Array.isArray(notes) ? notes : [];
+
+  // Dashboard preview limit only.
+  // This is NOT "latest notes".
+  const displayedNotes = savedNotes.slice(0, 6);
+
+  // ----------------------------------------------------------
+  // OPEN SAVED NOTE
+  // ----------------------------------------------------------
+
+  const handleOpenNote = (note) => {
+    if (!note) return;
+
+    const noteId =
+      note?._id ||
+      note?.id ||
+      note?.noteId;
+
+    if (!noteId) {
+      console.error("Saved note does not have an ID:", note);
+      return;
+    }
+
+    // Send the exact saved note to Smart Notes.
+    navigate("/smart-notes", {
+      state: {
+        savedNote: note,
+      },
+    });
+  };
 
   return (
     <section className="min-w-0 overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/70 shadow-xl">
@@ -67,12 +101,12 @@ function SavedNotesCard({ notes, loading, onRefresh }) {
             </h2>
 
             <p className="mt-0.5 text-xs text-gray-500 sm:text-sm">
-              Your saved study notes
+              Notes you saved for future learning
             </p>
           </div>
 
           <span className="shrink-0 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-xs font-semibold text-cyan-400">
-            {notes.length}
+            {savedNotes.length}
           </span>
         </div>
 
@@ -123,8 +157,10 @@ function SavedNotesCard({ notes, loading, onRefresh }) {
               </div>
             ))}
           </div>
-        ) : latestNotes.length === 0 ? (
-          /* EMPTY STATE */
+        ) : displayedNotes.length === 0 ? (
+          /* ====================================================
+             EMPTY STATE
+          ==================================================== */
 
           <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-950/40 px-5 py-10 text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-800 text-gray-500">
@@ -136,13 +172,13 @@ function SavedNotesCard({ notes, loading, onRefresh }) {
             </h3>
 
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-500">
-              Generate notes from Smart Notes and save them here for
-              quick access from your dashboard.
+              Generate notes from Smart Notes and click Save Note.
+              Your saved notes will appear here for future access.
             </p>
 
             <Link
               to="/smart-notes"
-              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-cyan-500/10 px-4 py-2.5 text-sm font-semibold text-cyan-400 transition-all duration-300 hover:bg-cyan-500/20 hover:text-cyan-300"
+              className="group mt-5 inline-flex items-center gap-2 rounded-xl bg-cyan-500/10 px-4 py-2.5 text-sm font-semibold text-cyan-400 transition-all duration-300 hover:bg-cyan-500/20 hover:text-cyan-300"
             >
               Create Notes
 
@@ -153,51 +189,73 @@ function SavedNotesCard({ notes, loading, onRefresh }) {
             </Link>
           </div>
         ) : (
-          /* NOTES */
+          /* ====================================================
+             SAVED NOTES
+          ==================================================== */
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {latestNotes.map((note) => {
+            {displayedNotes.map((note) => {
               const noteId =
                 note?._id ||
                 note?.id ||
                 note?.noteId;
 
+              const title =
+                note?.title ||
+                "Untitled Note";
+
+              const subject =
+                note?.subject ||
+                note?.category ||
+                "General";
+
+              const summary =
+                note?.summary ||
+                note?.description ||
+                note?.topic ||
+                "Saved study note";
+
               return (
-                <div
+                <button
+                  type="button"
                   key={noteId || `${note.title}-${note.createdAt}`}
-                  className="group min-w-0 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/50 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/30 hover:bg-slate-950 hover:shadow-lg hover:shadow-cyan-950/10"
+                  onClick={() => {
+                    navigate("/smart-notes", {
+                      state: {
+                        savedNote: note,
+                      },
+                    });
+                  }}
+                  className="group w-full min-w-0 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/50 p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/30 hover:bg-slate-950 hover:shadow-lg hover:shadow-cyan-950/10"
                 >
                   {/* TOP */}
 
                   <div className="flex min-w-0 items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 transition-colors group-hover:bg-cyan-500/10 group-hover:text-cyan-400">
                       <FileText size={18} />
                     </div>
 
                     <div className="min-w-0 flex-1">
                       <h3 className="break-words text-sm font-semibold leading-5 text-gray-200 transition-colors group-hover:text-white">
-                        {note?.title || "Untitled Note"}
+                        {title}
                       </h3>
 
                       <p className="mt-1 truncate text-xs text-gray-500">
-                        {note?.subject ||
-                          note?.category ||
-                          "General"}
+                        {subject}
                       </p>
                     </div>
+
+                    <ChevronRight
+                      size={17}
+                      className="mt-1 shrink-0 text-gray-600 transition-all duration-300 group-hover:translate-x-1 group-hover:text-cyan-400"
+                    />
                   </div>
 
                   {/* SUMMARY */}
 
-                  {(note?.summary ||
-                    note?.description ||
-                    note?.topic) && (
-                    <p className="mt-4 line-clamp-2 text-xs leading-5 text-gray-500">
-                      {note?.summary ||
-                        note?.description ||
-                        note?.topic}
-                    </p>
-                  )}
+                  <p className="mt-4 line-clamp-2 text-xs leading-5 text-gray-500">
+                    {summary}
+                  </p>
 
                   {/* FOOTER */}
 
@@ -216,11 +274,18 @@ function SavedNotesCard({ notes, loading, onRefresh }) {
                       </span>
                     </div>
 
-                    <span className="shrink-0 rounded-full border border-slate-700 bg-slate-900 px-2 py-1 text-[10px] font-medium text-gray-500">
+                    <span className="shrink-0 rounded-full border border-green-500/20 bg-green-500/5 px-2 py-1 text-[10px] font-medium text-green-400">
                       Saved
                     </span>
                   </div>
-                </div>
+
+                  {/* OPEN TEXT */}
+
+                  <div className="mt-4 flex items-center gap-1 text-xs font-medium text-cyan-500 opacity-70 transition-opacity group-hover:opacity-100">
+                    Read saved note
+                    <ArrowRight size={13} />
+                  </div>
+                </button>
               );
             })}
           </div>
@@ -228,22 +293,15 @@ function SavedNotesCard({ notes, loading, onRefresh }) {
       </div>
 
       {/* ======================================================
-          VIEW ALL
+          MORE SAVED NOTES
       ====================================================== */}
 
-      {notes.length > 0 && !loading && (
+      {savedNotes.length > 6 && !loading && (
         <div className="border-t border-slate-800 p-4 sm:p-5">
-          <Link
-            to="/smart-notes"
-            className="group flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-gray-300 transition-all duration-300 hover:border-cyan-500/40 hover:bg-cyan-500/5 hover:text-cyan-400"
-          >
-            View All Saved Notes
-
-            <ArrowRight
-              size={16}
-              className="transition-transform duration-300 group-hover:translate-x-1"
-            />
-          </Link>
+          <p className="text-center text-xs text-gray-500">
+            Showing 6 of {savedNotes.length} saved notes.
+            Use Smart Notes to access your saved notes.
+          </p>
         </div>
       )}
     </section>
@@ -343,7 +401,8 @@ function StudentDashboard() {
     } catch (err) {
       console.error(
         "Student Dashboard Saved Notes Error:",
-        err?.response?.data || err?.message
+        err?.response?.data ||
+          err?.message
       );
 
       setSavedNotes([]);
@@ -361,13 +420,14 @@ function StudentDashboard() {
   }, [fetchSavedNotes]);
 
   // ==========================================================
-  // REFRESH NOTES WHEN USER RETURNS TO DASHBOARD
+  // REFRESH NOTES WHEN USER RETURNS
   // ==========================================================
 
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (
-        document.visibilityState === "visible"
+        document.visibilityState ===
+        "visible"
       ) {
         fetchSavedNotes();
       }
@@ -430,46 +490,30 @@ function StudentDashboard() {
           setDashboardData({
             ...dashboard,
 
-            // ------------------------------------------------
-            // SAFE USER
-            // ------------------------------------------------
-
             user:
               dashboard?.user &&
-              typeof dashboard.user === "object"
+              typeof dashboard.user ===
+                "object"
                 ? dashboard.user
                 : {},
 
-            // ------------------------------------------------
-            // SAFE STATS
-            // ------------------------------------------------
-
             stats:
               dashboard?.stats &&
-              typeof dashboard.stats === "object"
+              typeof dashboard.stats ===
+                "object"
                 ? dashboard.stats
                 : {},
 
-            // ------------------------------------------------
-            // SAFE OVERVIEW
-            // ------------------------------------------------
-
             overview:
               dashboard?.overview &&
-              typeof dashboard.overview === "object"
+              typeof dashboard.overview ===
+                "object"
                 ? dashboard.overview
                 : {},
 
-            // ------------------------------------------------
-            // SAFE LEARNING
-            // ------------------------------------------------
-
             learning:
-              dashboard?.learning || null,
-
-            // ------------------------------------------------
-            // SAFE ACTIVITIES
-            // ------------------------------------------------
+              dashboard?.learning ||
+              null,
 
             activities:
               Array.isArray(
@@ -477,10 +521,6 @@ function StudentDashboard() {
               )
                 ? dashboard.activities
                 : [],
-
-            // ------------------------------------------------
-            // SAFE NOTIFICATIONS
-            // ------------------------------------------------
 
             notifications:
               dashboard?.notifications &&
@@ -561,16 +601,19 @@ function StudentDashboard() {
 
     stats:
       dashboardData?.stats &&
-      typeof dashboardData.stats === "object"
+      typeof dashboardData.stats ===
+        "object"
         ? dashboardData.stats
         : {},
 
     learning:
-      dashboardData?.learning || null,
+      dashboardData?.learning ||
+      null,
 
     overview:
       dashboardData?.overview &&
-      typeof dashboardData.overview === "object"
+      typeof dashboardData.overview ===
+        "object"
         ? dashboardData.overview
         : {},
 
@@ -621,22 +664,16 @@ function StudentDashboard() {
             ================================================= */}
 
             <section className="relative mb-8 overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950/30 p-6 sm:p-8">
-              {/* Background Glow */}
-
               <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
 
               <div className="pointer-events-none absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-blue-600/10 blur-3xl" />
 
               <div className="relative max-w-3xl">
-                {/* Time Badge */}
-
                 <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-300">
                   <Sparkles size={13} />
 
                   {timeContext.label} mode
                 </div>
-
-                {/* Hero Title */}
 
                 <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
                   {timeContext.title}
@@ -646,21 +683,15 @@ function StudentDashboard() {
                   </span>
                 </h1>
 
-                {/* Hero Message */}
-
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-400 sm:text-base">
                   {timeContext.message}
                 </p>
-
-                {/* Backend Error */}
 
                 {error && (
                   <div className="mt-5 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-300">
                     {error}
                   </div>
                 )}
-
-                {/* User Information */}
 
                 {!error && user?.name && (
                   <p className="mt-5 text-sm text-gray-500">
