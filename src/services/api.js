@@ -674,6 +674,24 @@ export const logoutUser = async () => {
 };
 
 // ============================================================
+// GET SINGLE SAVED NOTE
+// GET /api/notes/:id
+// ============================================================
+
+export const getNoteById = async (id) => {
+  try {
+    const { data } = await api.get(`/notes/${id}`);
+
+    return data;
+  } catch (error) {
+    return handleError(
+      error,
+      "Failed to fetch saved note"
+    );
+  }
+};
+
+// ============================================================
 // DEFAULT EXPORT
 // ============================================================
 

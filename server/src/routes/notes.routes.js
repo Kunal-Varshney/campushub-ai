@@ -5,9 +5,9 @@ import {
   createNote,
   getNotes,
   getNoteById,
-} from "../controllers/noteController.js";
+} from "../controllers/notes.controller.js";
 
-import authMiddleware from "../middleware/authMiddleware.js";
+import authMiddleware from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
