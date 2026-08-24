@@ -46,7 +46,6 @@ const noteSchema = new mongoose.Schema(
       default: "",
     },
 
-    // Main structured AI answer
     answer: {
       introduction: {
         type: String,
@@ -81,25 +80,46 @@ const noteSchema = new mongoose.Schema(
       ],
     },
 
-    // Important points
+    // ============================================================
+    // IMPORTANT POINTS
+    // ============================================================
+
     points: {
       type: [String],
       default: [],
     },
 
-    // General examples
+    // ============================================================
+    // EXAMPLES
+    // ============================================================
+
     examples: {
       type: [String],
       default: [],
     },
 
-    // Relevant keywords only
+    // ============================================================
+    // KEYWORDS
+    // ============================================================
+
     keywords: {
       type: [String],
       default: [],
     },
 
-    // Only generated when relevant
+    // ============================================================
+    // QUICK REVISION
+    // ============================================================
+
+    quickRevision: {
+      type: [String],
+      default: [],
+    },
+
+    // ============================================================
+    // EXAM TIPS
+    // ============================================================
+
     examTips: {
       type: [String],
       default: [],
@@ -142,7 +162,7 @@ const noteSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ["pending", "approved", "rejected"],
-      default: "pending",
+      default: "approved",
     },
 
     // ============================================================

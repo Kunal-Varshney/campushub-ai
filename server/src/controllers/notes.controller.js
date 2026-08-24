@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Note from "../models/note.js";
 import Groq from "groq-sdk";
 
@@ -847,6 +848,50 @@ export const getNotes = async (req, res) => {
       message:
         error?.message ||
         "Failed to fetch notes",
+    });
+  }
+};
+
+// ============================================================
+// GET SINGLE SAVED NOTE
+// GET /api/notes/:id
+// ============================================================
+
+export const getNoteById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid note ID",
+      });
+    }
+
+    const note = await Note.findOne({
+      _id: id,
+      uploadedBy: req.user.id,
+    }).lean();
+
+    if (!note) {
+      return res.status(404).json({
+        success: false,
+        message: "Saved note not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      note,
+    });
+  } catch (error) {
+    console.error("GET SINGLE NOTE ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message:
+        error?.message ||
+        "Failed to fetch saved note",
     });
   }
 };

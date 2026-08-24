@@ -137,123 +137,168 @@ function SmartNotes() {
   const [isCurrentNoteSaved, setIsCurrentNoteSaved] = useState(false);
 
   // ============================================================
-  // OPEN SAVED NOTE FROM STUDENT DASHBOARD
+  // OPEN SAVED NOTE
   // ============================================================
 
   useEffect(() => {
-    const savedNote = location.state?.savedNote;
+    const savedNoteId =
+      location.state?.savedNote ||
+      location.state?.savedNoteId;
 
-    if (!savedNote) return;
+    if (!savedNoteId) return;
 
-    console.log("OPENING SAVED NOTE:", savedNote);
+    const loadSavedNote = async () => {
+      try {
+        setIsLoading(true);
 
-    const answer =
-      savedNote?.answer &&
-      typeof savedNote.answer === "object"
-        ? savedNote.answer
-        : {};
+        const response = await API.get(
+          `/notes/${savedNoteId}`
+        );
 
-    const sections = Array.isArray(answer?.sections)
-      ? answer.sections
-      : Array.isArray(savedNote?.sections)
-      ? savedNote.sections
-      : [];
+        if (
+          !response?.data?.success ||
+          !response?.data?.note
+        ) {
+          throw new Error(
+            response?.data?.message ||
+            "Saved note not found"
+          );
+        }
 
-    const keyPoints = Array.isArray(savedNote?.points)
-      ? savedNote.points
-      : [];
+        const savedNote =
+          response.data.note;
 
-    const keywords = Array.isArray(savedNote?.keywords)
-      ? savedNote.keywords
-      : [];
+        console.log(
+          "OPENING COMPLETE SAVED NOTE:",
+          savedNote
+        );
 
-    const examTips = Array.isArray(savedNote?.examTips)
-      ? savedNote.examTips
-      : [];
+        const answer =
+          savedNote?.answer &&
+          typeof savedNote.answer === "object"
+            ? savedNote.answer
+            : {};
 
-    const quickRevision = Array.isArray(savedNote?.quickRevision)
-      ? savedNote.quickRevision
-      : [];
+        const sections =
+          Array.isArray(answer?.sections)
+            ? answer.sections
+            : [];
 
-    // ==========================================================
-    // RESTORE INPUT VALUES
-    // ==========================================================
+        const keyPoints =
+          Array.isArray(savedNote?.points)
+            ? savedNote.points
+            : [];
 
-    setInputText(
-      savedNote?.topic ||
-        savedNote?.description ||
-        ""
-    );
+        const keywords =
+          Array.isArray(savedNote?.keywords)
+            ? savedNote.keywords
+            : [];
 
-    setSubject(
-      savedNote?.subject ||
-        savedNote?.category ||
-        "Computer Science"
-    );
+        const examTips =
+          Array.isArray(savedNote?.examTips)
+            ? savedNote.examTips
+            : [];
 
-    setDifficulty(
-      savedNote?.difficulty ||
-        "Intermediate"
-    );
+        const quickRevision =
+          Array.isArray(savedNote?.quickRevision)
+            ? savedNote.quickRevision
+            : [];
 
-    // ==========================================================
-    // RESTORE SAVED NOTE
-    // ==========================================================
+        // ======================================================
+        // RESTORE INPUT
+        // ======================================================
 
-    setGeneratedNotes({
-      _id:
-        savedNote?._id ||
-        savedNote?.id ||
-        savedNote?.noteId ||
-        null,
+        setInputText(
+          savedNote?.topic ||
+          savedNote?.description ||
+          ""
+        );
 
-      title:
-        savedNote?.title ||
-        "Saved Notes",
+        setSubject(
+          savedNote?.subject ||
+          savedNote?.category ||
+          "Computer Science"
+        );
 
-      subject:
-        savedNote?.subject ||
-        savedNote?.category ||
-        "General",
+        setDifficulty(
+          savedNote?.difficulty ||
+          "Intermediate"
+        );
 
-      difficulty:
-        savedNote?.difficulty ||
-        "Intermediate",
+        // ======================================================
+        // RESTORE COMPLETE SAVED NOTE
+        // ======================================================
 
-      introduction:
-        savedNote?.summary ||
-        answer?.introduction ||
-        "",
+        setGeneratedNotes({
+          _id: savedNote._id,
 
-      sections,
+          title:
+            savedNote?.title ||
+            "Saved Notes",
 
-      keyPoints,
+          subject:
+            savedNote?.subject ||
+            savedNote?.category ||
+            "General",
 
-      keywords,
+          difficulty:
+            savedNote?.difficulty ||
+            "Intermediate",
 
-      examTips,
+          introduction:
+            savedNote?.summary ||
+            answer?.introduction ||
+            "",
 
-      quickRevision,
-    });
+          sections,
 
-    // ==========================================================
-    // NOTE IS ALREADY SAVED
-    // ==========================================================
+          keyPoints,
 
-    setIsCurrentNoteSaved(true);
+          keywords,
 
-    // ==========================================================
-    // CLEAR ROUTER LOCATION STATE
-    // Prevent the same saved note from reopening after refresh/
-    // returning to this page.
-    // ==========================================================
+          examTips,
 
-    window.history.replaceState(
-      null,
-      "",
-      window.location.pathname + window.location.search
-    );
-  }, [location.state]);
+          quickRevision,
+        });
+
+        // ======================================================
+        // IMPORTANT
+        // ======================================================
+
+        setIsCurrentNoteSaved(true);
+
+        // Remove navigation state so refresh doesn't
+        // repeatedly request the same note.
+        navigate(
+          location.pathname,
+          {
+            replace: true,
+            state: {},
+          }
+        );
+      } catch (error) {
+        console.error(
+          "OPEN SAVED NOTE ERROR:",
+          error?.response?.data ||
+            error?.message
+        );
+
+        alert(
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to open saved note"
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSavedNote();
+  }, [
+    location.state?.savedNoteId,
+    navigate,
+    location.pathname,
+  ]);
 
   // ============================================================
   // FETCH PREVIOUS NOTES
@@ -467,25 +512,53 @@ function SmartNotes() {
 
       const response = await API.post("/notes/create", {
         title: generatedNotes.title,
-        description: inputText.trim(),
-        subject: generatedNotes.subject,
-        topic: inputText.trim(),
-        category: generatedNotes.subject,
-        branch: "AI & ML",
-        year: 2,
-        summary: generatedNotes.introduction,
+
+        description:
+          inputText.trim(),
+
+        subject:
+          generatedNotes.subject,
+
+        topic:
+          inputText.trim(),
+
+        category:
+          generatedNotes.subject,
+
+        difficulty:
+          generatedNotes.difficulty,
+
+        branch:
+          "AI & ML",
+
+        year:
+          2,
+
+        summary:
+          generatedNotes.introduction,
 
         answer: {
-          introduction: generatedNotes.introduction,
-          sections: generatedNotes.sections,
+          introduction:
+            generatedNotes.introduction,
+
+          sections:
+            generatedNotes.sections,
         },
 
-        points: generatedNotes.keyPoints,
-        keywords: generatedNotes.keywords,
-        examTips: generatedNotes.examTips,
-        quickRevision: generatedNotes.quickRevision,
+        points:
+          generatedNotes.keyPoints,
 
-        fileUrl: "ai-generated",
+        keywords:
+          generatedNotes.keywords,
+
+        examTips:
+          generatedNotes.examTips,
+
+        quickRevision:
+          generatedNotes.quickRevision,
+
+        fileUrl:
+          "ai-generated",
       });
 
       console.log("SAVE NOTE RESPONSE:", response.data);

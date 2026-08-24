@@ -1,34 +1,18 @@
 import express from "express";
 
 import {
-  recordNoteDownload,
-} from "../controllers/admin.controller.js";
-
-import {
   generateNote,
   createNote,
   getNotes,
-} from "../controllers/notes.controller.js";
+  getNoteById,
+} from "../controllers/noteController.js";
 
-import authMiddleware from "../middleware/auth.middleware.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // ============================================================
-// GET MY NOTES
-// GET /api/notes
-// ============================================================
-
-router.get(
-  "/",
-  authMiddleware,
-  getNotes
-);
-
-
-// ============================================================
-// AI SMART NOTE GENERATOR
-// POST /api/notes/generate
+// GENERATE NOTE
 // ============================================================
 
 router.post(
@@ -37,10 +21,8 @@ router.post(
   generateNote
 );
 
-
 // ============================================================
-// CREATE NOTE
-// POST /api/notes/create
+// SAVE NOTE
 // ============================================================
 
 router.post(
@@ -49,16 +31,24 @@ router.post(
   createNote
 );
 
-
 // ============================================================
-// RECORD NOTE DOWNLOAD
-// POST /api/notes/:id/download
+// GET ALL MY SAVED NOTES
 // ============================================================
 
-router.post(
-  "/:id/download",
+router.get(
+  "/",
   authMiddleware,
-  recordNoteDownload
+  getNotes
+);
+
+// ============================================================
+// GET ONE SAVED NOTE
+// ============================================================
+
+router.get(
+  "/:id",
+  authMiddleware,
+  getNoteById
 );
 
 export default router;
