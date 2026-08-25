@@ -5,7 +5,7 @@ const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith("Bearer")) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         success: false,
         message: "No token provided",
@@ -19,7 +19,8 @@ const authMiddleware = async (req, res, next) => {
       process.env.JWT_SECRET
     );
 
-    const user = await User.findById(decoded.id).select("-password");
+    const user = await User.findById(decoded.id)
+      .select("-password");
 
     if (!user) {
       return res.status(404).json({
@@ -53,15 +54,17 @@ const authMiddleware = async (req, res, next) => {
     ) {
       return res.status(401).json({
         success: false,
-        message: "Your session has expired. Please login again.",
+        message:
+          "Your session has expired. Please login again.",
       });
     }
 
     req.user = user;
 
     next();
-
   } catch (error) {
+    console.error("Auth Middleware Error:", error.message);
+
     return res.status(401).json({
       success: false,
       message: "Invalid token",

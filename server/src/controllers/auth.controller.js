@@ -56,7 +56,10 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    // Create user
+    // ========================================================
+    // CREATE USER
+    // ========================================================
+
     const user = await User.create({
       name: name.trim(),
       email: normalizedEmail,
@@ -67,7 +70,41 @@ export const registerUser = async (req, res) => {
       authProvider: "local",
     });
 
-    const token = generateToken(user._id);
+    // ========================================================
+    // CREATE ACTIVE LOGIN SESSION
+    // ========================================================
+
+    const sessionId = crypto.randomUUID();
+
+    user.activeSessionId = sessionId;
+
+    // Session validity: 7 days
+    user.activeSessionExpires = new Date(
+      Date.now() + 7 * 24 * 60 * 60 * 1000
+    );
+
+    // ========================================================
+    // ADMIN EMAIL
+    // ========================================================
+
+    if (user.email === "kunalvarshney187@gmail.com") {
+      user.role = "admin";
+    }
+
+    await user.save();
+
+    // ========================================================
+    // GENERATE JWT WITH SESSION ID
+    // ========================================================
+
+    const token = generateToken(
+      user._id,
+      sessionId
+    );
+
+    // ========================================================
+    // RESPONSE
+    // ========================================================
 
     return res.status(201).json({
       success: true,
