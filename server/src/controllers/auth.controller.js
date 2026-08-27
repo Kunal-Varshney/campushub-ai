@@ -64,12 +64,24 @@ const generateVerificationOtp = () => {
 // ============================================================
 
 const sendVerificationEmail = async (email, name, otp) => {
-  // Check environment variables before sending
+  // ============================================================
+  // CHECK EMAIL ENVIRONMENT VARIABLES
+  // ============================================================
+
+  console.log("EMAIL USER EXISTS:", !!EMAIL_USER);
+  console.log("EMAIL PASS EXISTS:", !!EMAIL_PASS);
+  console.log("EMAIL USER:", EMAIL_USER || "NOT SET");
+  console.log("EMAIL RECIPIENT:", email);
+
   if (!EMAIL_USER || !EMAIL_PASS) {
     throw new Error(
       "EMAIL_USER or EMAIL_PASS environment variable is missing."
     );
   }
+
+  // ============================================================
+  // MAIL OPTIONS
+  // ============================================================
 
   const mailOptions = {
     from: `"CampusHub AI" <${EMAIL_USER}>`,
@@ -156,6 +168,69 @@ const sendVerificationEmail = async (email, name, otp) => {
     `,
   };
 
+  // ============================================================
+  // SEND EMAIL
+  // ============================================================
+
+  try {
+    console.log("STARTING EMAIL SEND...");
+
+    const info = await transporter.sendMail(
+      mailOptions
+    );
+
+    console.log(
+      "VERIFICATION EMAIL SENT ✅:",
+      info.messageId
+    );
+
+    return info;
+  } catch (error) {
+    // ==========================================================
+    // DETAILED EMAIL ERROR
+    // ==========================================================
+
+    console.error(
+      "============================================================"
+    );
+
+    console.error(
+      "VERIFICATION EMAIL SEND FAILED ❌"
+    );
+
+    console.error(
+      "ERROR MESSAGE:",
+      error?.message
+    );
+
+    console.error(
+      "ERROR CODE:",
+      error?.code
+    );
+
+    console.error(
+      "ERROR COMMAND:",
+      error?.command
+    );
+
+    console.error(
+      "ERROR RESPONSE:",
+      error?.response
+    );
+
+    console.error(
+      "ERROR RESPONSE CODE:",
+      error?.responseCode
+    );
+
+    console.error(
+      "============================================================"
+    );
+
+    throw error;
+  }
+};
+
   const info = await transporter.sendMail(mailOptions);
 
   console.log(
@@ -164,7 +239,6 @@ const sendVerificationEmail = async (email, name, otp) => {
   );
 
   return info;
-};
 
 // ============================================================
 // REGISTER USER
