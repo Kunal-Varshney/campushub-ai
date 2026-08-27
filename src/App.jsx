@@ -1,26 +1,38 @@
 import { Navigate, Routes, Route } from "react-router-dom";
 
-// Main Pages
+// ============================================================
+// MAIN PAGES
+// ============================================================
+
 import Home from "./Pages/Home/Home";
 import About from "./Pages/About/About";
 import Careers from "./Pages/Careers/Careers";
 import Privacy from "./Pages/Privacy/Privacy";
 import Terms from "./Pages/Terms/Terms";
 
-// Authentication
+// ============================================================
+// AUTHENTICATION
+// ============================================================
+
 import Signup from "./Pages/Signup/Signup";
 import Login from "./Pages/Login/Login";
 import Forgot from "./Pages/Forgot/ForgotPassword";
 import ResetPassword from "./Pages/ResetPassword/Resetpassword";
 
-// Dashboard
+// ============================================================
+// DASHBOARD
+// ============================================================
+
 import StudentDashboard from "./Pages/Dashboard/StudentDashboard";
 import NotificationCenter from "./Pages/Dashboard/NotificationCenter";
 import Discover from "./Pages/Discover/Discover";
 import Settings from "./Pages/Settings/Settings";
 import Profile from "./Pages/Profile/Profile";
 
-// Features
+// ============================================================
+// FEATURES
+// ============================================================
+
 import AIAssistant from "./Pages/Features/AIAssistant";
 import SmartNotes from "./Pages/Features/SmartNotes";
 import ResumeBuilder from "./Pages/Features/ResumeBuilder";
@@ -31,11 +43,18 @@ import Certificates from "./Pages/Features/Certificates";
 import Community from "./Pages/Features/Community";
 import VerifyCertificate from "./Pages/Features/VerifyCertificate";
 
-// Layout
+// ============================================================
+// LAYOUT
+// ============================================================
+
 import MainLayout from "./layouts/MainLayout";
 
-// Admin
+// ============================================================
+// ADMIN
+// ============================================================
+
 import AdminDashboard from "./Pages/Admin/AdminDashboard";
+
 
 // ============================================================
 // AUTH HELPERS
@@ -46,12 +65,20 @@ function PublicRoute({ children }) {
   const token = localStorage.getItem("token");
 
   if (token) {
-    const user = JSON.parse(localStorage.getItem("user") || "null");
+    let user = null;
 
+    try {
+      user = JSON.parse(localStorage.getItem("user") || "null");
+    } catch (error) {
+      console.error("Invalid user data in localStorage:", error);
+    }
+
+    // Admin ko admin dashboard par bhejo
     if (user?.role === "admin") {
       return <Navigate to="/admin/dashboard" replace />;
     }
 
+    // Normal authenticated user
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -82,7 +109,14 @@ function ProtectedRoute({ children }) {
 // Sirf authenticated admin users ke liye
 function AdminRoute({ children }) {
   const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+
+  let user = null;
+
+  try {
+    user = JSON.parse(localStorage.getItem("user") || "null");
+  } catch (error) {
+    console.error("Invalid user data in localStorage:", error);
+  }
 
   // Login nahi hai
   if (!token) {
@@ -107,20 +141,40 @@ function App() {
     <Routes>
 
       {/* ====================================================
-          MAIN WEBSITE
+          MAIN WEBSITE + PUBLIC FEATURES + PROTECTED FEATURES
+          MainLayout = Navbar + Page Content + Footer
       ==================================================== */}
 
       <Route element={<MainLayout />}>
 
-        <Route path="/" element={<Home />} />
+        {/* ==================================================
+            PUBLIC MAIN PAGES
+        ================================================== */}
 
-        <Route path="/about" element={<About />} />
+        <Route
+          path="/"
+          element={<Home />}
+        />
 
-        <Route path="/careers" element={<Careers />} />
+        <Route
+          path="/about"
+          element={<About />}
+        />
 
-        <Route path="/privacy" element={<Privacy />} />
+        <Route
+          path="/careers"
+          element={<Careers />}
+        />
 
-        <Route path="/terms" element={<Terms />} />
+        <Route
+          path="/privacy"
+          element={<Privacy />}
+        />
+
+        <Route
+          path="/terms"
+          element={<Terms />}
+        />
 
         {/* ==================================================
             DISCOVER
@@ -132,7 +186,7 @@ function App() {
         />
 
         {/* ==================================================
-            PUBLIC FEATURES
+            PUBLIC CERTIFICATE VERIFICATION
         ================================================== */}
 
         <Route
@@ -140,11 +194,97 @@ function App() {
           element={<VerifyCertificate />}
         />
 
+
+        {/* ==================================================
+            PROTECTED FEATURES
+
+            These pages will now automatically get:
+
+            Navbar
+              ↓
+            Feature Page
+              ↓
+            Footer
+        ================================================== */}
+
+        <Route
+          path="/ai-assistant"
+          element={
+            <ProtectedRoute>
+              <AIAssistant />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/smart-notes"
+          element={
+            <ProtectedRoute>
+              <SmartNotes />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/resume-builder"
+          element={
+            <ProtectedRoute>
+              <ResumeBuilder />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/mock-interview"
+          element={
+            <ProtectedRoute>
+              <MockInterview />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/internship-finder"
+          element={
+            <ProtectedRoute>
+              <InternshipFinder />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/skill-roadmap"
+          element={
+            <ProtectedRoute>
+              <SkillRoadmap />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/certificates"
+          element={
+            <ProtectedRoute>
+              <Certificates />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/community"
+          element={
+            <ProtectedRoute>
+              <Community />
+            </ProtectedRoute>
+          }
+        />
+
       </Route>
 
 
       {/* ====================================================
           AUTHENTICATION
+          These intentionally stay OUTSIDE MainLayout
       ==================================================== */}
 
       <Route
@@ -165,7 +305,6 @@ function App() {
         }
       />
 
-      {/* Forgot password public rahega */}
       <Route
         path="/forgot-password"
         element={<Forgot />}
@@ -178,7 +317,8 @@ function App() {
 
 
       {/* ====================================================
-          PROTECTED STUDENT AREA
+          PROTECTED STUDENT DASHBOARD
+          Dashboard has its own UI/layout
       ==================================================== */}
 
       <Route
@@ -219,84 +359,8 @@ function App() {
 
 
       {/* ====================================================
-          PROTECTED FEATURES
-      ==================================================== */}
-
-      <Route
-        path="/ai-assistant"
-        element={
-          <ProtectedRoute>
-            <AIAssistant />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/smart-notes"
-        element={
-          <ProtectedRoute>
-            <SmartNotes />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/resume-builder"
-        element={
-          <ProtectedRoute>
-            <ResumeBuilder />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/mock-interview"
-        element={
-          <ProtectedRoute>
-            <MockInterview />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/internship-finder"
-        element={
-          <ProtectedRoute>
-            <InternshipFinder />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/skill-roadmap"
-        element={
-          <ProtectedRoute>
-            <SkillRoadmap />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/certificates"
-        element={
-          <ProtectedRoute>
-            <Certificates />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/community"
-        element={
-          <ProtectedRoute>
-            <Community />
-          </ProtectedRoute>
-        }
-      />
-
-
-      {/* ====================================================
           ADMIN PANEL
+          Admin has its own UI/layout
       ==================================================== */}
 
       <Route
