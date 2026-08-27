@@ -6,15 +6,42 @@ import User from "../models/User.js";
 import generateToken from "../utils/generateToken.js";
 
 // ============================================================
+// EMAIL CONFIGURATION
+// ============================================================
+
+const EMAIL_USER = process.env.EMAIL_USER;
+const EMAIL_PASS = process.env.EMAIL_PASS;
+
+// ============================================================
 // EMAIL TRANSPORTER
 // ============================================================
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
+
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: EMAIL_USER,
+    pass: EMAIL_PASS,
   },
+});
+
+// ============================================================
+// EMAIL TRANSPORTER CHECK
+// ============================================================
+
+transporter.verify((error, success) => {
+  if (error) {
+    console.error(
+      "============================================================"
+    );
+    console.error("EMAIL TRANSPORTER ERROR ❌");
+    console.error(error);
+    console.error(
+      "============================================================"
+    );
+  } else {
+    console.log("EMAIL TRANSPORTER READY ✅");
+  }
 });
 
 // ============================================================
@@ -37,8 +64,15 @@ const generateVerificationOtp = () => {
 // ============================================================
 
 const sendVerificationEmail = async (email, name, otp) => {
-  await transporter.sendMail({
-    from: `"CampusHub AI" <${process.env.EMAIL_USER}>`,
+  // Check environment variables before sending
+  if (!EMAIL_USER || !EMAIL_PASS) {
+    throw new Error(
+      "EMAIL_USER or EMAIL_PASS environment variable is missing."
+    );
+  }
+
+  const mailOptions = {
+    from: `"CampusHub AI" <${EMAIL_USER}>`,
     to: email,
     subject: "CampusHub AI - Verify Your Email",
 
@@ -120,7 +154,16 @@ const sendVerificationEmail = async (email, name, otp) => {
 
       </div>
     `,
-  });
+  };
+
+  const info = await transporter.sendMail(mailOptions);
+
+  console.log(
+    "VERIFICATION EMAIL SENT ✅:",
+    info.messageId
+  );
+
+  return info;
 };
 
 // ============================================================
@@ -141,7 +184,10 @@ export const registerUser = async (req, res) => {
       year,
     } = req.body;
 
-    // Validate required fields
+    // ========================================================
+    // VALIDATE REQUIRED FIELDS
+    // ========================================================
+
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -151,14 +197,32 @@ export const registerUser = async (req, res) => {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Check existing user
+    // ========================================================
+    // CHECK EMAIL CONFIGURATION
+    // ========================================================
+
+    if (!EMAIL_USER || !EMAIL_PASS) {
+      console.error(
+        "REGISTER ERROR ❌: EMAIL_USER or EMAIL_PASS is missing."
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Email service is not configured on the server.",
+      });
+    }
+
+    // ========================================================
+    // CHECK EXISTING USER
+    // ========================================================
+
     const existingUser = await User.findOne({
       email: normalizedEmail,
     });
 
     if (existingUser) {
-      // Existing unverified account:
-      // allow user to request a fresh OTP instead of creating duplicate user.
+      // Existing unverified account
       if (
         existingUser.authProvider === "local" &&
         existingUser.isEmailVerified === false
@@ -196,9 +260,12 @@ export const registerUser = async (req, res) => {
       // Email verification
       isEmailVerified: false,
       emailVerificationOtp: verificationOtp,
+
       emailVerificationOtpExpire: new Date(
-        Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000
+        Date.now() +
+          OTP_EXPIRY_MINUTES * 60 * 1000
       ),
+
       emailVerificationLastSent: new Date(),
     });
 
@@ -216,6 +283,11 @@ export const registerUser = async (req, res) => {
     // ========================================================
 
     try {
+      console.log(
+        "SENDING VERIFICATION EMAIL TO:",
+        user.email
+      );
+
       await sendVerificationEmail(
         user.email,
         user.name,
@@ -223,11 +295,43 @@ export const registerUser = async (req, res) => {
       );
     } catch (emailError) {
       console.error(
-        "Verification Email Error:",
-        emailError.message
+        "============================================================"
       );
 
-      // Remove newly created account if email could not be sent.
+      console.error(
+        "VERIFICATION EMAIL ERROR ❌"
+      );
+
+      console.error(
+        "MESSAGE:",
+        emailError?.message
+      );
+
+      console.error(
+        "CODE:",
+        emailError?.code
+      );
+
+      console.error(
+        "COMMAND:",
+        emailError?.command
+      );
+
+      console.error(
+        "RESPONSE:",
+        emailError?.response
+      );
+
+      console.error(
+        "RESPONSE CODE:",
+        emailError?.responseCode
+      );
+
+      console.error(
+        "============================================================"
+      );
+
+      // Remove newly created account
       await User.findByIdAndDelete(user._id);
 
       return res.status(500).json({
@@ -256,7 +360,8 @@ export const registerUser = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: error.message || "Registration failed.",
+      message:
+        error.message || "Registration failed.",
     });
   }
 };
@@ -270,20 +375,33 @@ export const verifyEmail = async (req, res) => {
   try {
     const { email, otp } = req.body;
 
+    // ========================================================
+    // VALIDATE INPUT
+    // ========================================================
+
     if (!email || !otp) {
       return res.status(400).json({
         success: false,
-        message: "Email and verification code are required.",
+        message:
+          "Email and verification code are required.",
       });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = email
+      .trim()
+      .toLowerCase();
+
     const normalizedOtp = String(otp).trim();
+
+    // ========================================================
+    // VALIDATE OTP FORMAT
+    // ========================================================
 
     if (!/^\d{6}$/.test(normalizedOtp)) {
       return res.status(400).json({
         success: false,
-        message: "Please enter a valid 6-digit verification code.",
+        message:
+          "Please enter a valid 6-digit verification code.",
       });
     }
 
@@ -334,10 +452,14 @@ export const verifyEmail = async (req, res) => {
     // OTP CHECK
     // ========================================================
 
-    if (user.emailVerificationOtp !== normalizedOtp) {
+    if (
+      user.emailVerificationOtp !==
+      normalizedOtp
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Invalid verification code. Please try again.",
+        message:
+          "Invalid verification code. Please try again.",
       });
     }
 
@@ -360,10 +482,14 @@ export const verifyEmail = async (req, res) => {
 
     // Session validity: 7 days
     user.activeSessionExpires = new Date(
-      Date.now() + 7 * 24 * 60 * 60 * 1000
+      Date.now() +
+        7 * 24 * 60 * 60 * 1000
     );
 
-    // Admin email
+    // ========================================================
+    // ADMIN EMAIL
+    // ========================================================
+
     if (user.email === "kunalvarshney187@gmail.com") {
       user.role = "admin";
     }
@@ -387,6 +513,7 @@ export const verifyEmail = async (req, res) => {
       success: true,
       message: "Email verified successfully.",
       token,
+
       user: {
         id: user._id,
         name: user.name,
@@ -399,7 +526,10 @@ export const verifyEmail = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Verify Email Error:", error);
+    console.error(
+      "Verify Email Error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
@@ -413,9 +543,16 @@ export const verifyEmail = async (req, res) => {
 // POST /api/auth/resend-otp
 // ============================================================
 
-export const resendVerificationOtp = async (req, res) => {
+export const resendVerificationOtp = async (
+  req,
+  res
+) => {
   try {
     const { email } = req.body;
+
+    // ========================================================
+    // VALIDATE EMAIL
+    // ========================================================
 
     if (!email) {
       return res.status(400).json({
@@ -424,7 +561,29 @@ export const resendVerificationOtp = async (req, res) => {
       });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = email
+      .trim()
+      .toLowerCase();
+
+    // ========================================================
+    // CHECK EMAIL CONFIGURATION
+    // ========================================================
+
+    if (!EMAIL_USER || !EMAIL_PASS) {
+      console.error(
+        "RESEND OTP ERROR ❌: EMAIL_USER or EMAIL_PASS is missing."
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Email service is not configured on the server.",
+      });
+    }
+
+    // ========================================================
+    // FIND USER
+    // ========================================================
 
     const user = await User.findOne({
       email: normalizedEmail,
@@ -445,7 +604,8 @@ export const resendVerificationOtp = async (req, res) => {
     if (user.isEmailVerified) {
       return res.status(400).json({
         success: false,
-        message: "This email is already verified.",
+        message:
+          "This email is already verified.",
       });
     }
 
@@ -459,9 +619,13 @@ export const resendVerificationOtp = async (req, res) => {
           user.emailVerificationLastSent.getTime()) /
         1000;
 
-      if (elapsedSeconds < OTP_RESEND_COOLDOWN_SECONDS) {
+      if (
+        elapsedSeconds <
+        OTP_RESEND_COOLDOWN_SECONDS
+      ) {
         const remainingSeconds = Math.ceil(
-          OTP_RESEND_COOLDOWN_SECONDS - elapsedSeconds
+          OTP_RESEND_COOLDOWN_SECONDS -
+            elapsedSeconds
         );
 
         return res.status(429).json({
@@ -476,15 +640,19 @@ export const resendVerificationOtp = async (req, res) => {
     // GENERATE NEW OTP
     // ========================================================
 
-    const newOtp = generateVerificationOtp();
+    const newOtp =
+      generateVerificationOtp();
 
     user.emailVerificationOtp = newOtp;
 
-    user.emailVerificationOtpExpire = new Date(
-      Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000
-    );
+    user.emailVerificationOtpExpire =
+      new Date(
+        Date.now() +
+          OTP_EXPIRY_MINUTES * 60 * 1000
+      );
 
-    user.emailVerificationLastSent = new Date();
+    user.emailVerificationLastSent =
+      new Date();
 
     await user.save();
 
@@ -493,6 +661,11 @@ export const resendVerificationOtp = async (req, res) => {
     // ========================================================
 
     try {
+      console.log(
+        "SENDING NEW VERIFICATION OTP TO:",
+        user.email
+      );
+
       await sendVerificationEmail(
         user.email,
         user.name,
@@ -500,11 +673,43 @@ export const resendVerificationOtp = async (req, res) => {
       );
     } catch (emailError) {
       console.error(
-        "Resend Verification Email Error:",
-        emailError.message
+        "============================================================"
       );
 
-      // Do not leave a newly generated OTP active if sending failed.
+      console.error(
+        "RESEND VERIFICATION EMAIL ERROR ❌"
+      );
+
+      console.error(
+        "MESSAGE:",
+        emailError?.message
+      );
+
+      console.error(
+        "CODE:",
+        emailError?.code
+      );
+
+      console.error(
+        "COMMAND:",
+        emailError?.command
+      );
+
+      console.error(
+        "RESPONSE:",
+        emailError?.response
+      );
+
+      console.error(
+        "RESPONSE CODE:",
+        emailError?.responseCode
+      );
+
+      console.error(
+        "============================================================"
+      );
+
+      // Remove invalid OTP
       user.emailVerificationOtp = null;
       user.emailVerificationOtpExpire = null;
       user.emailVerificationLastSent = null;
@@ -520,14 +725,19 @@ export const resendVerificationOtp = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "A new verification code has been sent.",
+      message:
+        "A new verification code has been sent.",
     });
   } catch (error) {
-    console.error("Resend OTP Error:", error);
+    console.error(
+      "Resend OTP Error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      message: "Unable to resend verification code.",
+      message:
+        "Unable to resend verification code.",
     });
   }
 };
@@ -541,42 +751,68 @@ export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validate input
+    // ========================================================
+    // VALIDATE INPUT
+    // ========================================================
+
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Email and password are required.",
+        message:
+          "Email and password are required.",
       });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = email
+      .trim()
+      .toLowerCase();
 
-    console.log("LOGIN EMAIL:", normalizedEmail);
+    console.log(
+      "LOGIN EMAIL:",
+      normalizedEmail
+    );
 
-    // Find user and include password
+    // ========================================================
+    // FIND USER
+    // ========================================================
+
     const user = await User.findOne({
       email: normalizedEmail,
     }).select("+password");
 
-    console.log("USER FOUND:", !!user);
+    console.log(
+      "USER FOUND:",
+      !!user
+    );
 
-    // User does not exist
+    // ========================================================
+    // USER DOES NOT EXIST
+    // ========================================================
+
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "Invalid Email or Password",
+        message:
+          "Invalid Email or Password",
       });
     }
 
-    // Check blocked account
+    // ========================================================
+    // BLOCKED ACCOUNT
+    // ========================================================
+
     if (user.isBlocked) {
       return res.status(403).json({
         success: false,
-        message: "Your account has been blocked by admin.",
+        message:
+          "Your account has been blocked by admin.",
       });
     }
 
-    // Google-only account
+    // ========================================================
+    // GOOGLE ONLY ACCOUNT
+    // ========================================================
+
     if (!user.password) {
       return res.status(400).json({
         success: false,
@@ -599,15 +835,25 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    // Compare password
-    const isMatch = await user.comparePassword(password);
+    // ========================================================
+    // COMPARE PASSWORD
+    // ========================================================
 
-    console.log("PASSWORD MATCH:", isMatch);
+    const isMatch =
+      await user.comparePassword(
+        password
+      );
+
+    console.log(
+      "PASSWORD MATCH:",
+      isMatch
+    );
 
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: "Invalid Email or Password",
+        message:
+          "Invalid Email or Password",
       });
     }
 
@@ -633,16 +879,23 @@ export const loginUser = async (req, res) => {
     // CREATE NEW LOGIN SESSION
     // ========================================================
 
-    const sessionId = crypto.randomUUID();
+    const sessionId =
+      crypto.randomUUID();
 
-    user.activeSessionId = sessionId;
+    user.activeSessionId =
+      sessionId;
 
     // Session validity: 7 days
-    user.activeSessionExpires = new Date(
-      Date.now() + 7 * 24 * 60 * 60 * 1000
-    );
+    user.activeSessionExpires =
+      new Date(
+        Date.now() +
+          7 * 24 * 60 * 60 * 1000
+      );
 
-    // Admin email
+    // ========================================================
+    // ADMIN EMAIL
+    // ========================================================
+
     if (user.email === "kunalvarshney187@gmail.com") {
       user.role = "admin";
     }
@@ -658,10 +911,15 @@ export const loginUser = async (req, res) => {
       sessionId
     );
 
+    // ========================================================
+    // RESPONSE
+    // ========================================================
+
     return res.status(200).json({
       success: true,
       message: "Login Successful",
       token,
+
       user: {
         id: user._id,
         name: user.name,
@@ -674,11 +932,15 @@ export const loginUser = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Login Error:", error);
+    console.error(
+      "Login Error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      message: error.message || "Login failed.",
+      message:
+        error.message || "Login failed.",
     });
   }
 };
@@ -688,21 +950,49 @@ export const loginUser = async (req, res) => {
 // POST /api/auth/forgot-password
 // ============================================================
 
-export const forgotPassword = async (req, res) => {
+export const forgotPassword = async (
+  req,
+  res
+) => {
   try {
     const { email } = req.body;
 
-    // Validate email
+    // ========================================================
+    // VALIDATE EMAIL
+    // ========================================================
+
     if (!email) {
       return res.status(400).json({
         success: false,
-        message: "Please enter your email.",
+        message:
+          "Please enter your email.",
       });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = email
+      .trim()
+      .toLowerCase();
 
-    // Find user
+    // ========================================================
+    // CHECK EMAIL CONFIGURATION
+    // ========================================================
+
+    if (!EMAIL_USER || !EMAIL_PASS) {
+      console.error(
+        "FORGOT PASSWORD ERROR ❌: EMAIL_USER or EMAIL_PASS is missing."
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Email service is not configured on the server.",
+      });
+    }
+
+    // ========================================================
+    // FIND USER
+    // ========================================================
+
     const user = await User.findOne({
       email: normalizedEmail,
     });
@@ -716,22 +1006,35 @@ export const forgotPassword = async (req, res) => {
       });
     }
 
-    // Generate raw reset token
-    const resetToken = crypto.randomBytes(32).toString("hex");
+    // ========================================================
+    // GENERATE RESET TOKEN
+    // ========================================================
+
+    const resetToken =
+      crypto
+        .randomBytes(32)
+        .toString("hex");
 
     // Hash reset token before saving
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
+    const hashedToken =
+      crypto
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex");
 
-    user.resetPasswordToken = hashedToken;
+    user.resetPasswordToken =
+      hashedToken;
 
     // Token expires in 15 minutes
     user.resetPasswordExpire =
-      Date.now() + 15 * 60 * 1000;
+      Date.now() +
+      15 * 60 * 1000;
 
     await user.save();
+
+    // ========================================================
+    // RESET URL
+    // ========================================================
 
     const clientUrl =
       process.env.CLIENT_URL ||
@@ -740,94 +1043,151 @@ export const forgotPassword = async (req, res) => {
     const resetUrl =
       `${clientUrl}/reset-password/${resetToken}`;
 
-    console.log("RESET URL GENERATED");
+    console.log(
+      "RESET URL GENERATED"
+    );
 
-    // Send email
-    await transporter.sendMail({
-      from: `"CampusHub AI" <${process.env.EMAIL_USER}>`,
-      to: user.email,
-      subject: "CampusHub AI - Reset Your Password",
+    // ========================================================
+    // SEND RESET EMAIL
+    // ========================================================
 
-      html: `
-        <div style="
-          font-family: Arial, sans-serif;
-          max-width: 600px;
-          margin: 30px auto;
-          padding: 30px;
-          background: #0f172a;
-          color: #ffffff;
-          border-radius: 16px;
-        ">
+    try {
+      await transporter.sendMail({
+        from: `"CampusHub AI" <${EMAIL_USER}>`,
+        to: user.email,
+        subject:
+          "CampusHub AI - Reset Your Password",
 
-          <h2 style="
-            color: #38bdf8;
-            margin-bottom: 20px;
-          ">
-            CampusHub AI
-          </h2>
-
-          <h3>
-            Password Reset Request
-          </h3>
-
-          <p style="
-            color: #cbd5e1;
-            line-height: 1.6;
-          ">
-            We received a request to reset your CampusHub AI password.
-          </p>
-
-          <p style="
-            color: #cbd5e1;
-            line-height: 1.6;
-          ">
-            Click the button below to create a new password.
-          </p>
-
+        html: `
           <div style="
-            margin: 30px 0;
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 30px;
+            background: #0f172a;
+            color: #ffffff;
+            border-radius: 16px;
           ">
 
-            <a
-              href="${resetUrl}"
-              style="
-                display: inline-block;
-                padding: 14px 24px;
-                background: #2563eb;
-                color: #ffffff;
-                text-decoration: none;
-                border-radius: 10px;
-                font-weight: bold;
-              "
-            >
-              Reset Password
-            </a>
+            <h2 style="
+              color: #38bdf8;
+              margin-bottom: 20px;
+            ">
+              CampusHub AI
+            </h2>
+
+            <h3>
+              Password Reset Request
+            </h3>
+
+            <p style="
+              color: #cbd5e1;
+              line-height: 1.6;
+            ">
+              We received a request to reset your CampusHub AI password.
+            </p>
+
+            <p style="
+              color: #cbd5e1;
+              line-height: 1.6;
+            ">
+              Click the button below to create a new password.
+            </p>
+
+            <div style="
+              margin: 30px 0;
+            ">
+
+              <a
+                href="${resetUrl}"
+                style="
+                  display: inline-block;
+                  padding: 14px 24px;
+                  background: #2563eb;
+                  color: #ffffff;
+                  text-decoration: none;
+                  border-radius: 10px;
+                  font-weight: bold;
+                "
+              >
+                Reset Password
+              </a>
+
+            </div>
+
+            <p style="
+              color: #94a3b8;
+              font-size: 14px;
+            ">
+              This link will expire in 15 minutes.
+            </p>
+
+            <p style="
+              color: #94a3b8;
+              font-size: 14px;
+            ">
+              If you did not request this password reset,
+              you can safely ignore this email.
+            </p>
 
           </div>
+        `,
+      });
 
-          <p style="
-            color: #94a3b8;
-            font-size: 14px;
-          ">
-            This link will expire in 15 minutes.
-          </p>
+      console.log(
+        "RESET EMAIL SENT TO:",
+        user.email
+      );
+    } catch (emailError) {
+      console.error(
+        "============================================================"
+      );
 
-          <p style="
-            color: #94a3b8;
-            font-size: 14px;
-          ">
-            If you did not request this password reset,
-            you can safely ignore this email.
-          </p>
+      console.error(
+        "RESET EMAIL ERROR ❌"
+      );
 
-        </div>
-      `,
-    });
+      console.error(
+        "MESSAGE:",
+        emailError?.message
+      );
 
-    console.log(
-      "RESET EMAIL SENT TO:",
-      user.email
-    );
+      console.error(
+        "CODE:",
+        emailError?.code
+      );
+
+      console.error(
+        "COMMAND:",
+        emailError?.command
+      );
+
+      console.error(
+        "RESPONSE:",
+        emailError?.response
+      );
+
+      console.error(
+        "RESPONSE CODE:",
+        emailError?.responseCode
+      );
+
+      console.error(
+        "============================================================"
+      );
+
+      // Remove reset token if email failed
+      user.resetPasswordToken = null;
+      user.resetPasswordExpire = null;
+
+      await user.save();
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Unable to send reset email.",
+      });
+    }
 
     return res.status(200).json({
       success: true,
@@ -842,7 +1202,8 @@ export const forgotPassword = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: "Unable to send reset email.",
+      message:
+        "Unable to send reset email.",
     });
   }
 };
@@ -852,16 +1213,23 @@ export const forgotPassword = async (req, res) => {
 // POST /api/auth/reset-password/:token
 // ============================================================
 
-export const resetPassword = async (req, res) => {
+export const resetPassword = async (
+  req,
+  res
+) => {
   try {
     const { token } = req.params;
     const { password } = req.body;
 
-    // Validate password
+    // ========================================================
+    // VALIDATE PASSWORD
+    // ========================================================
+
     if (!password) {
       return res.status(400).json({
         success: false,
-        message: "New password is required.",
+        message:
+          "New password is required.",
       });
     }
 
@@ -873,15 +1241,23 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    // Hash token received from URL
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(token)
-      .digest("hex");
+    // ========================================================
+    // HASH TOKEN
+    // ========================================================
 
-    // Find valid reset token
+    const hashedToken =
+      crypto
+        .createHash("sha256")
+        .update(token)
+        .digest("hex");
+
+    // ========================================================
+    // FIND VALID RESET TOKEN
+    // ========================================================
+
     const user = await User.findOne({
       resetPasswordToken: hashedToken,
+
       resetPasswordExpire: {
         $gt: Date.now(),
       },
@@ -895,7 +1271,10 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    // Hash new password
+    // ========================================================
+    // UPDATE PASSWORD
+    // ========================================================
+
     user.password = password;
 
     // Change authentication provider to local
@@ -920,7 +1299,8 @@ export const resetPassword = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: "Unable to reset password.",
+      message:
+        "Unable to reset password.",
     });
   }
 };
@@ -930,7 +1310,10 @@ export const resetPassword = async (req, res) => {
 // GET /api/auth/google/callback
 // ============================================================
 
-export const googleLoginSuccess = async (req, res) => {
+export const googleLoginSuccess = async (
+  req,
+  res
+) => {
   try {
     if (!req.user) {
       return res.redirect(
@@ -938,7 +1321,10 @@ export const googleLoginSuccess = async (req, res) => {
       );
     }
 
-    // Check blocked account
+    // ========================================================
+    // CHECK BLOCKED ACCOUNT
+    // ========================================================
+
     if (req.user.isBlocked) {
       return res.redirect(
         `${process.env.CLIENT_URL}/login?error=account-blocked`
@@ -946,16 +1332,24 @@ export const googleLoginSuccess = async (req, res) => {
     }
 
     // ========================================================
-    // GOOGLE ALREADY VERIFIES EMAIL OWNERSHIP
+    // GOOGLE VERIFIES EMAIL OWNERSHIP
     // ========================================================
 
-    if (req.user.isEmailVerified !== true) {
+    if (
+      req.user.isEmailVerified !== true
+    ) {
       req.user.isEmailVerified = true;
+
       await req.user.save();
     }
 
-    // Generate JWT
-    const token = generateToken(req.user._id);
+    // ========================================================
+    // GENERATE JWT
+    // ========================================================
+
+    const token = generateToken(
+      req.user._id
+    );
 
     const userData = {
       id: req.user._id,
@@ -968,9 +1362,10 @@ export const googleLoginSuccess = async (req, res) => {
       avatar: req.user.avatar,
     };
 
-    const encodedUser = encodeURIComponent(
-      JSON.stringify(userData)
-    );
+    const encodedUser =
+      encodeURIComponent(
+        JSON.stringify(userData)
+      );
 
     return res.redirect(
       `${process.env.CLIENT_URL}/auth/google/success?token=${encodeURIComponent(
@@ -994,24 +1389,30 @@ export const googleLoginSuccess = async (req, res) => {
 // POST /api/auth/logout
 // ============================================================
 
-export const logoutUser = async (req, res) => {
+export const logoutUser = async (
+  req,
+  res
+) => {
   try {
-    const authHeader = req.headers.authorization;
+    const authHeader =
+      req.headers.authorization;
 
     if (
       authHeader &&
       authHeader.startsWith("Bearer ")
     ) {
-      const token = authHeader.split(" ")[1];
+      const token =
+        authHeader.split(" ")[1];
 
       try {
-        const decoded = jwt.verify(
-          token,
-          process.env.JWT_SECRET,
-          {
-            ignoreExpiration: true,
-          }
-        );
+        const decoded =
+          jwt.verify(
+            token,
+            process.env.JWT_SECRET,
+            {
+              ignoreExpiration: true,
+            }
+          );
 
         await User.findByIdAndUpdate(
           decoded.id,
