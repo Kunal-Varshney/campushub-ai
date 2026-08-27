@@ -54,6 +54,7 @@ import MainLayout from "./layouts/MainLayout";
 // ============================================================
 
 import AdminDashboard from "./Pages/Admin/AdminDashboard";
+import VerifyEmail from "./Pages/VerifyEmail/VerifyEmail";
 
 
 // ============================================================
@@ -303,6 +304,11 @@ function App() {
             <Login />
           </PublicRoute>
         }
+      />
+
+      <Route
+        path="/verify-email"
+        element={<VerifyEmail />}
       />
 
       <Route
