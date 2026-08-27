@@ -18,7 +18,114 @@ const transporter = nodemailer.createTransport({
 });
 
 // ============================================================
+// EMAIL VERIFICATION CONSTANTS
+// ============================================================
+
+const OTP_EXPIRY_MINUTES = 10;
+const OTP_RESEND_COOLDOWN_SECONDS = 60;
+
+// ============================================================
+// GENERATE 6 DIGIT OTP
+// ============================================================
+
+const generateVerificationOtp = () => {
+  return crypto.randomInt(100000, 1000000).toString();
+};
+
+// ============================================================
+// SEND VERIFICATION OTP EMAIL
+// ============================================================
+
+const sendVerificationEmail = async (email, name, otp) => {
+  await transporter.sendMail({
+    from: `"CampusHub AI" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: "CampusHub AI - Verify Your Email",
+
+    html: `
+      <div style="
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 30px auto;
+        padding: 30px;
+        background: #0f172a;
+        color: #ffffff;
+        border-radius: 16px;
+      ">
+
+        <h2 style="
+          color: #38bdf8;
+          margin-bottom: 20px;
+        ">
+          CampusHub AI
+        </h2>
+
+        <h3>
+          Verify Your Email
+        </h3>
+
+        <p style="
+          color: #cbd5e1;
+          line-height: 1.6;
+        ">
+          Hello ${name || "there"},
+        </p>
+
+        <p style="
+          color: #cbd5e1;
+          line-height: 1.6;
+        ">
+          Thank you for creating an account with CampusHub AI.
+          Use the verification code below to verify your email address.
+        </p>
+
+        <div style="
+          margin: 30px 0;
+          text-align: center;
+        ">
+
+          <div style="
+            display: inline-block;
+            padding: 16px 28px;
+            background: #1e293b;
+            color: #38bdf8;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 8px;
+          ">
+            ${otp}
+          </div>
+
+        </div>
+
+        <p style="
+          color: #94a3b8;
+          font-size: 14px;
+          line-height: 1.6;
+        ">
+          This verification code will expire in
+          ${OTP_EXPIRY_MINUTES} minutes.
+        </p>
+
+        <p style="
+          color: #94a3b8;
+          font-size: 14px;
+          line-height: 1.6;
+        ">
+          If you did not create this account, you can safely ignore
+          this email.
+        </p>
+
+      </div>
+    `,
+  });
+};
+
+// ============================================================
 // REGISTER USER
+// POST /api/auth/register
 // ============================================================
 
 export const registerUser = async (req, res) => {
@@ -50,6 +157,21 @@ export const registerUser = async (req, res) => {
     });
 
     if (existingUser) {
+      // Existing unverified account:
+      // allow user to request a fresh OTP instead of creating duplicate user.
+      if (
+        existingUser.authProvider === "local" &&
+        existingUser.isEmailVerified === false
+      ) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "An unverified account already exists with this email. Please verify your email or request a new OTP.",
+          requiresVerification: true,
+          email: existingUser.email,
+        });
+      }
+
       return res.status(400).json({
         success: false,
         message: "User already exists.",
@@ -60,6 +182,8 @@ export const registerUser = async (req, res) => {
     // CREATE USER
     // ========================================================
 
+    const verificationOtp = generateVerificationOtp();
+
     const user = await User.create({
       name: name.trim(),
       email: normalizedEmail,
@@ -68,7 +192,163 @@ export const registerUser = async (req, res) => {
       branch: branch || "",
       year: year || "",
       authProvider: "local",
+
+      // Email verification
+      isEmailVerified: false,
+      emailVerificationOtp: verificationOtp,
+      emailVerificationOtpExpire: new Date(
+        Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000
+      ),
+      emailVerificationLastSent: new Date(),
     });
+
+    // ========================================================
+    // ADMIN EMAIL
+    // ========================================================
+
+    if (user.email === "kunalvarshney187@gmail.com") {
+      user.role = "admin";
+      await user.save();
+    }
+
+    // ========================================================
+    // SEND VERIFICATION EMAIL
+    // ========================================================
+
+    try {
+      await sendVerificationEmail(
+        user.email,
+        user.name,
+        verificationOtp
+      );
+    } catch (emailError) {
+      console.error(
+        "Verification Email Error:",
+        emailError.message
+      );
+
+      // Remove newly created account if email could not be sent.
+      await User.findByIdAndDelete(user._id);
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Unable to send verification email. Please try again later.",
+      });
+    }
+
+    // ========================================================
+    // RESPONSE
+    // ========================================================
+
+    // IMPORTANT:
+    // Do NOT create JWT/session before email verification.
+
+    return res.status(201).json({
+      success: true,
+      message:
+        "Registration successful. Please verify your email.",
+      requiresVerification: true,
+      email: user.email,
+    });
+  } catch (error) {
+    console.error("Register Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Registration failed.",
+    });
+  }
+};
+
+// ============================================================
+// VERIFY EMAIL
+// POST /api/auth/verify-email
+// ============================================================
+
+export const verifyEmail = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and verification code are required.",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedOtp = String(otp).trim();
+
+    if (!/^\d{6}$/.test(normalizedOtp)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid 6-digit verification code.",
+      });
+    }
+
+    // ========================================================
+    // FIND USER
+    // ========================================================
+
+    const user = await User.findOne({
+      email: normalizedEmail,
+      authProvider: "local",
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Account not found.",
+      });
+    }
+
+    // ========================================================
+    // ALREADY VERIFIED
+    // ========================================================
+
+    if (user.isEmailVerified) {
+      return res.status(200).json({
+        success: true,
+        message: "Email is already verified.",
+      });
+    }
+
+    // ========================================================
+    // OTP EXPIRY CHECK
+    // ========================================================
+
+    if (
+      !user.emailVerificationOtpExpire ||
+      user.emailVerificationOtpExpire <= new Date()
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "This verification code has expired. Please request a new OTP.",
+        expired: true,
+      });
+    }
+
+    // ========================================================
+    // OTP CHECK
+    // ========================================================
+
+    if (user.emailVerificationOtp !== normalizedOtp) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid verification code. Please try again.",
+      });
+    }
+
+    // ========================================================
+    // VERIFY EMAIL
+    // ========================================================
+
+    user.isEmailVerified = true;
+    user.emailVerificationOtp = null;
+    user.emailVerificationOtpExpire = null;
+    user.emailVerificationLastSent = null;
 
     // ========================================================
     // CREATE ACTIVE LOGIN SESSION
@@ -83,10 +363,7 @@ export const registerUser = async (req, res) => {
       Date.now() + 7 * 24 * 60 * 60 * 1000
     );
 
-    // ========================================================
-    // ADMIN EMAIL
-    // ========================================================
-
+    // Admin email
     if (user.email === "kunalvarshney187@gmail.com") {
       user.role = "admin";
     }
@@ -94,7 +371,7 @@ export const registerUser = async (req, res) => {
     await user.save();
 
     // ========================================================
-    // GENERATE JWT WITH SESSION ID
+    // GENERATE JWT
     // ========================================================
 
     const token = generateToken(
@@ -106,9 +383,9 @@ export const registerUser = async (req, res) => {
     // RESPONSE
     // ========================================================
 
-    return res.status(201).json({
+    return res.status(200).json({
       success: true,
-      message: "Registration Successful",
+      message: "Email verified successfully.",
       token,
       user: {
         id: user._id,
@@ -122,17 +399,142 @@ export const registerUser = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Register Error:", error);
+    console.error("Verify Email Error:", error);
 
     return res.status(500).json({
       success: false,
-      message: error.message || "Registration failed.",
+      message: "Unable to verify email.",
+    });
+  }
+};
+
+// ============================================================
+// RESEND VERIFICATION OTP
+// POST /api/auth/resend-otp
+// ============================================================
+
+export const resendVerificationOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required.",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const user = await User.findOne({
+      email: normalizedEmail,
+      authProvider: "local",
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Account not found.",
+      });
+    }
+
+    // ========================================================
+    // ALREADY VERIFIED
+    // ========================================================
+
+    if (user.isEmailVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "This email is already verified.",
+      });
+    }
+
+    // ========================================================
+    // RESEND COOLDOWN
+    // ========================================================
+
+    if (user.emailVerificationLastSent) {
+      const elapsedSeconds =
+        (Date.now() -
+          user.emailVerificationLastSent.getTime()) /
+        1000;
+
+      if (elapsedSeconds < OTP_RESEND_COOLDOWN_SECONDS) {
+        const remainingSeconds = Math.ceil(
+          OTP_RESEND_COOLDOWN_SECONDS - elapsedSeconds
+        );
+
+        return res.status(429).json({
+          success: false,
+          message: `Please wait ${remainingSeconds} seconds before requesting another OTP.`,
+          retryAfter: remainingSeconds,
+        });
+      }
+    }
+
+    // ========================================================
+    // GENERATE NEW OTP
+    // ========================================================
+
+    const newOtp = generateVerificationOtp();
+
+    user.emailVerificationOtp = newOtp;
+
+    user.emailVerificationOtpExpire = new Date(
+      Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000
+    );
+
+    user.emailVerificationLastSent = new Date();
+
+    await user.save();
+
+    // ========================================================
+    // SEND NEW OTP
+    // ========================================================
+
+    try {
+      await sendVerificationEmail(
+        user.email,
+        user.name,
+        newOtp
+      );
+    } catch (emailError) {
+      console.error(
+        "Resend Verification Email Error:",
+        emailError.message
+      );
+
+      // Do not leave a newly generated OTP active if sending failed.
+      user.emailVerificationOtp = null;
+      user.emailVerificationOtpExpire = null;
+      user.emailVerificationLastSent = null;
+
+      await user.save();
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Unable to send verification email. Please try again later.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "A new verification code has been sent.",
+    });
+  } catch (error) {
+    console.error("Resend OTP Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to resend verification code.",
     });
   }
 };
 
 // ============================================================
 // LOGIN USER
+// POST /api/auth/login
 // ============================================================
 
 export const loginUser = async (req, res) => {
@@ -183,6 +585,20 @@ export const loginUser = async (req, res) => {
       });
     }
 
+    // ========================================================
+    // EMAIL VERIFICATION CHECK
+    // ========================================================
+
+    if (user.isEmailVerified === false) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Please verify your email before logging in.",
+        requiresVerification: true,
+        email: user.email,
+      });
+    }
+
     // Compare password
     const isMatch = await user.comparePassword(password);
 
@@ -195,46 +611,52 @@ export const loginUser = async (req, res) => {
       });
     }
 
-        // ========================================================
-        // CHECK ACTIVE LOGIN SESSION
-        // ========================================================
+    // ========================================================
+    // CHECK ACTIVE LOGIN SESSION
+    // ========================================================
 
-        const now = new Date();
+    const now = new Date();
 
-        if (
-          user.activeSessionId &&
-          user.activeSessionExpires &&
-          user.activeSessionExpires > now
-        ) {
-          return res.status(409).json({
-            success: false,
-            message:
-              "This account is already logged in on another device. Please log out from that device before logging in here.",
-          });
-        }
+    if (
+      user.activeSessionId &&
+      user.activeSessionExpires &&
+      user.activeSessionExpires > now
+    ) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "This account is already logged in on another device. Please log out from that device before logging in here.",
+      });
+    }
 
-        // ========================================================
-        // CREATE NEW LOGIN SESSION
-        // ========================================================
+    // ========================================================
+    // CREATE NEW LOGIN SESSION
+    // ========================================================
 
-        const sessionId = crypto.randomUUID();
+    const sessionId = crypto.randomUUID();
 
-        user.activeSessionId = sessionId;
+    user.activeSessionId = sessionId;
 
-        // Session validity: 7 days
-        user.activeSessionExpires = new Date(
-          Date.now() + 7 * 24 * 60 * 60 * 1000
-        );
-        await user.save();
+    // Session validity: 7 days
+    user.activeSessionExpires = new Date(
+      Date.now() + 7 * 24 * 60 * 60 * 1000
+    );
 
     // Admin email
     if (user.email === "kunalvarshney187@gmail.com") {
       user.role = "admin";
-      await user.save();
     }
 
-    // Generate JWT
-    const token = generateToken(user._id, sessionId);
+    await user.save();
+
+    // ========================================================
+    // GENERATE JWT
+    // ========================================================
+
+    const token = generateToken(
+      user._id,
+      sessionId
+    );
 
     return res.status(200).json({
       success: true,
@@ -263,6 +685,7 @@ export const loginUser = async (req, res) => {
 
 // ============================================================
 // FORGOT PASSWORD
+// POST /api/auth/forgot-password
 // ============================================================
 
 export const forgotPassword = async (req, res) => {
@@ -305,14 +728,14 @@ export const forgotPassword = async (req, res) => {
     user.resetPasswordToken = hashedToken;
 
     // Token expires in 15 minutes
-    user.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
+    user.resetPasswordExpire =
+      Date.now() + 15 * 60 * 1000;
 
     await user.save();
 
-    // IMPORTANT:
-    // Your .env contains CLIENT_URL
     const clientUrl =
-      process.env.CLIENT_URL || "http://localhost:5173";
+      process.env.CLIENT_URL ||
+      "http://localhost:5173";
 
     const resetUrl =
       `${clientUrl}/reset-password/${resetToken}`;
@@ -325,7 +748,7 @@ export const forgotPassword = async (req, res) => {
       to: user.email,
       subject: "CampusHub AI - Reset Your Password",
 
-      html:`
+      html: `
         <div style="
           font-family: Arial, sans-serif;
           max-width: 600px;
@@ -401,8 +824,10 @@ export const forgotPassword = async (req, res) => {
       `,
     });
 
-
-    console.log("RESET EMAIL SENT TO:", user.email);
+    console.log(
+      "RESET EMAIL SENT TO:",
+      user.email
+    );
 
     return res.status(200).json({
       success: true,
@@ -410,7 +835,10 @@ export const forgotPassword = async (req, res) => {
         "If an account exists with this email, a password reset link has been sent.",
     });
   } catch (error) {
-    console.error("Forgot Password Error:", error);
+    console.error(
+      "Forgot Password Error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
@@ -421,6 +849,7 @@ export const forgotPassword = async (req, res) => {
 
 // ============================================================
 // RESET PASSWORD
+// POST /api/auth/reset-password/:token
 // ============================================================
 
 export const resetPassword = async (req, res) => {
@@ -439,7 +868,8 @@ export const resetPassword = async (req, res) => {
     if (password.length < 6) {
       return res.status(400).json({
         success: false,
-        message: "Password must be at least 6 characters.",
+        message:
+          "Password must be at least 6 characters.",
       });
     }
 
@@ -460,7 +890,8 @@ export const resetPassword = async (req, res) => {
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "Reset link is invalid or has expired.",
+        message:
+          "Reset link is invalid or has expired.",
       });
     }
 
@@ -478,10 +909,14 @@ export const resetPassword = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Password reset successful. You can now login.",
+      message:
+        "Password reset successful. You can now login.",
     });
   } catch (error) {
-    console.error("Reset Password Error:", error);
+    console.error(
+      "Reset Password Error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
@@ -492,6 +927,7 @@ export const resetPassword = async (req, res) => {
 
 // ============================================================
 // GOOGLE LOGIN SUCCESS
+// GET /api/auth/google/callback
 // ============================================================
 
 export const googleLoginSuccess = async (req, res) => {
@@ -507,6 +943,15 @@ export const googleLoginSuccess = async (req, res) => {
       return res.redirect(
         `${process.env.CLIENT_URL}/login?error=account-blocked`
       );
+    }
+
+    // ========================================================
+    // GOOGLE ALREADY VERIFIES EMAIL OWNERSHIP
+    // ========================================================
+
+    if (req.user.isEmailVerified !== true) {
+      req.user.isEmailVerified = true;
+      await req.user.save();
     }
 
     // Generate JWT
@@ -533,7 +978,10 @@ export const googleLoginSuccess = async (req, res) => {
       )}&user=${encodedUser}`
     );
   } catch (error) {
-    console.error("Google Login Success Error:", error);
+    console.error(
+      "Google Login Success Error:",
+      error
+    );
 
     return res.redirect(
       `${process.env.CLIENT_URL}/login?error=google-login-failed`
@@ -543,13 +991,17 @@ export const googleLoginSuccess = async (req, res) => {
 
 // ============================================================
 // LOGOUT USER
+// POST /api/auth/logout
 // ============================================================
 
 export const logoutUser = async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
 
-    if (authHeader && authHeader.startsWith("Bearer ")) {
+    if (
+      authHeader &&
+      authHeader.startsWith("Bearer ")
+    ) {
       const token = authHeader.split(" ")[1];
 
       try {
@@ -561,14 +1013,20 @@ export const logoutUser = async (req, res) => {
           }
         );
 
-        await User.findByIdAndUpdate(decoded.id, {
-          $set: {
-            activeSessionId: null,
-            activeSessionExpires: null,
-          },
-        });
+        await User.findByIdAndUpdate(
+          decoded.id,
+          {
+            $set: {
+              activeSessionId: null,
+              activeSessionExpires: null,
+            },
+          }
+        );
       } catch (tokenError) {
-        console.error("Logout token error:", tokenError.message);
+        console.error(
+          "Logout token error:",
+          tokenError.message
+        );
       }
     }
 
@@ -577,7 +1035,10 @@ export const logoutUser = async (req, res) => {
       message: "Logout Successful",
     });
   } catch (error) {
-    console.error("Logout Error:", error);
+    console.error(
+      "Logout Error:",
+      error
+    );
 
     return res.status(200).json({
       success: true,

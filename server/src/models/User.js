@@ -88,6 +88,30 @@ const userSchema = new mongoose.Schema(
     },
 
     // ==========================
+    // EMAIL VERIFICATION
+    // ==========================
+
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    emailVerificationOtp: {
+      type: String,
+      default: null,
+    },
+
+    emailVerificationOtpExpire: {
+      type: Date,
+      default: null,
+    },
+
+    emailVerificationLastSent: {
+      type: Date,
+      default: null,
+    },
+
+    // ==========================
     // PASSWORD RESET
     // ==========================
 
@@ -143,6 +167,8 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
 
   return await bcrypt.compare(enteredPassword, this.password);
 };
+
+
 
 // ============================================================
 // CREATE MODEL

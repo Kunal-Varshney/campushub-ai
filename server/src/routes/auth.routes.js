@@ -8,6 +8,8 @@ import {
   resetPassword,
   googleLoginSuccess,
   logoutUser,
+  verifyEmail,
+  resendVerificationOtp,
 } from "../controllers/auth.controller.js";
 
 const router = express.Router();
@@ -18,6 +20,20 @@ const router = express.Router();
 // ============================================================
 
 router.post("/register", registerUser);
+
+// ============================================================
+// EMAIL VERIFICATION
+// POST /api/auth/verify-email
+// ============================================================
+
+router.post("/verify-email", verifyEmail);
+
+// ============================================================
+// RESEND EMAIL VERIFICATION OTP
+// POST /api/auth/resend-otp
+// ============================================================
+
+router.post("/resend-otp", resendVerificationOtp);
 
 // ============================================================
 // LOGIN
