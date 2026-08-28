@@ -19,7 +19,6 @@ const getEmailConfig = () => {
 // ============================================================
 // EMAIL TRANSPORTER
 // ============================================================
-
 const createEmailTransporter = () => {
   const emailUser = process.env.EMAIL_USER?.trim();
   const emailPass = process.env.EMAIL_PASS?.trim();
@@ -29,6 +28,9 @@ const createEmailTransporter = () => {
   console.log("EMAIL_USER EXISTS:", !!emailUser);
   console.log("EMAIL_PASS EXISTS:", !!emailPass);
   console.log("EMAIL_USER:", emailUser || "NOT SET");
+  console.log("SMTP HOST: smtp.gmail.com");
+  console.log("SMTP PORT: 587");
+  console.log("SMTP SECURE: false");
   console.log("============================================================");
 
   if (!emailUser || !emailPass) {
@@ -41,6 +43,7 @@ const createEmailTransporter = () => {
     host: "smtp.gmail.com",
     port: 587,
     secure: false,
+    requireTLS: true,
 
     auth: {
       user: emailUser,
@@ -50,11 +53,8 @@ const createEmailTransporter = () => {
     connectionTimeout: 10000,
     greetingTimeout: 10000,
     socketTimeout: 15000,
-
-    requireTLS: true,
   });
-}
-
+};
 
 // ============================================================
 // EMAIL VERIFICATION CONSTANTS
