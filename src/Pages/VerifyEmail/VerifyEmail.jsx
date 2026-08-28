@@ -411,7 +411,7 @@ try {
   setIsResending(true);
 
   const response = await API.post(
-    "/auth/resend-verification-otp",
+    "/auth/resend-otp",
     {
       email,
     }
