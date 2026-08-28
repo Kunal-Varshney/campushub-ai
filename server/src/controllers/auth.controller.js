@@ -26,12 +26,20 @@ const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 465,
-  secure: true,
+  secure: false,
   family: 4,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+});
+
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("SMTP CONNECTION ERROR:", error);
+  } else {
+    console.log("SMTP SERVER READY ✅");
+  }
 });
 
 // ------------------------------------------------------------
