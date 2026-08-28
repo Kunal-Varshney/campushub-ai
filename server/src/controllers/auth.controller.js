@@ -10,9 +10,12 @@ import generateToken from "../utils/generateToken.js";
 // ============================================================
 
 const getEmailConfig = () => {
+  const user = process.env.EMAIL_USER?.trim();
+  const pass = process.env.EMAIL_PASS?.trim();
+
   return {
-    user: process.env.EMAIL_USER?.trim(),
-    pass: process.env.EMAIL_PASS?.trim(),
+    user,
+    pass,
   };
 };
 
@@ -23,6 +26,14 @@ const getEmailConfig = () => {
 const createEmailTransporter = () => {
   const { user, pass } = getEmailConfig();
 
+  console.log("============================================================");
+  console.log("GMAIL SMTP CONFIGURATION CHECK");
+  console.log("EMAIL_USER EXISTS:", !!user);
+  console.log("EMAIL_USER:", user || "MISSING");
+  console.log("EMAIL_PASS EXISTS:", !!pass);
+  console.log("EMAIL_PASS LENGTH:", pass ? pass.length : 0);
+  console.log("============================================================");
+
   if (!user || !pass) {
     throw new Error(
       "EMAIL_USER or EMAIL_PASS environment variable is missing."
@@ -30,12 +41,48 @@ const createEmailTransporter = () => {
   }
 
   return nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+
     auth: {
       user,
       pass,
     },
+
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 20000,
   });
+};
+
+// ============================================================
+// VERIFY SMTP CONNECTION
+// ============================================================
+
+const verifyEmailTransporter = async () => {
+  const transporter = createEmailTransporter();
+
+  try {
+    console.log("Checking Gmail SMTP connection...");
+
+    await transporter.verify();
+
+    console.log("GMAIL SMTP CONNECTION SUCCESSFUL");
+
+    return transporter;
+  } catch (error) {
+    console.error("============================================================");
+    console.error("GMAIL SMTP CONNECTION FAILED");
+    console.error("ERROR NAME:", error?.name);
+    console.error("ERROR CODE:", error?.code);
+    console.error("ERROR MESSAGE:", error?.message);
+    console.error("ERROR RESPONSE:", error?.response);
+    console.error("ERROR RESPONSE CODE:", error?.responseCode);
+    console.error("============================================================");
+
+    throw error;
+  }
 };
 
 // ============================================================
@@ -58,25 +105,15 @@ const generateVerificationOtp = () => {
 // ============================================================
 
 const sendVerificationEmail = async (email, name, otp) => {
-  const { user, pass } = getEmailConfig();
-
-  if (!user || !pass) {
-    throw new Error(
-      "EMAIL_USER or EMAIL_PASS environment variable is missing."
-    );
-  }
-
-  const transporter = createEmailTransporter();
-
   console.log("============================================================");
   console.log("SENDING VERIFICATION EMAIL");
-  console.log("EMAIL_USER EXISTS:", !!user);
-  console.log("EMAIL_PASS EXISTS:", !!pass);
-  console.log("EMAIL RECIPIENT:", email);
+  console.log("RECIPIENT:", email);
   console.log("============================================================");
 
+  const transporter = await verifyEmailTransporter();
+
   try {
-    await transporter.verify();
+    const { user } = getEmailConfig();
 
     const info = await transporter.sendMail({
       from: `"CampusHub AI" <${user}>`,
@@ -163,15 +200,21 @@ const sendVerificationEmail = async (email, name, otp) => {
       `,
     });
 
-    console.log("VERIFICATION EMAIL SENT");
+    console.log("============================================================");
+    console.log("VERIFICATION EMAIL SENT SUCCESSFULLY");
     console.log("MESSAGE ID:", info.messageId);
+    console.log("RECIPIENT:", email);
     console.log("============================================================");
 
     return info;
   } catch (error) {
     console.error("============================================================");
     console.error("VERIFICATION EMAIL SEND FAILED");
+    console.error("ERROR NAME:", error?.name);
+    console.error("ERROR CODE:", error?.code);
     console.error("ERROR MESSAGE:", error?.message);
+    console.error("ERROR RESPONSE:", error?.response);
+    console.error("ERROR RESPONSE CODE:", error?.responseCode);
     console.error("============================================================");
 
     throw error;
@@ -183,25 +226,15 @@ const sendVerificationEmail = async (email, name, otp) => {
 // ============================================================
 
 const sendPasswordResetEmail = async (email, name, resetUrl) => {
-  const { user, pass } = getEmailConfig();
-
-  if (!user || !pass) {
-    throw new Error(
-      "EMAIL_USER or EMAIL_PASS environment variable is missing."
-    );
-  }
-
-  const transporter = createEmailTransporter();
-
   console.log("============================================================");
   console.log("SENDING PASSWORD RESET EMAIL");
-  console.log("EMAIL_USER EXISTS:", !!user);
-  console.log("EMAIL_PASS EXISTS:", !!pass);
-  console.log("EMAIL RECIPIENT:", email);
+  console.log("RECIPIENT:", email);
   console.log("============================================================");
 
+  const transporter = await verifyEmailTransporter();
+
   try {
-    await transporter.verify();
+    const { user } = getEmailConfig();
 
     const info = await transporter.sendMail({
       from: `"CampusHub AI" <${user}>`,
@@ -291,7 +324,8 @@ const sendPasswordResetEmail = async (email, name, resetUrl) => {
       `,
     });
 
-    console.log("PASSWORD RESET EMAIL SENT");
+    console.log("============================================================");
+    console.log("PASSWORD RESET EMAIL SENT SUCCESSFULLY");
     console.log("MESSAGE ID:", info.messageId);
     console.log("============================================================");
 
@@ -299,7 +333,11 @@ const sendPasswordResetEmail = async (email, name, resetUrl) => {
   } catch (error) {
     console.error("============================================================");
     console.error("PASSWORD RESET EMAIL SEND FAILED");
+    console.error("ERROR NAME:", error?.name);
+    console.error("ERROR CODE:", error?.code);
     console.error("ERROR MESSAGE:", error?.message);
+    console.error("ERROR RESPONSE:", error?.response);
+    console.error("ERROR RESPONSE CODE:", error?.responseCode);
     console.error("============================================================");
 
     throw error;
@@ -315,6 +353,7 @@ export const registerUser = async (req, res) => {
   try {
     console.log("============================================================");
     console.log("REGISTER REQUEST RECEIVED");
+    console.log("============================================================");
 
     console.log("REGISTER BODY:", {
       ...req.body,
@@ -330,10 +369,6 @@ export const registerUser = async (req, res) => {
       year,
     } = req.body;
 
-    // ========================================================
-    // VALIDATE REQUIRED FIELDS
-    // ========================================================
-
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -343,16 +378,16 @@ export const registerUser = async (req, res) => {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // ========================================================
-    // CHECK EMAIL SERVICE CONFIGURATION
-    // ========================================================
+    // --------------------------------------------------------
+    // CHECK EMAIL CONFIG
+    // --------------------------------------------------------
 
     const { user: emailUser, pass: emailPass } =
       getEmailConfig();
 
     if (!emailUser || !emailPass) {
       console.error(
-        "REGISTER ERROR: EMAIL_USER or EMAIL_PASS is missing."
+        "REGISTER ERROR: EMAIL_USER OR EMAIL_PASS MISSING"
       );
 
       return res.status(500).json({
@@ -361,9 +396,9 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    // ========================================================
+    // --------------------------------------------------------
     // CHECK EXISTING USER
-    // ========================================================
+    // --------------------------------------------------------
 
     const existingUser = await User.findOne({
       email: normalizedEmail,
@@ -389,23 +424,25 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    // ========================================================
+    // --------------------------------------------------------
     // GENERATE OTP
-    // ========================================================
+    // --------------------------------------------------------
 
     const verificationOtp = generateVerificationOtp();
 
-    // ========================================================
+    // --------------------------------------------------------
     // CREATE USER
-    // ========================================================
+    // --------------------------------------------------------
 
     const user = await User.create({
       name: name.trim(),
       email: normalizedEmail,
       password,
+
       college: college || "",
       branch: branch || "",
       year: year || "",
+
       authProvider: "local",
 
       isEmailVerified: false,
@@ -421,9 +458,9 @@ export const registerUser = async (req, res) => {
 
     console.log("USER CREATED:", user._id);
 
-    // ========================================================
-    // ADMIN EMAIL
-    // ========================================================
+    // --------------------------------------------------------
+    // ADMIN ROLE
+    // --------------------------------------------------------
 
     if (user.email === "kunalvarshney187@gmail.com") {
       user.role = "admin";
@@ -432,9 +469,9 @@ export const registerUser = async (req, res) => {
       console.log("ADMIN ROLE ASSIGNED");
     }
 
-    // ========================================================
+    // --------------------------------------------------------
     // SEND VERIFICATION EMAIL
-    // ========================================================
+    // --------------------------------------------------------
 
     try {
       await sendVerificationEmail(
@@ -446,16 +483,23 @@ export const registerUser = async (req, res) => {
       console.log("VERIFICATION EMAIL PROCESS COMPLETED");
     } catch (emailError) {
       console.error("============================================================");
-      console.error("VERIFICATION EMAIL ERROR");
-      console.error("MESSAGE:", emailError?.message);
+      console.error("REGISTER EMAIL FAILURE");
+      console.error("ERROR NAME:", emailError?.name);
+      console.error("ERROR CODE:", emailError?.code);
+      console.error("ERROR MESSAGE:", emailError?.message);
+      console.error("ERROR RESPONSE:", emailError?.response);
+      console.error(
+        "ERROR RESPONSE CODE:",
+        emailError?.responseCode
+      );
       console.error("============================================================");
 
-      // Remove newly created account because email could not be sent.
+      // Delete account because verification email was not sent.
       try {
         await User.findByIdAndDelete(user._id);
 
         console.log(
-          "UNVERIFIED USER REMOVED AFTER EMAIL FAILURE"
+          "USER DELETED AFTER EMAIL FAILURE"
         );
       } catch (deleteError) {
         console.error(
@@ -466,14 +510,12 @@ export const registerUser = async (req, res) => {
 
       return res.status(500).json({
         success: false,
-        message:
-          "Unable to send verification email. Please try again later.",
+        message: "Unable to send verification email.",
+        error: emailError?.message || "Unknown email error",
+        code: emailError?.code || null,
+        responseCode: emailError?.responseCode || null,
       });
     }
-
-    // ========================================================
-    // RESPONSE
-    // ========================================================
 
     return res.status(201).json({
       success: true,
@@ -484,7 +526,8 @@ export const registerUser = async (req, res) => {
     });
   } catch (error) {
     console.error("============================================================");
-    console.error("REGISTER ERROR:", error);
+    console.error("REGISTER ERROR");
+    console.error("ERROR:", error);
     console.error("============================================================");
 
     return res.status(500).json({
@@ -579,7 +622,10 @@ export const verifyEmail = async (req, res) => {
 
     await user.save();
 
-    const token = generateToken(user._id, sessionId);
+    const token = generateToken(
+      user._id,
+      sessionId
+    );
 
     return res.status(200).json({
       success: true,
@@ -629,10 +675,6 @@ export const resendVerificationOtp = async (req, res) => {
       getEmailConfig();
 
     if (!emailUser || !emailPass) {
-      console.error(
-        "RESEND OTP ERROR: EMAIL_USER or EMAIL_PASS is missing."
-      );
-
       return res.status(500).json({
         success: false,
         message: "Email service is not configured on the server.",
@@ -666,7 +708,8 @@ export const resendVerificationOtp = async (req, res) => {
 
       if (elapsedSeconds < OTP_RESEND_COOLDOWN_SECONDS) {
         const remainingSeconds = Math.ceil(
-          OTP_RESEND_COOLDOWN_SECONDS - elapsedSeconds
+          OTP_RESEND_COOLDOWN_SECONDS -
+            elapsedSeconds
         );
 
         return res.status(429).json({
@@ -698,10 +741,10 @@ export const resendVerificationOtp = async (req, res) => {
 
       console.log("NEW VERIFICATION OTP SENT");
     } catch (emailError) {
-      console.error("============================================================");
-      console.error("RESEND VERIFICATION EMAIL ERROR");
-      console.error("MESSAGE:", emailError?.message);
-      console.error("============================================================");
+      console.error(
+        "RESEND VERIFICATION EMAIL ERROR:",
+        emailError
+      );
 
       user.emailVerificationOtp = null;
       user.emailVerificationOtpExpire = null;
@@ -712,7 +755,10 @@ export const resendVerificationOtp = async (req, res) => {
       return res.status(500).json({
         success: false,
         message:
-          "Unable to send verification email. Please try again later.",
+          "Unable to send verification email.",
+        error: emailError?.message || "Unknown email error",
+        code: emailError?.code || null,
+        responseCode: emailError?.responseCode || null,
       });
     }
 
@@ -766,7 +812,8 @@ export const loginUser = async (req, res) => {
     if (user.isBlocked) {
       return res.status(403).json({
         success: false,
-        message: "Your account has been blocked by admin.",
+        message:
+          "Your account has been blocked by admin.",
       });
     }
 
@@ -827,7 +874,10 @@ export const loginUser = async (req, res) => {
 
     await user.save();
 
-    const token = generateToken(user._id, sessionId);
+    const token = generateToken(
+      user._id,
+      sessionId
+    );
 
     return res.status(200).json({
       success: true,
@@ -877,10 +927,6 @@ export const forgotPassword = async (req, res) => {
       getEmailConfig();
 
     if (!emailUser || !emailPass) {
-      console.error(
-        "FORGOT PASSWORD ERROR: EMAIL_USER or EMAIL_PASS is missing."
-      );
-
       return res.status(500).json({
         success: false,
         message: "Email service is not configured on the server.",
@@ -933,8 +979,6 @@ export const forgotPassword = async (req, res) => {
     const resetUrl =
       `${clientUrl}/reset-password/${resetToken}`;
 
-    console.log("RESET URL GENERATED");
-
     try {
       await sendPasswordResetEmail(
         user.email,
@@ -947,10 +991,10 @@ export const forgotPassword = async (req, res) => {
         user.email
       );
     } catch (emailError) {
-      console.error("============================================================");
-      console.error("RESET EMAIL ERROR");
-      console.error("MESSAGE:", emailError?.message);
-      console.error("============================================================");
+      console.error(
+        "RESET EMAIL ERROR:",
+        emailError
+      );
 
       user.resetPasswordToken = null;
       user.resetPasswordExpire = null;
@@ -960,6 +1004,9 @@ export const forgotPassword = async (req, res) => {
       return res.status(500).json({
         success: false,
         message: "Unable to send reset email.",
+        error: emailError?.message || "Unknown email error",
+        code: emailError?.code || null,
+        responseCode: emailError?.responseCode || null,
       });
     }
 
@@ -1010,7 +1057,6 @@ export const resetPassword = async (req, res) => {
 
     const user = await User.findOne({
       resetPasswordToken: hashedToken,
-
       resetPasswordExpire: {
         $gt: Date.now(),
       },
