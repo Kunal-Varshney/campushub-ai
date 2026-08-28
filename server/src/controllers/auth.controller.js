@@ -25,9 +25,10 @@ const ADMIN_EMAIL = "kunalvarshney187@gmail.com";
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
 const transporter = nodemailer.createTransport({
+  service: "gmail",
   host: "smtp.gmail.com",
   port: 465,
-  secure: false,
+  secure: true,
   family: 4,
   auth: {
     user: process.env.EMAIL_USER,
