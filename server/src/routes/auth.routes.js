@@ -11,6 +11,11 @@ import {
   verifyEmail,
   resendVerificationOtp,
 } from "../controllers/auth.controller.js";
+import {
+  registerRateLimiter,
+  verifyOtpRateLimiter,
+  resendOtpRateLimiter,
+} from "../middleware/authRateLimiter.js";
 
 const router = express.Router();
 
@@ -19,21 +24,21 @@ const router = express.Router();
 // POST /api/auth/register
 // ============================================================
 
-router.post("/register", registerUser);
+router.post("/register", registerRateLimiter, registerUser);
 
 // ============================================================
 // EMAIL VERIFICATION
 // POST /api/auth/verify-email
 // ============================================================
 
-router.post("/verify-email", verifyEmail);
+router.post("/verify-email", verifyOtpRateLimiter, verifyEmail);
 
 // ============================================================
 // RESEND EMAIL VERIFICATION OTP
 // POST /api/auth/resend-otp
 // ============================================================
 
-router.post("/resend-otp", resendVerificationOtp);
+router.post("/resend-otp", resendOtpRateLimiter, resendVerificationOtp);
 
 // ============================================================
 // LOGIN

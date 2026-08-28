@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import User from "../models/User.js";
 import  generateToken  from "../utils/generateToken.js";
+import { isValidEmailFormat, isDisposableEmail } from "../utils/disposableEmailChecker.js";
 
 // ============================================================
 // DEVELOPMENT AUTH MODE
@@ -110,6 +111,31 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Password must be at least 6 characters long.",
+      });
+    }
+
+    if (!isValidEmailFormat(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid email address.",
+      });
+    }
+
+    // ------------------------------------------------------------
+    // Disposable / temporary email protection.
+    // This is a backend-authoritative check — it cannot be bypassed
+    // by the frontend. See utils/disposableEmailChecker.js for the
+    // detection logic and its limitations.
+    // ------------------------------------------------------------
+    const disposableCheck = isDisposableEmail(email);
+
+    if (disposableCheck.isDisposable) {
+      console.warn(`Disposable email blocked: domain=${disposableCheck.domain}`);
+
+      return res.status(400).json({
+        success: false,
+        message:
+          "Temporary or disposable email addresses are not allowed. Please use a permanent email address.",
       });
     }
 
