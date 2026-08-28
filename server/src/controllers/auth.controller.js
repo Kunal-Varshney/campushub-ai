@@ -13,7 +13,7 @@ import  generateToken  from "../utils/generateToken.js";
 // Flip this to false (and wire up a real email provider) before
 // any real deployment with real users.
 // ============================================================
-const DEVELOPMENT_AUTH_MODE = true;
+const DEVELOPMENT_AUTH_MODE = false
 
 const OTP_EXPIRY_MINUTES = 10;
 const OTP_RESEND_COOLDOWN_SECONDS = 60;
