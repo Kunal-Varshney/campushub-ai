@@ -20,37 +20,39 @@ const getEmailConfig = () => {
 // EMAIL TRANSPORTER
 // ============================================================
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
+const createEmailTransporter = () => {
+  const emailUser = process.env.EMAIL_USER?.trim();
+  const emailPass = process.env.EMAIL_PASS?.trim();
 
-  auth: {
-    user: process.env.EMAIL_USER?.trim(),
-    pass: process.env.EMAIL_PASS?.trim(),
-  },
-});
+  console.log("============================================================");
+  console.log("CREATING EMAIL TRANSPORTER");
+  console.log("EMAIL_USER EXISTS:", !!emailUser);
+  console.log("EMAIL_PASS EXISTS:", !!emailPass);
+  console.log("EMAIL_USER:", emailUser || "NOT SET");
+  console.log("============================================================");
 
-// ============================================================
-// EMAIL TRANSPORTER CHECK
-// ============================================================
-
-transporter.verify((error) => {
-  if (error) {
-    console.error(
-      "============================================================"
+  if (!emailUser || !emailPass) {
+    throw new Error(
+      "EMAIL_USER or EMAIL_PASS environment variable is missing."
     );
-    console.error("EMAIL TRANSPORTER ERROR ❌");
-    console.error("MESSAGE:", error?.message);
-    console.error("CODE:", error?.code);
-    console.error("COMMAND:", error?.command);
-    console.error("RESPONSE:", error?.response);
-    console.error("RESPONSE CODE:", error?.responseCode);
-    console.error(
-      "============================================================"
-    );
-  } else {
-    console.log("EMAIL TRANSPORTER READY ✅");
   }
-});
+
+  return nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+
+    auth: {
+      user: emailUser,
+      pass: emailPass,
+    },
+
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
+  });
+};
+
 
 // ============================================================
 // EMAIL VERIFICATION CONSTANTS
@@ -206,13 +208,20 @@ const sendVerificationEmail = async (
     `,
   };
 
-  // ==========================================================
+    // ==========================================================
   // SEND EMAIL
   // ==========================================================
 
   try {
     console.log(
       "STARTING VERIFICATION EMAIL SEND..."
+    );
+
+    const transporter =
+      createEmailTransporter();
+
+    console.log(
+      "EMAIL TRANSPORTER CREATED ✅"
     );
 
     const info =
@@ -266,6 +275,11 @@ const sendVerificationEmail = async (
     console.error(
       "ERROR RESPONSE CODE:",
       error?.responseCode
+    );
+
+    console.error(
+      "FULL EMAIL ERROR:",
+      error
     );
 
     console.error(
@@ -1378,6 +1392,8 @@ export const forgotPassword =
       // ======================================================
 
       try {
+        const transporter = createEmailTransporter();
+
         await transporter.sendMail({
           from: `"CampusHub AI" <${emailUser}>`,
 
