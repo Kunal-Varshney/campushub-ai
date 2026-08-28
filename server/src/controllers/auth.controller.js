@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
 import User from "../models/User.js";
 import generateToken from "../utils/generateToken.js";
@@ -11,25 +11,31 @@ import generateToken from "../utils/generateToken.js";
 
 const getEmailConfig = () => {
   return {
-    apiKey: process.env.RESEND_API_KEY?.trim(),
-    from: process.env.EMAIL_FROM?.trim(),
+    user: process.env.EMAIL_USER?.trim(),
+    pass: process.env.EMAIL_PASS?.trim(),
   };
 };
 
 // ============================================================
-// RESEND EMAIL CLIENT
+// GMAIL SMTP TRANSPORTER
 // ============================================================
 
-const createEmailClient = () => {
-  const { apiKey } = getEmailConfig();
+const createEmailTransporter = () => {
+  const { user, pass } = getEmailConfig();
 
-  if (!apiKey) {
+  if (!user || !pass) {
     throw new Error(
-      "RESEND_API_KEY environment variable is missing."
+      "EMAIL_USER or EMAIL_PASS environment variable is missing."
     );
   }
 
-  return new Resend(apiKey);
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user,
+      pass,
+    },
+  });
 };
 
 // ============================================================
@@ -52,27 +58,29 @@ const generateVerificationOtp = () => {
 // ============================================================
 
 const sendVerificationEmail = async (email, name, otp) => {
-  const { apiKey, from } = getEmailConfig();
+  const { user, pass } = getEmailConfig();
 
-  if (!apiKey || !from) {
+  if (!user || !pass) {
     throw new Error(
-      "RESEND_API_KEY or EMAIL_FROM environment variable is missing."
+      "EMAIL_USER or EMAIL_PASS environment variable is missing."
     );
   }
 
-  const resend = createEmailClient();
+  const transporter = createEmailTransporter();
 
   console.log("============================================================");
   console.log("SENDING VERIFICATION EMAIL");
-  console.log("RESEND_API_KEY EXISTS:", !!apiKey);
-  console.log("EMAIL_FROM:", from);
+  console.log("EMAIL_USER EXISTS:", !!user);
+  console.log("EMAIL_PASS EXISTS:", !!pass);
   console.log("EMAIL RECIPIENT:", email);
   console.log("============================================================");
 
   try {
-    const { data, error } = await resend.emails.send({
-      from,
-      to: [email],
+    await transporter.verify();
+
+    const info = await transporter.sendMail({
+      from: `"CampusHub AI" <${user}>`,
+      to: email,
       subject: "CampusHub AI - Verify Your Email",
 
       html: `
@@ -155,19 +163,11 @@ const sendVerificationEmail = async (email, name, otp) => {
       `,
     });
 
-    if (error) {
-      console.error("RESEND VERIFICATION ERROR:", error);
-
-      throw new Error(
-        error.message || "Failed to send verification email."
-      );
-    }
-
     console.log("VERIFICATION EMAIL SENT");
-    console.log("MESSAGE ID:", data?.id || "NOT AVAILABLE");
+    console.log("MESSAGE ID:", info.messageId);
     console.log("============================================================");
 
-    return data;
+    return info;
   } catch (error) {
     console.error("============================================================");
     console.error("VERIFICATION EMAIL SEND FAILED");
@@ -183,27 +183,29 @@ const sendVerificationEmail = async (email, name, otp) => {
 // ============================================================
 
 const sendPasswordResetEmail = async (email, name, resetUrl) => {
-  const { apiKey, from } = getEmailConfig();
+  const { user, pass } = getEmailConfig();
 
-  if (!apiKey || !from) {
+  if (!user || !pass) {
     throw new Error(
-      "RESEND_API_KEY or EMAIL_FROM environment variable is missing."
+      "EMAIL_USER or EMAIL_PASS environment variable is missing."
     );
   }
 
-  const resend = createEmailClient();
+  const transporter = createEmailTransporter();
 
   console.log("============================================================");
   console.log("SENDING PASSWORD RESET EMAIL");
-  console.log("RESEND_API_KEY EXISTS:", !!apiKey);
-  console.log("EMAIL_FROM:", from);
+  console.log("EMAIL_USER EXISTS:", !!user);
+  console.log("EMAIL_PASS EXISTS:", !!pass);
   console.log("EMAIL RECIPIENT:", email);
   console.log("============================================================");
 
   try {
-    const { data, error } = await resend.emails.send({
-      from,
-      to: [email],
+    await transporter.verify();
+
+    const info = await transporter.sendMail({
+      from: `"CampusHub AI" <${user}>`,
+      to: email,
       subject: "CampusHub AI - Reset Your Password",
 
       html: `
@@ -289,19 +291,11 @@ const sendPasswordResetEmail = async (email, name, resetUrl) => {
       `,
     });
 
-    if (error) {
-      console.error("RESEND PASSWORD RESET ERROR:", error);
-
-      throw new Error(
-        error.message || "Failed to send password reset email."
-      );
-    }
-
     console.log("PASSWORD RESET EMAIL SENT");
-    console.log("MESSAGE ID:", data?.id || "NOT AVAILABLE");
+    console.log("MESSAGE ID:", info.messageId);
     console.log("============================================================");
 
-    return data;
+    return info;
   } catch (error) {
     console.error("============================================================");
     console.error("PASSWORD RESET EMAIL SEND FAILED");
@@ -353,11 +347,12 @@ export const registerUser = async (req, res) => {
     // CHECK EMAIL SERVICE CONFIGURATION
     // ========================================================
 
-    const { apiKey, from } = getEmailConfig();
+    const { user: emailUser, pass: emailPass } =
+      getEmailConfig();
 
-    if (!apiKey || !from) {
+    if (!emailUser || !emailPass) {
       console.error(
-        "REGISTER ERROR: RESEND_API_KEY or EMAIL_FROM is missing."
+        "REGISTER ERROR: EMAIL_USER or EMAIL_PASS is missing."
       );
 
       return res.status(500).json({
@@ -508,10 +503,6 @@ export const verifyEmail = async (req, res) => {
   try {
     const { email, otp } = req.body;
 
-    // ========================================================
-    // VALIDATE INPUT
-    // ========================================================
-
     if (!email || !otp) {
       return res.status(400).json({
         success: false,
@@ -522,10 +513,6 @@ export const verifyEmail = async (req, res) => {
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedOtp = String(otp).trim();
 
-    // ========================================================
-    // VALIDATE OTP FORMAT
-    // ========================================================
-
     if (!/^\d{6}$/.test(normalizedOtp)) {
       return res.status(400).json({
         success: false,
@@ -533,10 +520,6 @@ export const verifyEmail = async (req, res) => {
           "Please enter a valid 6-digit verification code.",
       });
     }
-
-    // ========================================================
-    // FIND USER
-    // ========================================================
 
     const user = await User.findOne({
       email: normalizedEmail,
@@ -550,20 +533,12 @@ export const verifyEmail = async (req, res) => {
       });
     }
 
-    // ========================================================
-    // ALREADY VERIFIED
-    // ========================================================
-
     if (user.isEmailVerified) {
       return res.status(200).json({
         success: true,
         message: "Email is already verified.",
       });
     }
-
-    // ========================================================
-    // OTP EXPIRY CHECK
-    // ========================================================
 
     if (
       !user.emailVerificationOtpExpire ||
@@ -577,10 +552,6 @@ export const verifyEmail = async (req, res) => {
       });
     }
 
-    // ========================================================
-    // OTP CHECK
-    // ========================================================
-
     if (user.emailVerificationOtp !== normalizedOtp) {
       return res.status(400).json({
         success: false,
@@ -589,18 +560,10 @@ export const verifyEmail = async (req, res) => {
       });
     }
 
-    // ========================================================
-    // VERIFY EMAIL
-    // ========================================================
-
     user.isEmailVerified = true;
     user.emailVerificationOtp = null;
     user.emailVerificationOtpExpire = null;
     user.emailVerificationLastSent = null;
-
-    // ========================================================
-    // CREATE ACTIVE LOGIN SESSION
-    // ========================================================
 
     const sessionId = crypto.randomUUID();
 
@@ -610,25 +573,13 @@ export const verifyEmail = async (req, res) => {
       Date.now() + 7 * 24 * 60 * 60 * 1000
     );
 
-    // ========================================================
-    // ADMIN EMAIL
-    // ========================================================
-
     if (user.email === "kunalvarshney187@gmail.com") {
       user.role = "admin";
     }
 
     await user.save();
 
-    // ========================================================
-    // GENERATE JWT
-    // ========================================================
-
     const token = generateToken(user._id, sessionId);
-
-    // ========================================================
-    // RESPONSE
-    // ========================================================
 
     return res.status(200).json({
       success: true,
@@ -665,10 +616,6 @@ export const resendVerificationOtp = async (req, res) => {
   try {
     const { email } = req.body;
 
-    // ========================================================
-    // VALIDATE EMAIL
-    // ========================================================
-
     if (!email) {
       return res.status(400).json({
         success: false,
@@ -678,15 +625,12 @@ export const resendVerificationOtp = async (req, res) => {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // ========================================================
-    // CHECK EMAIL CONFIGURATION
-    // ========================================================
+    const { user: emailUser, pass: emailPass } =
+      getEmailConfig();
 
-    const { apiKey, from } = getEmailConfig();
-
-    if (!apiKey || !from) {
+    if (!emailUser || !emailPass) {
       console.error(
-        "RESEND OTP ERROR: RESEND_API_KEY or EMAIL_FROM is missing."
+        "RESEND OTP ERROR: EMAIL_USER or EMAIL_PASS is missing."
       );
 
       return res.status(500).json({
@@ -694,10 +638,6 @@ export const resendVerificationOtp = async (req, res) => {
         message: "Email service is not configured on the server.",
       });
     }
-
-    // ========================================================
-    // FIND USER
-    // ========================================================
 
     const user = await User.findOne({
       email: normalizedEmail,
@@ -711,20 +651,12 @@ export const resendVerificationOtp = async (req, res) => {
       });
     }
 
-    // ========================================================
-    // ALREADY VERIFIED
-    // ========================================================
-
     if (user.isEmailVerified) {
       return res.status(400).json({
         success: false,
         message: "This email is already verified.",
       });
     }
-
-    // ========================================================
-    // RESEND COOLDOWN
-    // ========================================================
 
     if (user.emailVerificationLastSent) {
       const elapsedSeconds =
@@ -745,10 +677,6 @@ export const resendVerificationOtp = async (req, res) => {
       }
     }
 
-    // ========================================================
-    // GENERATE NEW OTP
-    // ========================================================
-
     const newOtp = generateVerificationOtp();
 
     user.emailVerificationOtp = newOtp;
@@ -760,10 +688,6 @@ export const resendVerificationOtp = async (req, res) => {
     user.emailVerificationLastSent = new Date();
 
     await user.save();
-
-    // ========================================================
-    // SEND NEW OTP
-    // ========================================================
 
     try {
       await sendVerificationEmail(
@@ -779,7 +703,6 @@ export const resendVerificationOtp = async (req, res) => {
       console.error("MESSAGE:", emailError?.message);
       console.error("============================================================");
 
-      // Clear invalid OTP if email failed.
       user.emailVerificationOtp = null;
       user.emailVerificationOtpExpire = null;
       user.emailVerificationLastSent = null;
@@ -816,10 +739,6 @@ export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // ========================================================
-    // VALIDATE INPUT
-    // ========================================================
-
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -831,19 +750,11 @@ export const loginUser = async (req, res) => {
 
     console.log("LOGIN EMAIL:", normalizedEmail);
 
-    // ========================================================
-    // FIND USER
-    // ========================================================
-
     const user = await User.findOne({
       email: normalizedEmail,
     }).select("+password");
 
     console.log("USER FOUND:", !!user);
-
-    // ========================================================
-    // USER DOES NOT EXIST
-    // ========================================================
 
     if (!user) {
       return res.status(401).json({
@@ -852,20 +763,12 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    // ========================================================
-    // BLOCKED ACCOUNT
-    // ========================================================
-
     if (user.isBlocked) {
       return res.status(403).json({
         success: false,
         message: "Your account has been blocked by admin.",
       });
     }
-
-    // ========================================================
-    // GOOGLE ONLY ACCOUNT
-    // ========================================================
 
     if (!user.password) {
       return res.status(400).json({
@@ -874,10 +777,6 @@ export const loginUser = async (req, res) => {
           "This account uses Google Login. Please continue with Google.",
       });
     }
-
-    // ========================================================
-    // EMAIL VERIFICATION CHECK
-    // ========================================================
 
     if (user.isEmailVerified === false) {
       return res.status(403).json({
@@ -889,10 +788,6 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    // ========================================================
-    // COMPARE PASSWORD
-    // ========================================================
-
     const isMatch = await user.comparePassword(password);
 
     console.log("PASSWORD MATCH:", isMatch);
@@ -903,10 +798,6 @@ export const loginUser = async (req, res) => {
         message: "Invalid Email or Password",
       });
     }
-
-    // ========================================================
-    // CHECK ACTIVE LOGIN SESSION
-    // ========================================================
 
     const now = new Date();
 
@@ -922,10 +813,6 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    // ========================================================
-    // CREATE NEW LOGIN SESSION
-    // ========================================================
-
     const sessionId = crypto.randomUUID();
 
     user.activeSessionId = sessionId;
@@ -934,25 +821,13 @@ export const loginUser = async (req, res) => {
       Date.now() + 7 * 24 * 60 * 60 * 1000
     );
 
-    // ========================================================
-    // ADMIN EMAIL
-    // ========================================================
-
     if (user.email === "kunalvarshney187@gmail.com") {
       user.role = "admin";
     }
 
     await user.save();
 
-    // ========================================================
-    // GENERATE JWT
-    // ========================================================
-
     const token = generateToken(user._id, sessionId);
-
-    // ========================================================
-    // RESPONSE
-    // ========================================================
 
     return res.status(200).json({
       success: true,
@@ -989,10 +864,6 @@ export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
-    // ========================================================
-    // VALIDATE EMAIL
-    // ========================================================
-
     if (!email) {
       return res.status(400).json({
         success: false,
@@ -1002,15 +873,12 @@ export const forgotPassword = async (req, res) => {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // ========================================================
-    // CHECK EMAIL CONFIGURATION
-    // ========================================================
+    const { user: emailUser, pass: emailPass } =
+      getEmailConfig();
 
-    const { apiKey, from } = getEmailConfig();
-
-    if (!apiKey || !from) {
+    if (!emailUser || !emailPass) {
       console.error(
-        "FORGOT PASSWORD ERROR: RESEND_API_KEY or EMAIL_FROM is missing."
+        "FORGOT PASSWORD ERROR: EMAIL_USER or EMAIL_PASS is missing."
       );
 
       return res.status(500).json({
@@ -1019,15 +887,10 @@ export const forgotPassword = async (req, res) => {
       });
     }
 
-    // ========================================================
-    // FIND USER
-    // ========================================================
-
     const user = await User.findOne({
       email: normalizedEmail,
     });
 
-    // Do not reveal whether email exists.
     if (!user) {
       return res.status(200).json({
         success: true,
@@ -1035,10 +898,6 @@ export const forgotPassword = async (req, res) => {
           "If an account exists with this email, a password reset link has been sent.",
       });
     }
-
-    // ========================================================
-    // GOOGLE ONLY ACCOUNT
-    // ========================================================
 
     if (
       user.authProvider === "google" &&
@@ -1050,10 +909,6 @@ export const forgotPassword = async (req, res) => {
           "If an account exists with this email, a password reset link has been sent.",
       });
     }
-
-    // ========================================================
-    // GENERATE RESET TOKEN
-    // ========================================================
 
     const resetToken = crypto
       .randomBytes(32)
@@ -1071,10 +926,6 @@ export const forgotPassword = async (req, res) => {
 
     await user.save();
 
-    // ========================================================
-    // RESET URL
-    // ========================================================
-
     const clientUrl =
       process.env.CLIENT_URL?.trim() ||
       "http://localhost:5173";
@@ -1083,10 +934,6 @@ export const forgotPassword = async (req, res) => {
       `${clientUrl}/reset-password/${resetToken}`;
 
     console.log("RESET URL GENERATED");
-
-    // ========================================================
-    // SEND RESET EMAIL
-    // ========================================================
 
     try {
       await sendPasswordResetEmail(
@@ -1105,7 +952,6 @@ export const forgotPassword = async (req, res) => {
       console.error("MESSAGE:", emailError?.message);
       console.error("============================================================");
 
-      // Remove reset token if email failed.
       user.resetPasswordToken = null;
       user.resetPasswordExpire = null;
 
@@ -1142,10 +988,6 @@ export const resetPassword = async (req, res) => {
     const { token } = req.params;
     const { password } = req.body;
 
-    // ========================================================
-    // VALIDATE PASSWORD
-    // ========================================================
-
     if (!password) {
       return res.status(400).json({
         success: false,
@@ -1161,18 +1003,10 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    // ========================================================
-    // HASH TOKEN
-    // ========================================================
-
     const hashedToken = crypto
       .createHash("sha256")
       .update(token)
       .digest("hex");
-
-    // ========================================================
-    // FIND VALID RESET TOKEN
-    // ========================================================
 
     const user = await User.findOne({
       resetPasswordToken: hashedToken,
@@ -1190,18 +1024,12 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    // ========================================================
-    // UPDATE PASSWORD
-    // ========================================================
-
     user.password = password;
     user.authProvider = "local";
 
-    // Remove reset token.
     user.resetPasswordToken = null;
     user.resetPasswordExpire = null;
 
-    // Invalidate current session after password reset.
     user.activeSessionId = null;
     user.activeSessionExpires = null;
 
@@ -1233,19 +1061,11 @@ export const googleLoginSuccess = async (req, res) => {
       process.env.CLIENT_URL?.trim() ||
       "http://localhost:5173";
 
-    // ========================================================
-    // GOOGLE LOGIN FAILED
-    // ========================================================
-
     if (!req.user) {
       return res.redirect(
         `${clientUrl}/login?error=google-login-failed`
       );
     }
-
-    // ========================================================
-    // CHECK BLOCKED ACCOUNT
-    // ========================================================
 
     if (req.user.isBlocked) {
       return res.redirect(
@@ -1253,17 +1073,9 @@ export const googleLoginSuccess = async (req, res) => {
       );
     }
 
-    // ========================================================
-    // GOOGLE VERIFIES EMAIL OWNERSHIP
-    // ========================================================
-
     if (req.user.isEmailVerified !== true) {
       req.user.isEmailVerified = true;
     }
-
-    // ========================================================
-    // CREATE GOOGLE LOGIN SESSION
-    // ========================================================
 
     const sessionId = crypto.randomUUID();
 
@@ -1272,10 +1084,6 @@ export const googleLoginSuccess = async (req, res) => {
     req.user.activeSessionExpires = new Date(
       Date.now() + 7 * 24 * 60 * 60 * 1000
     );
-
-    // ========================================================
-    // ADMIN EMAIL
-    // ========================================================
 
     if (
       req.user.email ===
@@ -1286,18 +1094,10 @@ export const googleLoginSuccess = async (req, res) => {
 
     await req.user.save();
 
-    // ========================================================
-    // GENERATE JWT
-    // ========================================================
-
     const token = generateToken(
       req.user._id,
       sessionId
     );
-
-    // ========================================================
-    // USER DATA
-    // ========================================================
 
     const userData = {
       id: req.user._id,
@@ -1313,10 +1113,6 @@ export const googleLoginSuccess = async (req, res) => {
     const encodedUser = encodeURIComponent(
       JSON.stringify(userData)
     );
-
-    // ========================================================
-    // REDIRECT TO FRONTEND
-    // ========================================================
 
     return res.redirect(
       `${clientUrl}/auth/google/success?token=${encodeURIComponent(
@@ -1389,7 +1185,6 @@ export const logoutUser = async (req, res) => {
   } catch (error) {
     console.error("Logout Error:", error);
 
-    // Logout should remain idempotent.
     return res.status(200).json({
       success: true,
       message: "Logout Successful",
