@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
 import User from "../models/User.js";
 import  generateToken  from "../utils/generateToken.js";
 
@@ -21,6 +22,14 @@ const RESET_TOKEN_EXPIRY_MINUTES = 15;
 const ADMIN_EMAIL = "kunalvarshney187@gmail.com";
 
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 // ------------------------------------------------------------
 // Helpers
@@ -148,6 +157,35 @@ export const registerUser = async (req, res) => {
     applyAdminRoleIfMatch(newUser);
 
     await newUser.save();
+
+    await transporter.sendMail({
+      from: `"CampusHub AI" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "CampusHub AI - Email Verification OTP",
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;">
+          <h2>Verify your CampusHub AI account</h2>
+          <p>Your email verification code is:</p>
+
+          <div style="
+            font-size:32px;
+            font-weight:bold;
+            letter-spacing:8px;
+            padding:20px;
+            background:#f4f7fb;
+            text-align:center;
+            border-radius:10px;
+          ">
+            ${otp}
+          </div>
+
+          <p>This OTP will expire in ${OTP_EXPIRY_MINUTES} minutes.</p>
+          <p>If you did not create this account, you can ignore this email.</p>
+
+          <p>— CampusHub AI</p>
+        </div>
+      `,
+    });
 
     return res.status(201).json({
       success: true,
@@ -290,6 +328,33 @@ export const resendVerificationOtp = async (req, res) => {
     );
     user.emailVerificationLastSent = new Date();
     await user.save();
+
+    await transporter.sendMail({
+      from: `"CampusHub AI" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "CampusHub AI - New Verification OTP",
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;">
+          <h2>Verify your CampusHub AI account</h2>
+          <p>Your new verification code is:</p>
+
+          <div style="
+            font-size:32px;
+            font-weight:bold;
+            letter-spacing:8px;
+            padding:20px;
+            background:#f4f7fb;
+            text-align:center;
+            border-radius:10px;
+          ">
+            ${otp}
+          </div>
+
+          <p>This OTP will expire in ${OTP_EXPIRY_MINUTES} minutes.</p>
+          <p>— CampusHub AI</p>
+        </div>
+      `,
+    });
 
     return res.status(200).json({
       success: true,
