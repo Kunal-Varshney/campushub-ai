@@ -332,14 +332,20 @@ try {
     "verificationEmail"
   );
 
+  if (data.token) {
+    localStorage.setItem("token", data.token);
+  }
+
+  if (data.user) {
+    localStorage.setItem(
+      "user",
+      JSON.stringify(data.user)
+    );
+  }
+
   window.setTimeout(() => {
-    navigate("/login", {
+    navigate("/dashboard", {
       replace: true,
-      state: {
-        email,
-        message:
-          "Email verified successfully. You can now login.",
-      },
     });
   }, 1400);
 } catch (err) {
@@ -553,7 +559,7 @@ return ( <main className="relative flex min-h-screen items-center justify-center
 
       <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-400">
         Your CampusHub AI account is now verified.
-        Redirecting you to login...
+        Redirecting you to dashboard...
       </p>
 
       <div className="mt-6 flex items-center justify-center gap-2 text-xs text-emerald-400">
