@@ -868,7 +868,7 @@ export const forgotPassword =
 
       const user = await User.findOne({
         email,
-      });
+      }).select("+password");
 
       if (
         !user ||
