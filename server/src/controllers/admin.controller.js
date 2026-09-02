@@ -45,7 +45,7 @@ const getAllUsers = async (req, res) => {
       role = "",
       status = "",
       page = 1,
-      limit = 20,
+      limit = 100,
     } = req.query;
 
     const query = {};

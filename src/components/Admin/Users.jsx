@@ -26,16 +26,31 @@ const Users = () => {
   const [users, setUsers] = useState([]);
   const [totalUsers, setTotalUsers] = useState(0);
 
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [limit] = useState(100);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
+  // Filters
   const [search, setSearch] = useState("");
   const [role, setRole] = useState("");
   const [status, setStatus] = useState("");
 
+  // Activity modal
   const [activityModal, setActivityModal] = useState(null);
   const [activityLoading, setActivityLoading] = useState(false);
+
+  // ============================================================
+  // PAGINATION CALCULATION
+  // ============================================================
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(totalUsers / limit)
+  );
 
   // ============================================================
   // TOAST
@@ -62,6 +77,8 @@ const Users = () => {
         search,
         role,
         status,
+        page,
+        limit,
       });
 
       if (res?.success) {
@@ -92,7 +109,7 @@ const Users = () => {
     } finally {
       setLoading(false);
     }
-  }, [search, role, status]);
+  }, [search, role, status, page, limit]);
 
   // ============================================================
   // AUTO FETCH
@@ -105,6 +122,24 @@ const Users = () => {
 
     return () => clearTimeout(timer);
   }, [fetchUsers]);
+
+  // ============================================================
+  // RESET PAGINATION WHEN FILTERS CHANGE
+  // ============================================================
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, role, status]);
+
+  // ============================================================
+  // KEEP PAGE VALID AFTER USER COUNT CHANGES
+  // ============================================================
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
 
   // ============================================================
   // BLOCK USER
@@ -245,6 +280,22 @@ const Users = () => {
   };
 
   // ============================================================
+  // PAGINATION HANDLERS
+  // ============================================================
+
+  const handlePreviousPage = () => {
+    setPage((currentPage) =>
+      Math.max(1, currentPage - 1)
+    );
+  };
+
+  const handleNextPage = () => {
+    setPage((currentPage) =>
+      Math.min(totalPages, currentPage + 1)
+    );
+  };
+
+  // ============================================================
   // UI
   // ============================================================
 
@@ -382,13 +433,62 @@ const Users = () => {
           )}
         </div>
       ) : (
-        <UsersTable
-          users={users}
-          onBlock={handleBlock}
-          onUnblock={handleUnblock}
-          onDelete={handleDelete}
-          onViewActivity={handleViewActivity}
-        />
+        <>
+          <UsersTable
+            users={users}
+            onBlock={handleBlock}
+            onUnblock={handleUnblock}
+            onDelete={handleDelete}
+            onViewActivity={handleViewActivity}
+          />
+
+          {/* ==================================================
+              PAGINATION
+          ================================================== */}
+
+          {totalUsers > limit && (
+            <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+              {/* PAGE INFO */}
+
+              <p className="text-sm text-slate-400">
+                Page{" "}
+                <span className="font-medium text-white">
+                  {page}
+                </span>{" "}
+                of{" "}
+                <span className="font-medium text-white">
+                  {totalPages}
+                </span>
+              </p>
+
+              {/* BUTTONS */}
+
+              <div className="flex items-center gap-2">
+                {/* PREVIOUS */}
+
+                <button
+                  type="button"
+                  onClick={handlePreviousPage}
+                  disabled={page === 1}
+                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Previous
+                </button>
+
+                {/* NEXT */}
+
+                <button
+                  type="button"
+                  onClick={handleNextPage}
+                  disabled={page >= totalPages}
+                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* ======================================================
