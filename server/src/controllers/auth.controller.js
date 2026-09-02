@@ -751,6 +751,15 @@ export const loginUser = async (
       email,
     }).select("+password");
 
+    console.log("LOGIN DEBUG:", {
+    found: !!user,
+    email: user?.email,
+    hasPassword: !!user?.password,
+    passwordLength: user?.password?.length,
+    verified: user?.isEmailVerified,
+    authProvider: user?.authProvider,
+  });
+
     if (!user) {
       return res.status(400).json({
         success: false,
@@ -799,6 +808,8 @@ export const loginUser = async (
 
     const isMatch =
       await user.comparePassword(password);
+
+      console.log("PASSWORD MATCH:", isMatch);
 
     if (!isMatch) {
       return res.status(400).json({
