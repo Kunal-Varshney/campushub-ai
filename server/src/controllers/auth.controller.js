@@ -2,10 +2,13 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import generateToken from "../utils/generateToken.js";
+
 import {
   isValidEmailFormat,
   isDisposableEmail,
 } from "../utils/disposableEmailChecker.js";
+
+import { createNotification } from "./notification.controller.js";
 
 // ============================================================
 // DEVELOPMENT AUTH MODE
@@ -377,6 +380,114 @@ export const registerUser = async (req, res) => {
       });
 
       throw emailError;
+    }
+
+    // ============================================================
+    // ADMIN NEW USER NOTIFICATION
+    // ============================================================
+
+    try {
+      const adminUser = await User.findOne({
+        email: ADMIN_EMAIL.toLowerCase(),
+        role: "admin",
+      }).select("_id");
+
+      if (adminUser?._id) {
+        await createNotification({
+          user: adminUser._id,
+          title: "New User Signup",
+          message: `${newUser.name} (${newUser.email}) has created a new CampusHub AI account.`,
+          type: "system",
+          link: "/admin/users",
+        });
+      } else {
+        console.warn(
+          "ADMIN SIGNUP NOTIFICATION: Admin user not found."
+        );
+      }
+    } catch (notificationError) {
+      console.error(
+        "ADMIN SIGNUP NOTIFICATION ERROR:",
+        notificationError.message
+      );
+    }
+
+    // ============================================================
+    // ADMIN EMAIL NOTIFICATION
+    // ============================================================
+
+    try {
+      await sendEmail({
+        to: ADMIN_EMAIL,
+        subject: "CampusHub AI — New User Signup",
+        text: `
+    A new user has signed up on CampusHub AI.
+
+    Name: ${newUser.name}
+    Email: ${newUser.email}
+    Signup Time: ${newUser.createdAt?.toISOString() || new Date().toISOString()}
+
+    The user still needs to complete email verification.
+        `.trim(),
+
+        html: `
+          <div style="font-family: Arial, sans-serif; background:#f8fafc; padding:32px;">
+            <div style="max-width:600px; margin:0 auto; background:#ffffff; border-radius:16px; padding:32px; border:1px solid #e2e8f0;">
+              
+              <h2 style="margin:0 0 8px; color:#0f172a;">
+                New User Signup
+              </h2>
+
+              <p style="margin:0 0 24px; color:#64748b;">
+                A new user has created an account on CampusHub AI.
+              </p>
+
+              <div style="background:#f8fafc; border-radius:12px; padding:20px;">
+                
+                <p style="margin:0 0 12px; color:#334155;">
+                  <strong>Name:</strong>
+                  ${newUser.name}
+                </p>
+
+                <p style="margin:0 0 12px; color:#334155;">
+                  <strong>Email:</strong>
+                  ${newUser.email}
+                </p>
+
+                <p style="margin:0; color:#334155;">
+                  <strong>Signup Time:</strong>
+                  ${
+                    newUser.createdAt?.toISOString() ||
+                    new Date().toISOString()
+                  }
+                </p>
+
+              </div>
+
+              <p style="margin:24px 0 0; color:#64748b; font-size:14px;">
+                The user still needs to complete email verification.
+              </p>
+
+              <p style="margin:24px 0 0; color:#94a3b8; font-size:12px;">
+                CampusHub AI Administration
+              </p>
+
+            </div>
+          </div>
+        `,
+      });
+
+      console.log(
+        `ADMIN SIGNUP EMAIL SENT ✅ → ${ADMIN_EMAIL}`
+      );
+    } catch (adminEmailError) {
+      // IMPORTANT:
+      // Admin notification email failure must NEVER
+      // break the user's registration.
+      console.error(
+        "ADMIN SIGNUP EMAIL ERROR:",
+        adminEmailError.message
+      );
     }
 
     // ========================================================
