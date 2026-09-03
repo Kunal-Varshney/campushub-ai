@@ -3,7 +3,6 @@ import {
   FiMenu,
   FiBell,
   FiChevronDown,
-  FiActivity,
 } from "react-icons/fi";
 
 const AdminTopbar = ({
@@ -111,48 +110,10 @@ const AdminTopbar = ({
             <FiMenu size={20} />
           </button>
 
-          {/* ADMIN ICON */}
-
-          <div
-            className="
-              relative
-              flex
-              h-11
-              w-11
-              shrink-0
-              items-center
-              justify-center
-              overflow-hidden
-              rounded-2xl
-              border
-              border-blue-400/20
-              bg-gradient-to-br
-              from-blue-600
-              via-indigo-600
-              to-purple-600
-              shadow-[0_8px_30px_rgba(59,130,246,0.18)]
-            "
-          >
-            <div
-              className="
-                absolute
-                inset-0
-                bg-white/10
-              "
-            />
-
-            <FiActivity
-              size={21}
-              className="relative text-white"
-            />
-          </div>
-
           {/* ADMIN CONTEXT */}
 
           <div className="min-w-0">
-
             <div className="flex items-center gap-2">
-
               <h1
                 className="
                   truncate
@@ -165,8 +126,6 @@ const AdminTopbar = ({
               >
                 Admin Control Center
               </h1>
-
-              {/* SYSTEM STATUS */}
 
               <span
                 className="
@@ -187,19 +146,9 @@ const AdminTopbar = ({
                   md:inline-flex
                 "
               >
-                <span
-                  className="
-                    h-1.5
-                    w-1.5
-                    animate-pulse
-                    rounded-full
-                    bg-emerald-400
-                  "
-                />
-
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
                 Live
               </span>
-
             </div>
 
             <p
@@ -215,10 +164,7 @@ const AdminTopbar = ({
             >
               Monitor and manage your platform
             </p>
-
           </div>
-
-        </div>
 
         {/* ======================================================
             RIGHT SECTION
