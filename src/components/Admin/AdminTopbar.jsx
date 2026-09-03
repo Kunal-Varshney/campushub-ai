@@ -1,7 +1,9 @@
 import {
   FiShield,
-  FiZap,
   FiMenu,
+  FiBell,
+  FiChevronDown,
+  FiActivity,
 } from "react-icons/fi";
 
 const AdminTopbar = ({
@@ -15,21 +17,23 @@ const AdminTopbar = ({
   let user = {};
 
   try {
-    user =
-      JSON.parse(
-        localStorage.getItem("user")
-      ) || {};
+    user = JSON.parse(localStorage.getItem("user")) || {};
   } catch (error) {
-    console.error(
-      "Failed to read admin user:",
-      error
-    );
+    console.error("Failed to read admin user:", error);
   }
 
   const name = user.name || "Admin";
+  const initial = name.charAt(0).toUpperCase() || "A";
 
-  const initial =
-    name.charAt(0).toUpperCase() || "A";
+  // Dynamic greeting
+  const hour = new Date().getHours();
+
+  const greeting =
+    hour < 12
+      ? "Good morning"
+      : hour < 18
+      ? "Good afternoon"
+      : "Good evening";
 
   // ============================================================
   // RENDER
@@ -40,12 +44,12 @@ const AdminTopbar = ({
       className="
         sticky
         top-0
-        z-30
-        h-20
+        z-40
+        h-[76px]
         border-b
-        border-white/10
-        bg-slate-950/80
-        backdrop-blur-xl
+        border-white/[0.07]
+        bg-slate-950/90
+        backdrop-blur-2xl
       "
     >
       <div
@@ -54,27 +58,19 @@ const AdminTopbar = ({
           h-full
           items-center
           justify-between
-          gap-3
           px-4
           sm:px-6
-          lg:px-10
+          lg:px-8
+          xl:px-10
         "
       >
+        {/* ======================================================
+            LEFT SECTION
+        ====================================================== */}
 
-        {/* ====================================================
-            LEFT
-        ==================================================== */}
+        <div className="flex min-w-0 items-center gap-3">
 
-        <div
-          className="
-            flex
-            min-w-0
-            items-center
-            gap-3
-          "
-        >
-
-          {/* MOBILE MENU BUTTON */}
+          {/* MOBILE MENU */}
 
           <button
             type="button"
@@ -93,11 +89,12 @@ const AdminTopbar = ({
               rounded-xl
               border
               border-white/10
-              bg-white/5
+              bg-white/[0.04]
               text-slate-300
               transition-all
               duration-200
-              hover:bg-white/10
+              hover:border-blue-500/30
+              hover:bg-blue-500/10
               hover:text-white
               active:scale-95
               lg:hidden
@@ -111,25 +108,40 @@ const AdminTopbar = ({
             <FiMenu size={20} />
           </button>
 
-          {/* LOGO */}
+          {/* BRAND MARK */}
 
           <div
             className="
+              relative
               flex
-              h-10
-              w-10
+              h-11
+              w-11
               shrink-0
               items-center
               justify-center
-              rounded-xl
+              overflow-hidden
+              rounded-2xl
+              border
+              border-blue-400/20
               bg-gradient-to-br
-              from-blue-500
-              to-purple-500
-              text-white
-              shadow-lg
+              from-blue-600
+              via-indigo-600
+              to-purple-600
+              shadow-[0_8px_30px_rgba(59,130,246,0.20)]
             "
           >
-            <FiZap size={19} />
+            <div
+              className="
+                absolute
+                inset-0
+                bg-white/10
+              "
+            />
+
+            <FiActivity
+              size={21}
+              className="relative text-white"
+            />
           </div>
 
           {/* BRAND */}
@@ -138,117 +150,191 @@ const AdminTopbar = ({
 
             <div className="flex items-center gap-2">
 
+              {/* SINGLE CAMPUSHUB BRAND */}
+
               <h1
                 className="
-                  truncate
-                  text-base
-                  font-bold
+                  whitespace-nowrap
+                  text-[17px]
+                  font-extrabold
+                  tracking-tight
                   text-white
                   sm:text-lg
                 "
               >
-                CampusHub
+                Campus
                 <span className="text-blue-400">
-                  {" "}AI
+                  Hub
+                </span>
+                <span className="ml-1.5 text-slate-400">
+                  Admin
                 </span>
               </h1>
 
-              {/* ADMIN BADGE */}
+              {/* LIVE STATUS */}
 
               <span
                 className="
                   hidden
                   items-center
-                  gap-1
+                  gap-1.5
                   rounded-full
                   border
-                  border-purple-500/30
-                  bg-purple-500/10
+                  border-emerald-500/20
+                  bg-emerald-500/10
                   px-2
                   py-1
-                  text-[10px]
-                  font-semibold
-                  text-purple-300
-                  sm:flex
+                  text-[9px]
+                  font-bold
+                  uppercase
+                  tracking-wider
+                  text-emerald-400
+                  md:inline-flex
                 "
               >
-                <FiShield size={11} />
-                Admin
+                <span
+                  className="
+                    h-1.5
+                    w-1.5
+                    animate-pulse
+                    rounded-full
+                    bg-emerald-400
+                  "
+                />
+                Live
               </span>
 
             </div>
 
-            {/* SUBTITLE */}
-
             <p
               className="
+                mt-0.5
                 hidden
-                text-xs
+                text-[11px]
+                font-medium
+                tracking-wide
                 text-slate-500
                 sm:block
               "
             >
-              Platform Management Console
+              Administration & Platform Control
             </p>
 
           </div>
 
         </div>
 
-        {/* ====================================================
-            RIGHT
-        ==================================================== */}
+        {/* ======================================================
+            RIGHT SECTION
+        ====================================================== */}
 
-        <div
-          className="
-            flex
-            shrink-0
-            items-center
-            gap-3
-            sm:gap-4
-          "
-        >
+        <div className="flex items-center gap-2 sm:gap-4">
 
-          {/* WELCOME TEXT */}
+          {/* GREETING */}
 
           <div
             className="
               hidden
-              flex-col
-              items-end
-              md:flex
+              text-right
+              lg:block
             "
           >
+            <p
+              className="
+                text-sm
+                font-semibold
+                text-slate-200
+              "
+            >
+              {greeting}, {name}
+            </p>
 
             <p
               className="
-                max-w-[220px]
-                truncate
-                text-sm
+                mt-0.5
+                text-[10px]
                 font-medium
-                text-slate-300
+                uppercase
+                tracking-wider
+                text-slate-500
               "
             >
-              Welcome back, {name}
+              Control Center
             </p>
-
-            <p className="text-xs text-slate-500">
-              Admin Control Panel
-            </p>
-
           </div>
 
-          {/* PROFILE */}
+          {/* NOTIFICATION */}
+
+          <button
+            type="button"
+            className="
+              relative
+              flex
+              h-10
+              w-10
+              items-center
+              justify-center
+              rounded-xl
+              border
+              border-white/10
+              bg-white/[0.035]
+              text-slate-400
+              transition-all
+              duration-200
+              hover:border-blue-500/30
+              hover:bg-blue-500/10
+              hover:text-white
+            "
+            aria-label="Notifications"
+          >
+            <FiBell size={18} />
+
+            {/* Notification indicator */}
+
+            <span
+              className="
+                absolute
+                right-2
+                top-2
+                h-1.5
+                w-1.5
+                rounded-full
+                bg-blue-400
+                ring-2
+                ring-slate-950
+              "
+            />
+          </button>
+
+          {/* DIVIDER */}
+
+          <div
+            className="
+              hidden
+              h-8
+              w-px
+              bg-white/10
+              sm:block
+            "
+          />
+
+          {/* ADMIN PROFILE */}
 
           <div
             className="
               flex
               items-center
-              gap-3
-              border-l
-              border-white/10
-              pl-3
-              sm:pl-4
+              gap-2.5
+              rounded-2xl
+              border
+              border-white/[0.07]
+              bg-white/[0.025]
+              px-2
+              py-1.5
+              transition-all
+              duration-200
+              hover:border-white/10
+              hover:bg-white/[0.05]
             "
           >
 
@@ -257,59 +343,74 @@ const AdminTopbar = ({
             <div
               className="
                 flex
-                h-10
-                w-10
+                h-9
+                w-9
                 shrink-0
                 items-center
                 justify-center
-                rounded-full
+                rounded-xl
                 bg-gradient-to-br
                 from-blue-500
-                to-purple-500
-                font-bold
+                to-indigo-600
+                text-sm
+                font-extrabold
                 text-white
                 shadow-lg
-                sm:h-11
-                sm:w-11
+                shadow-blue-500/10
               "
             >
               {initial}
             </div>
 
-            {/* NAME */}
+            {/* PROFILE INFO */}
 
             <div className="hidden min-w-0 sm:block">
 
               <p
                 className="
-                  max-w-[120px]
+                  max-w-[130px]
                   truncate
-                  text-sm
-                  font-medium
+                  text-xs
+                  font-bold
                   text-white
                 "
               >
                 {name}
               </p>
 
-              <span
-                className="
-                  inline-flex
-                  rounded-full
-                  border
-                  border-blue-500/30
-                  bg-blue-500/10
-                  px-2
-                  py-0.5
-                  text-[10px]
-                  font-semibold
-                  text-blue-300
-                "
-              >
-                Administrator
-              </span>
+              <div className="mt-0.5 flex items-center gap-1.5">
+
+                <FiShield
+                  size={10}
+                  className="text-blue-400"
+                />
+
+                <span
+                  className="
+                    text-[9px]
+                    font-semibold
+                    uppercase
+                    tracking-wider
+                    text-slate-500
+                  "
+                >
+                  Administrator
+                </span>
+
+              </div>
 
             </div>
+
+            {/* DROPDOWN INDICATOR */}
+
+            <FiChevronDown
+              size={14}
+              className="
+                hidden
+                text-slate-500
+                sm:block
+              "
+            />
 
           </div>
 
