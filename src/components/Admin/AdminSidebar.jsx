@@ -5,7 +5,7 @@ import {
   FiGrid,
   FiBarChart2,
   FiSettings,
-  FiZap,
+  FiActivity,
   FiLogOut,
 } from "react-icons/fi";
 
@@ -49,37 +49,46 @@ const AdminSidebar = ({
   const navigate = useNavigate();
 
   // ============================================================
+  // CURRENT ADMIN
+  // ============================================================
+
+  let user = {};
+
+  try {
+    user = JSON.parse(localStorage.getItem("user")) || {};
+  } catch (error) {
+    console.error("Failed to read admin user:", error);
+  }
+
+  const name = user.name || "Admin";
+  const initial = name.charAt(0).toUpperCase() || "A";
+
+  // ============================================================
   // LOGOUT
   // ============================================================
 
-  // ============================================================
-// LOGOUT
-// ============================================================
+  const handleLogout = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to logout?"
+    );
 
-const handleLogout = async () => {
-  const confirmed = window.confirm(
-    "Are you sure you want to logout?"
-  );
+    if (!confirmed) return;
 
-  if (!confirmed) return;
+    try {
+      await API.post("/auth/logout");
 
-  try {
-    // Clear active session from backend/database
-    await API.post("/auth/logout");
+      console.log("Admin logout successful");
+    } catch (error) {
+      console.error("Admin Logout Error:", error);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
 
-    console.log("Admin logout successful");
-  } catch (error) {
-    console.error("Admin Logout Error:", error);
-  } finally {
-    // Always clear local authentication
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-
-    navigate("/login", {
-      replace: true,
-    });
-  }
-};
+      navigate("/login", {
+        replace: true,
+      });
+    }
+  };
 
   // ============================================================
   // NAVIGATION
@@ -88,8 +97,7 @@ const handleLogout = async () => {
   const handleNavigation = (id) => {
     setActive(id);
 
-    // Close sidebar after selecting a page on mobile
-    if (setMobileOpen) {
+    if (typeof setMobileOpen === "function") {
       setMobileOpen(false);
     }
   };
@@ -99,10 +107,14 @@ const handleLogout = async () => {
   // ============================================================
 
   const handleCloseSidebar = () => {
-    if (setMobileOpen) {
+    if (typeof setMobileOpen === "function") {
       setMobileOpen(false);
     }
   };
+
+  // ============================================================
+  // RENDER
+  // ============================================================
 
   return (
     <>
@@ -141,15 +153,13 @@ const handleLogout = async () => {
           flex-col
           overflow-hidden
           border-r
-          border-white/10
+          border-white/[0.08]
           bg-slate-950/95
           shadow-2xl
           backdrop-blur-xl
-
           transition-transform
           duration-300
           ease-in-out
-
           lg:w-64
           lg:translate-x-0
 
@@ -161,7 +171,7 @@ const handleLogout = async () => {
         `}
       >
         {/* ====================================================
-            LOGO / HEADER
+            BRAND HEADER
         ==================================================== */}
 
         <div
@@ -172,71 +182,108 @@ const handleLogout = async () => {
             items-center
             justify-between
             border-b
-            border-white/10
+            border-white/[0.08]
             px-4
             py-4
             sm:px-5
             lg:min-h-[80px]
-            lg:px-6
+            lg:px-5
           "
         >
           {/* BRAND */}
 
           <div className="flex min-w-0 items-center gap-3">
-            {/* LOGO */}
+
+            {/* BRAND ICON */}
 
             <div
               className="
+                relative
                 flex
-                h-10
-                w-10
+                h-11
+                w-11
                 shrink-0
                 items-center
                 justify-center
-                rounded-xl
+                overflow-hidden
+                rounded-2xl
+                border
+                border-blue-400/20
                 bg-gradient-to-br
-                from-blue-500
-                to-purple-500
-                text-white
-                shadow-lg
-                sm:h-11
-                sm:w-11
+                from-blue-600
+                via-indigo-600
+                to-purple-600
+                shadow-[0_8px_25px_rgba(59,130,246,0.18)]
               "
             >
-              <FiZap className="text-lg sm:text-xl" />
+              <div
+                className="
+                  absolute
+                  inset-0
+                  bg-white/10
+                "
+              />
+
+              <FiActivity
+                size={21}
+                className="relative text-white"
+              />
             </div>
 
             {/* BRAND TEXT */}
 
             <div className="min-w-0">
-              <h1
-                className="
-                  truncate
-                  text-base
-                  font-bold
-                  text-white
-                  sm:text-lg
-                "
-              >
-                CampusHub AI
-              </h1>
+
+              <div className="flex items-center gap-2">
+
+                <h1
+                  className="
+                    truncate
+                    text-[16px]
+                    font-black
+                    tracking-[0.04em]
+                    text-white
+                    sm:text-[17px]
+                  "
+                >
+                  CAMPUS
+                  <span className="text-blue-400">
+                    HUB
+                  </span>
+                </h1>
+
+                {/* STATUS DOT */}
+
+                <span
+                  className="
+                    h-1.5
+                    w-1.5
+                    shrink-0
+                    animate-pulse
+                    rounded-full
+                    bg-emerald-400
+                  "
+                />
+
+              </div>
 
               <p
                 className="
-                  truncate
-                  text-[11px]
-                  text-slate-400
-                  sm:text-xs
+                  mt-0.5
+                  text-[9px]
+                  font-bold
+                  uppercase
+                  tracking-[0.18em]
+                  text-slate-500
                 "
               >
-                Admin Panel
+                Administration
               </p>
+
             </div>
           </div>
 
-          {/* ==================================================
-              MOBILE CLOSE BUTTON
-          ================================================== */}
+          {/* MOBILE CLOSE */}
 
           <button
             type="button"
@@ -249,13 +296,14 @@ const handleLogout = async () => {
               shrink-0
               items-center
               justify-center
-              rounded-lg
+              rounded-xl
               border
               border-white/10
-              bg-white/5
+              bg-white/[0.04]
               text-slate-400
-              transition
+              transition-all
               duration-200
+              hover:border-white/20
               hover:bg-white/10
               hover:text-white
               active:scale-95
@@ -284,6 +332,22 @@ const handleLogout = async () => {
             sm:py-6
           "
         >
+          {/* SECTION LABEL */}
+
+          <p
+            className="
+              mb-3
+              px-3
+              text-[9px]
+              font-bold
+              uppercase
+              tracking-[0.18em]
+              text-slate-600
+            "
+          >
+            Workspace
+          </p>
+
           {navItems.map((item) => {
             const Icon = item.icon;
             const activeBtn = active === item.id;
@@ -292,21 +356,19 @@ const handleLogout = async () => {
               <button
                 key={item.id}
                 type="button"
-                onClick={() =>
-                  handleNavigation(item.id)
-                }
+                onClick={() => handleNavigation(item.id)}
                 aria-current={
-                  activeBtn
-                    ? "page"
-                    : undefined
+                  activeBtn ? "page" : undefined
                 }
                 className={`
                   group
+                  relative
                   flex
                   min-h-[46px]
                   w-full
                   items-center
                   gap-3
+                  overflow-hidden
                   rounded-xl
                   border
                   px-3
@@ -315,29 +377,42 @@ const handleLogout = async () => {
                   transition-all
                   duration-200
                   active:scale-[0.98]
-
                   sm:px-4
 
                   ${
                     activeBtn
                       ? `
-                        border-blue-400/30
-                        bg-gradient-to-r
-                        from-blue-500/20
-                        to-purple-500/20
+                        border-blue-400/20
+                        bg-blue-500/[0.10]
                         text-white
-                        shadow-lg
                       `
                       : `
                         border-transparent
                         text-slate-400
-                        hover:border-white/5
-                        hover:bg-white/5
+                        hover:border-white/[0.06]
+                        hover:bg-white/[0.04]
                         hover:text-white
                       `
                   }
                 `}
               >
+                {/* ACTIVE INDICATOR */}
+
+                {activeBtn && (
+                  <span
+                    className="
+                      absolute
+                      left-0
+                      top-1/2
+                      h-6
+                      w-0.5
+                      -translate-y-1/2
+                      rounded-r-full
+                      bg-blue-400
+                    "
+                  />
+                )}
+
                 {/* ICON */}
 
                 <Icon
@@ -380,14 +455,12 @@ const handleLogout = async () => {
           className="
             shrink-0
             border-t
-            border-white/10
+            border-white/[0.08]
             p-3
             sm:p-4
           "
         >
-          {/* ==================================================
-              PROFILE
-          ================================================== */}
+          {/* PROFILE */}
 
           <div
             className="
@@ -398,8 +471,8 @@ const handleLogout = async () => {
               gap-3
               rounded-xl
               border
-              border-white/10
-              bg-white/5
+              border-white/[0.07]
+              bg-white/[0.035]
               p-3
             "
           >
@@ -413,51 +486,66 @@ const handleLogout = async () => {
                 shrink-0
                 items-center
                 justify-center
-                rounded-full
+                rounded-xl
                 bg-gradient-to-br
                 from-blue-500
-                to-purple-500
+                to-indigo-600
                 text-sm
-                font-bold
+                font-extrabold
                 text-white
                 shadow-lg
+                shadow-blue-500/10
                 sm:h-10
                 sm:w-10
               "
             >
-              K
+              {initial}
             </div>
 
             {/* USER INFO */}
 
             <div className="min-w-0 flex-1">
+
               <p
                 className="
                   truncate
                   text-sm
-                  font-medium
+                  font-semibold
                   text-white
                 "
               >
-                Kunal
+                {name}
               </p>
 
-              <p
-                className="
-                  truncate
-                  text-[11px]
-                  text-slate-400
-                  sm:text-xs
-                "
-              >
-                Administrator
-              </p>
+              <div className="mt-0.5 flex items-center gap-1.5">
+
+                <span
+                  className="
+                    h-1.5
+                    w-1.5
+                    rounded-full
+                    bg-emerald-400
+                  "
+                />
+
+                <p
+                  className="
+                    truncate
+                    text-[10px]
+                    font-medium
+                    text-slate-500
+                    sm:text-[11px]
+                  "
+                >
+                  Administrator
+                </p>
+
+              </div>
+
             </div>
           </div>
 
-          {/* ==================================================
-              LOGOUT
-          ================================================== */}
+          {/* LOGOUT */}
 
           <button
             type="button"
@@ -471,11 +559,11 @@ const handleLogout = async () => {
               rounded-xl
               px-3
               py-3
-              text-red-400
+              text-slate-500
               transition-all
               duration-200
-              hover:bg-red-500/10
-              hover:text-red-300
+              hover:bg-red-500/[0.08]
+              hover:text-red-400
               active:scale-[0.98]
               sm:px-4
             "

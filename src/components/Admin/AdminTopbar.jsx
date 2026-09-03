@@ -25,7 +25,10 @@ const AdminTopbar = ({
   const name = user.name || "Admin";
   const initial = name.charAt(0).toUpperCase() || "A";
 
-  // Dynamic greeting
+  // ============================================================
+  // DYNAMIC GREETING
+  // ============================================================
+
   const hour = new Date().getHours();
 
   const greeting =
@@ -108,7 +111,7 @@ const AdminTopbar = ({
             <FiMenu size={20} />
           </button>
 
-          {/* BRAND MARK */}
+          {/* ADMIN ICON */}
 
           <div
             className="
@@ -127,7 +130,7 @@ const AdminTopbar = ({
               from-blue-600
               via-indigo-600
               to-purple-600
-              shadow-[0_8px_30px_rgba(59,130,246,0.20)]
+              shadow-[0_8px_30px_rgba(59,130,246,0.18)]
             "
           >
             <div
@@ -144,17 +147,15 @@ const AdminTopbar = ({
             />
           </div>
 
-          {/* BRAND */}
+          {/* ADMIN CONTEXT */}
 
           <div className="min-w-0">
 
             <div className="flex items-center gap-2">
 
-              {/* SINGLE CAMPUSHUB BRAND */}
-
               <h1
                 className="
-                  whitespace-nowrap
+                  truncate
                   text-[17px]
                   font-extrabold
                   tracking-tight
@@ -162,16 +163,10 @@ const AdminTopbar = ({
                   sm:text-lg
                 "
               >
-                Campus
-                <span className="text-blue-400">
-                  Hub
-                </span>
-                <span className="ml-1.5 text-slate-400">
-                  Admin
-                </span>
+                Admin Control Center
               </h1>
 
-              {/* LIVE STATUS */}
+              {/* SYSTEM STATUS */}
 
               <span
                 className="
@@ -201,6 +196,7 @@ const AdminTopbar = ({
                     bg-emerald-400
                   "
                 />
+
                 Live
               </span>
 
@@ -217,7 +213,7 @@ const AdminTopbar = ({
                 sm:block
               "
             >
-              Administration & Platform Control
+              Monitor and manage your platform
             </p>
 
           </div>
@@ -259,7 +255,7 @@ const AdminTopbar = ({
                 text-slate-500
               "
             >
-              Control Center
+              Administrator
             </p>
           </div>
 
@@ -284,12 +280,11 @@ const AdminTopbar = ({
               hover:border-blue-500/30
               hover:bg-blue-500/10
               hover:text-white
+              active:scale-95
             "
             aria-label="Notifications"
           >
             <FiBell size={18} />
-
-            {/* Notification indicator */}
 
             <span
               className="
@@ -401,7 +396,7 @@ const AdminTopbar = ({
 
             </div>
 
-            {/* DROPDOWN INDICATOR */}
+            {/* DROPDOWN */}
 
             <FiChevronDown
               size={14}
