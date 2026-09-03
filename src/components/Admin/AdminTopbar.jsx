@@ -71,7 +71,6 @@ const AdminTopbar = ({
         ====================================================== */}
 
         <div className="flex min-w-0 items-center gap-3">
-
           {/* MOBILE MENU */}
 
           <button
@@ -165,22 +164,16 @@ const AdminTopbar = ({
               Monitor and manage your platform
             </p>
           </div>
+        </div>
 
         {/* ======================================================
             RIGHT SECTION
         ====================================================== */}
 
         <div className="flex items-center gap-2 sm:gap-4">
-
           {/* GREETING */}
 
-          <div
-            className="
-              hidden
-              text-right
-              lg:block
-            "
-          >
+          <div className="hidden text-right lg:block">
             <p
               className="
                 text-sm
@@ -278,7 +271,6 @@ const AdminTopbar = ({
               hover:bg-white/[0.05]
             "
           >
-
             {/* AVATAR */}
 
             <div
@@ -306,7 +298,6 @@ const AdminTopbar = ({
             {/* PROFILE INFO */}
 
             <div className="hidden min-w-0 sm:block">
-
               <p
                 className="
                   max-w-[130px]
@@ -320,7 +311,6 @@ const AdminTopbar = ({
               </p>
 
               <div className="mt-0.5 flex items-center gap-1.5">
-
                 <FiShield
                   size={10}
                   className="text-blue-400"
@@ -337,9 +327,7 @@ const AdminTopbar = ({
                 >
                   Administrator
                 </span>
-
               </div>
-
             </div>
 
             {/* DROPDOWN */}
@@ -352,11 +340,8 @@ const AdminTopbar = ({
                 sm:block
               "
             />
-
           </div>
-
         </div>
-
       </div>
     </header>
   );
