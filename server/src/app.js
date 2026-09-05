@@ -4,6 +4,8 @@
 
 import express from "express";
 import cors from "cors";
+import passport from "passport";
+import "./config/passport.js";
 
 // ============================================================
 // ROUTES
@@ -45,6 +47,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use(passport.initialize());
 
 app.get("/healthz", (req, res) => {
   res.status(200).json({
