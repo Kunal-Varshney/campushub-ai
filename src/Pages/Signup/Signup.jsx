@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
+
 import API from "../../services/api";
+
 import { Link, useNavigate } from "react-router-dom";
+
 import {
   ArrowRight,
   ArrowUpRight,
@@ -19,6 +22,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+
 import { motion, AnimatePresence } from "framer-motion";
 
 function Signup() {
@@ -28,6 +32,8 @@ function Signup() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
   const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState("");
 
@@ -53,6 +59,37 @@ function Signup() {
       ...prev,
       [name]: value,
     }));
+  };
+
+  // ============================================================
+  // GOOGLE SIGNUP / LOGIN
+  // ============================================================
+
+  const handleGoogleSignup = () => {
+    if (loading || googleLoading) {
+      return;
+    }
+
+    setError("");
+    setGoogleLoading(true);
+
+    try {
+      const baseURL = API.defaults?.baseURL?.replace(/\/$/, "");
+
+      if (!baseURL) {
+        throw new Error("API base URL is not configured.");
+      }
+
+      window.location.href = `${baseURL}/auth/google`;
+    } catch (error) {
+      console.error("GOOGLE SIGNUP ERROR:", error);
+
+      setGoogleLoading(false);
+
+      setError(
+        "Google signup is currently unavailable. Please try again later."
+      );
+    }
   };
 
   // ============================================================
@@ -180,7 +217,7 @@ function Signup() {
     e.preventDefault();
 
     // Prevent accidental double submission.
-    if (loading) {
+    if (loading || googleLoading) {
       return;
     }
 
@@ -233,9 +270,7 @@ function Signup() {
       // CASE 2:
       // Backend returns successful registration + token.
       //
-      // This is kept as a compatibility fallback.
-      // Normal verified-registration flow should generally
-      // use requiresVerification above.
+      // Compatibility fallback.
       // ========================================================
 
       if (data?.success && data?.token) {
@@ -271,17 +306,6 @@ function Signup() {
 
       // ========================================================
       // EXISTING UNVERIFIED ACCOUNT
-      //
-      // Backend can return something like:
-      //
-      // {
-      //   success: false,
-      //   requiresVerification: true,
-      //   email: "...",
-      //   message: "Account exists but is not verified..."
-      // }
-      //
-      // Send user directly to OTP verification.
       // ========================================================
 
       if (errorData?.requiresVerification === true) {
@@ -475,7 +499,6 @@ function Signup() {
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-500/5 px-3.5 py-2 text-[10px] font-semibold text-blue-300 backdrop-blur-xl sm:mb-7 sm:px-4 sm:text-xs">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
-
               <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-400" />
             </span>
 
@@ -712,7 +735,8 @@ function Signup() {
                   name="role"
                   value={formData.role}
                   onChange={handleChange}
-                  className="w-full appearance-none rounded-2xl border border-white/[0.08] bg-[#070d1b] py-3.5 pl-11 pr-10 text-sm text-white outline-none transition-all duration-300 hover:border-white/[0.14] focus:border-cyan-400/40 focus:bg-[#0a1121] focus:ring-4 focus:ring-cyan-400/[0.06]"
+                  disabled={loading || googleLoading}
+                  className="w-full appearance-none rounded-2xl border border-white/[0.08] bg-[#070d1b] py-3.5 pl-11 pr-10 text-sm text-white outline-none transition-all duration-300 hover:border-white/[0.14] focus:border-cyan-400/40 focus:bg-[#0a1121] focus:ring-4 focus:ring-cyan-400/[0.06] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <option value="Student">Student</option>
                   <option value="Recruiter">Recruiter</option>
@@ -742,6 +766,7 @@ function Signup() {
                   toggleVisible={() =>
                     setShowPassword((prev) => !prev)
                   }
+                  disabled={loading || googleLoading}
                 />
 
                 {formData.password && (
@@ -791,6 +816,7 @@ function Signup() {
                   toggleVisible={() =>
                     setShowConfirmPassword((prev) => !prev)
                   }
+                  disabled={loading || googleLoading}
                 />
 
                 {formData.confirmPassword && (
@@ -823,7 +849,8 @@ function Signup() {
                   setAccepted((prev) => !prev)
                 }
                 aria-pressed={accepted}
-                className="flex w-full items-start gap-3 text-left"
+                disabled={loading || googleLoading}
+                className="flex w-full items-start gap-3 text-left disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <span
                   className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-all ${
@@ -843,6 +870,7 @@ function Signup() {
 
                 <span className="text-[10px] leading-5 text-slate-500 sm:text-[11px]">
                   I agree to the{" "}
+
                   <Link
                     to="/terms"
                     onClick={(e) => e.stopPropagation()}
@@ -850,7 +878,9 @@ function Signup() {
                   >
                     Terms of Service
                   </Link>{" "}
+
                   and{" "}
+
                   <Link
                     to="/privacy"
                     onClick={(e) => e.stopPropagation()}
@@ -868,16 +898,16 @@ function Signup() {
 
               <motion.button
                 type="submit"
-                disabled={loading}
+                disabled={loading || googleLoading}
                 whileHover={
-                  !loading
+                  !loading && !googleLoading
                     ? {
                         y: -2,
                       }
                     : {}
                 }
                 whileTap={
-                  !loading
+                  !loading && !googleLoading
                     ? {
                         scale: 0.98,
                       }
@@ -911,6 +941,75 @@ function Signup() {
                   </>
                 )}
               </motion.button>
+
+              {/* =================================================
+                  GOOGLE SIGNUP
+              ================================================== */}
+
+              <div className="my-5 flex items-center gap-4">
+                <div className="h-px flex-1 bg-white/[0.08]" />
+
+                <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-600 sm:text-[10px]">
+                  OR CONTINUE WITH
+                </span>
+
+                <div className="h-px flex-1 bg-white/[0.08]" />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleGoogleSignup}
+                disabled={loading || googleLoading}
+                className="group flex w-full items-center justify-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.025] py-3.5 text-sm font-semibold text-white transition-all duration-300 hover:border-white/[0.16] hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {googleLoading ? (
+                  <>
+                    <span
+                      aria-hidden="true"
+                      className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"
+                    />
+
+                    <span>
+                      Connecting to Google...
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M21.805 12.23c0-.79-.07-1.55-.23-2.28H12v4.31h5.5a4.7 4.7 0 0 1-2.04 3.08v2.56h3.3c1.93-1.78 3.045-4.4 3.045-7.67Z"
+                        fill="#4285F4"
+                      />
+
+                      <path
+                        d="M12 22c2.76 0 5.07-.91 6.76-2.47l-3.3-2.56c-.91.61-2.07.97-3.46.97-2.66 0-4.91-1.8-5.72-4.22H2.87v2.64A10.21 10.21 0 0 0 12 22Z"
+                        fill="#34A853"
+                      />
+
+                      <path
+                        d="M6.28 13.72A6.14 6.14 0 0 1 5.96 12c0-.6.11-1.18.32-1.72V7.64H2.87A10.02 10.02 0 0 0 1.8 12c0 1.61.39 3.13 1.07 4.36l3.41-2.64Z"
+                        fill="#FBBC05"
+                      />
+
+                      <path
+                        d="M12 6.06c1.5 0 2.85.52 3.91 1.54l2.93-2.93C17.07 2.99 14.76 2 12 2a10.21 10.21 0 0 0-9.13 5.64l3.41 2.64C7.09 7.86 9.34 6.06 12 6.06Z"
+                        fill="#EA4335"
+                      />
+                    </svg>
+
+                    <span>
+                      Continue with Google
+                    </span>
+                  </>
+                )}
+              </button>
 
               {/* =================================================
                   MOBILE LOGIN
@@ -967,6 +1066,7 @@ function Input({
   type = "text",
   autoComplete = "off",
   required = false,
+  disabled = false,
 }) {
   return (
     <div className="group relative">
@@ -993,7 +1093,8 @@ function Input({
         placeholder={placeholder}
         autoComplete={autoComplete}
         required={required}
-        className="w-full rounded-2xl border border-white/[0.08] bg-[#070d1b] py-3.5 pl-11 pr-4 text-sm text-white placeholder:text-slate-600 outline-none transition-all duration-300 hover:border-white/[0.14] focus:border-cyan-400/40 focus:bg-[#0a1121] focus:ring-4 focus:ring-cyan-400/[0.06]"
+        disabled={disabled}
+        className="w-full rounded-2xl border border-white/[0.08] bg-[#070d1b] py-3.5 pl-11 pr-4 text-sm text-white placeholder:text-slate-600 outline-none transition-all duration-300 hover:border-white/[0.14] focus:border-cyan-400/40 focus:bg-[#0a1121] focus:ring-4 focus:ring-cyan-400/[0.06] disabled:cursor-not-allowed disabled:opacity-60"
       />
     </div>
   );
@@ -1011,6 +1112,7 @@ function PasswordInput({
   placeholder,
   visible,
   toggleVisible,
+  disabled = false,
 }) {
   return (
     <div className="group relative">
@@ -1029,19 +1131,21 @@ function PasswordInput({
         placeholder={placeholder}
         autoComplete="new-password"
         required
-        className="w-full rounded-2xl border border-white/[0.08] bg-[#070d1b] py-3.5 pl-11 pr-12 text-sm text-white placeholder:text-slate-600 outline-none transition-all duration-300 hover:border-white/[0.14] focus:border-cyan-400/40 focus:bg-[#0a1121] focus:ring-4 focus:ring-cyan-400/[0.06]"
+        disabled={disabled}
+        className="w-full rounded-2xl border border-white/[0.08] bg-[#070d1b] py-3.5 pl-11 pr-12 text-sm text-white placeholder:text-slate-600 outline-none transition-all duration-300 hover:border-white/[0.14] focus:border-cyan-400/40 focus:bg-[#0a1121] focus:ring-4 focus:ring-cyan-400/[0.06] disabled:cursor-not-allowed disabled:opacity-60"
       />
 
       <button
         type="button"
         onClick={toggleVisible}
+        disabled={disabled}
         aria-label={
           visible
             ? `Hide ${placeholder.toLowerCase()}`
             : `Show ${placeholder.toLowerCase()}`
         }
         aria-pressed={visible}
-        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 transition-colors hover:text-cyan-400"
+        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 transition-colors hover:text-cyan-400 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {visible ? (
           <EyeOff
