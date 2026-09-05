@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import API from "../../services/api";
 import {
@@ -29,12 +29,39 @@ function Login() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+
+  // ============================================================
+  // GOOGLE LOGIN ERROR
+  // ============================================================
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const googleError = params.get("error");
+
+    if (googleError === "google-login-failed") {
+      setError(
+        "Google login failed. Please try again or use email and password."
+      );
+
+      // Remove error from URL without reloading the page
+      window.history.replaceState(
+        {},
+        document.title,
+        window.location.pathname
+      );
+    }
+  }, []);
+
+  // ============================================================
+  // INPUT CHANGE
+  // ============================================================
 
   const handleChange = (e) => {
     setError("");
@@ -45,10 +72,14 @@ function Login() {
     }));
   };
 
+  // ============================================================
+  // NORMAL EMAIL/PASSWORD LOGIN
+  // ============================================================
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (loading) return;
+    if (loading || googleLoading) return;
 
     setError("");
 
@@ -75,7 +106,7 @@ function Login() {
       }
 
       // -------------------------------------------------------
-      // Clear any old authentication state first
+      // Clear old authentication state
       // -------------------------------------------------------
 
       localStorage.removeItem("token");
@@ -143,6 +174,44 @@ function Login() {
       setLoading(false);
     }
   };
+
+  // ============================================================
+  // GOOGLE LOGIN
+  // ============================================================
+
+  const handleGoogleLogin = () => {
+    if (loading || googleLoading) return;
+
+    setError("");
+    setGoogleLoading(true);
+
+    try {
+      const baseURL = API.defaults?.baseURL?.replace(/\/$/, "");
+
+      if (!baseURL) {
+        throw new Error("API base URL is not configured.");
+      }
+
+      // Backend route:
+      // GET /api/auth/google
+      //
+      // Backend handles:
+      // Google OAuth → callback → JWT → frontend success route
+
+      window.location.href = `${baseURL}/auth/google`;
+    } catch (error) {
+      console.error("GOOGLE LOGIN ERROR:", error);
+
+      setGoogleLoading(false);
+      setError(
+        "Google login is currently unavailable. Please try again later."
+      );
+    }
+  };
+
+  // ============================================================
+  // JOURNEY DATA
+  // ============================================================
 
   const journey = [
     {
@@ -229,7 +298,6 @@ function Login() {
       ====================================================== */}
 
       <div className="relative z-10 mx-auto grid w-full max-w-7xl items-start gap-8 px-4 pb-8 pt-3 sm:gap-12 sm:px-8 sm:pb-12 sm:pt-4 lg:min-h-[calc(100vh-88px)] lg:min-h-[calc(100dvh-88px)] lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:gap-16">
-
         {/* =================================================
             LEFT SIDE
         ================================================== */}
@@ -333,16 +401,12 @@ function Login() {
           className="mx-auto w-full max-w-[500px]"
         >
           <div className="relative overflow-hidden rounded-[24px] border border-white/[0.09] bg-[#0a1020]/90 p-5 shadow-2xl shadow-blue-950/40 backdrop-blur-2xl sm:rounded-[30px] sm:p-8">
-
             <div className="pointer-events-none absolute -right-24 -top-24 h-48 w-48 rounded-full bg-blue-500/10 blur-3xl" />
 
             <div className="relative">
               <div className="mb-4 flex items-center justify-between gap-3 sm:mb-5">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-blue-400/20 bg-blue-500/10 sm:h-11 sm:w-11">
-                  <Rocket
-                    size={20}
-                    className="text-cyan-300 sm:hidden"
-                  />
+                  <Rocket size={20} className="text-cyan-300 sm:hidden" />
 
                   <Rocket
                     size={21}
@@ -351,15 +415,9 @@ function Login() {
                 </div>
 
                 <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-400/15 bg-emerald-400/5 px-2.5 py-1 text-[9px] font-semibold text-emerald-300 sm:px-3 sm:text-[10px]">
-                  <ShieldCheck
-                    size={11}
-                    className="sm:hidden"
-                  />
+                  <ShieldCheck size={11} className="sm:hidden" />
 
-                  <ShieldCheck
-                    size={12}
-                    className="hidden sm:block"
-                  />
+                  <ShieldCheck size={12} className="hidden sm:block" />
 
                   SECURE LOGIN
                 </span>
@@ -375,6 +433,10 @@ function Login() {
               </p>
             </div>
 
+            {/* =================================================
+                ERROR MESSAGE
+            ================================================== */}
+
             <AnimatePresence>
               {error && (
                 <motion.div
@@ -384,10 +446,7 @@ function Login() {
                   className="relative mt-4 overflow-hidden rounded-xl border border-red-400/15 bg-red-500/[0.06] px-3.5 py-3 text-sm text-red-300 sm:mt-5 sm:px-4"
                 >
                   <div className="flex items-start gap-2">
-                    <X
-                      size={17}
-                      className="mt-0.5 shrink-0"
-                    />
+                    <X size={17} className="mt-0.5 shrink-0" />
 
                     <span className="break-words">{error}</span>
                   </div>
@@ -399,7 +458,9 @@ function Login() {
               onSubmit={handleSubmit}
               className="relative mt-6 space-y-4 sm:mt-7 sm:space-y-5"
             >
-              {/* Email */}
+              {/* =================================================
+                  EMAIL
+              ================================================== */}
 
               <div className="group relative">
                 <Mail
@@ -415,12 +476,14 @@ function Login() {
                   placeholder="Email address"
                   autoComplete="email"
                   required
-                  disabled={loading}
+                  disabled={loading || googleLoading}
                   className="w-full rounded-2xl border border-white/[0.08] bg-[#070d1b] py-3.5 pl-11 pr-4 text-sm text-white placeholder:text-slate-600 outline-none transition-all duration-300 hover:border-white/[0.14] focus:border-cyan-400/40 focus:bg-[#0a1121] focus:ring-4 focus:ring-cyan-400/[0.06] disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
 
-              {/* Password */}
+              {/* =================================================
+                  PASSWORD
+              ================================================== */}
 
               <div className="group relative">
                 <Lock
@@ -436,32 +499,26 @@ function Login() {
                   placeholder="Password"
                   autoComplete="current-password"
                   required
-                  disabled={loading}
+                  disabled={loading || googleLoading}
                   className="w-full rounded-2xl border border-white/[0.08] bg-[#070d1b] py-3.5 pl-11 pr-12 text-sm text-white placeholder:text-slate-600 outline-none transition-all duration-300 hover:border-white/[0.14] focus:border-cyan-400/40 focus:bg-[#0a1121] focus:ring-4 focus:ring-cyan-400/[0.06] disabled:cursor-not-allowed disabled:opacity-60"
                 />
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowPassword((prev) => !prev)
-                  }
-                  disabled={loading}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  disabled={loading || googleLoading}
                   className="absolute right-3.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/[0.04] hover:text-cyan-400 disabled:cursor-not-allowed disabled:opacity-50 sm:right-4"
                   aria-label={
-                    showPassword
-                      ? "Hide password"
-                      : "Show password"
+                    showPassword ? "Hide password" : "Show password"
                   }
                 >
-                  {showPassword ? (
-                    <EyeOff size={17} />
-                  ) : (
-                    <Eye size={17} />
-                  )}
+                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                 </button>
               </div>
 
-              {/* Remember / Forgot */}
+              {/* =================================================
+                  REMEMBER / FORGOT
+              ================================================== */}
 
               <div className="flex items-center justify-between gap-3 text-[11px] sm:text-sm">
                 <button
@@ -479,7 +536,7 @@ function Login() {
                       return nextValue;
                     });
                   }}
-                  disabled={loading}
+                  disabled={loading || googleLoading}
                   className="flex min-w-0 cursor-pointer items-center gap-2 text-left text-slate-500 transition-colors hover:text-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <span
@@ -489,17 +546,10 @@ function Login() {
                         : "border-slate-600 bg-transparent"
                     }`}
                   >
-                    {rememberMe && (
-                      <Check
-                        size={11}
-                        strokeWidth={3}
-                      />
-                    )}
+                    {rememberMe && <Check size={11} strokeWidth={3} />}
                   </span>
 
-                  <span className="whitespace-nowrap">
-                    Remember me
-                  </span>
+                  <span className="whitespace-nowrap">Remember me</span>
                 </button>
 
                 <Link
@@ -510,13 +560,15 @@ function Login() {
                 </Link>
               </div>
 
-              {/* Login Button */}
+              {/* =================================================
+                  EMAIL/PASSWORD LOGIN BUTTON
+              ================================================== */}
 
               <motion.button
                 type="submit"
-                disabled={loading}
-                whileHover={!loading ? { y: -2 } : {}}
-                whileTap={!loading ? { scale: 0.98 } : {}}
+                disabled={loading || googleLoading}
+                whileHover={!loading && !googleLoading ? { y: -2 } : {}}
+                whileTap={!loading && !googleLoading ? { scale: 0.98 } : {}}
                 className="group relative flex min-h-[52px] w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-400 py-3.5 text-sm font-bold shadow-xl shadow-blue-600/20 transition-all duration-300 hover:shadow-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-60 sm:py-4"
               >
                 <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
@@ -538,32 +590,94 @@ function Login() {
                 )}
               </motion.button>
 
-              {/* Divider */}
+              {/* =================================================
+                  GOOGLE DIVIDER
+              ================================================== */}
 
               <div className="flex items-center gap-3 py-1">
                 <div className="h-px flex-1 bg-white/[0.06]" />
 
                 <span className="whitespace-nowrap text-[9px] font-medium tracking-wider text-slate-600 sm:text-[10px]">
-                  SECURE ACCESS
+                  OR CONTINUE WITH
                 </span>
 
                 <div className="h-px flex-1 bg-white/[0.06]" />
               </div>
 
-              {/* Security Note */}
+              {/* =================================================
+                  GOOGLE LOGIN BUTTON
+              ================================================== */}
+
+              <motion.button
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={loading || googleLoading}
+                whileHover={
+                  !loading && !googleLoading ? { y: -1 } : {}
+                }
+                whileTap={
+                  !loading && !googleLoading ? { scale: 0.98 } : {}
+                }
+                className="group flex min-h-[52px] w-full items-center justify-center gap-3 rounded-2xl border border-white/[0.09] bg-white/[0.035] py-3.5 text-sm font-semibold text-white transition-all duration-300 hover:border-white/[0.16] hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-60 sm:py-4"
+              >
+                {googleLoading ? (
+                  <>
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+
+                    <span>Connecting to Google...</span>
+                  </>
+                ) : (
+                  <>
+                    {/* Google G Icon */}
+                    <svg
+                      width="19"
+                      height="19"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M21.805 12.227c0-.79-.064-1.548-.182-2.273H12v4.305h5.498a4.7 4.7 0 0 1-2.04 3.088v2.568h3.302c1.933-1.78 3.045-4.4 3.045-7.688Z"
+                        fill="#4285F4"
+                      />
+
+                      <path
+                        d="M12 22c2.76 0 5.073-.91 6.76-2.467l-3.302-2.568c-.91.61-2.07.97-3.458.97-2.66 0-4.915-1.798-5.725-4.214H2.862v2.65A10.2 10.2 0 0 0 12 22Z"
+                        fill="#34A853"
+                      />
+
+                      <path
+                        d="M6.275 13.721A6.14 6.14 0 0 1 5.955 12c0-.598.103-1.18.32-1.721V7.629H2.862A10 10 0 0 0 1.8 12c0 1.58.379 3.073 1.062 4.371l3.413-2.65Z"
+                        fill="#FBBC05"
+                      />
+
+                      <path
+                        d="M12 6.065c1.5 0 2.846.516 3.906 1.527l2.927-2.927C17.068 3.01 14.755 2 12 2a10.2 10.2 0 0 0-9.138 5.629l3.413 2.65C7.085 7.863 9.34 6.065 12 6.065Z"
+                        fill="#EA4335"
+                      />
+                    </svg>
+
+                    <span>Continue with Google</span>
+                  </>
+                )}
+              </motion.button>
+
+              {/* =================================================
+                  SECURITY NOTE
+              ================================================== */}
 
               <div className="flex items-center justify-center gap-2 rounded-2xl border border-white/[0.05] bg-white/[0.02] px-3 py-3 text-center text-[10px] leading-4 text-slate-500 sm:px-4 sm:text-[11px]">
-                <Lock
-                  size={13}
-                  className="shrink-0 text-emerald-400"
-                />
+                <Lock size={13} className="shrink-0 text-emerald-400" />
 
                 <span>
                   Your credentials are securely handled by CampusHub AI.
                 </span>
               </div>
 
-              {/* Mobile Signup */}
+              {/* =================================================
+                  MOBILE SIGNUP
+              ================================================== */}
 
               <p className="pt-1 text-center text-xs text-slate-500 sm:hidden">
                 Don't have an account?
@@ -577,7 +691,9 @@ function Login() {
               </p>
             </form>
 
-            {/* Footer */}
+            {/* =================================================
+                FOOTER
+            ================================================== */}
 
             <div className="mt-5 flex flex-wrap items-center justify-center gap-2 border-t border-white/[0.06] pt-4 text-center text-[9px] text-slate-600 sm:mt-6 sm:pt-5 sm:text-[10px]">
               <Zap size={12} />

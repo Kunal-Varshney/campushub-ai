@@ -18,6 +18,7 @@ import Signup from "./Pages/Signup/Signup";
 import Login from "./Pages/Login/Login";
 import Forgot from "./Pages/Forgot/ForgotPassword";
 import ResetPassword from "./Pages/ResetPassword/Resetpassword";
+import GoogleLoginSuccess from "./Pages/GoogleLoginSuccess/GoogleLoginSuccess";
 
 // ============================================================
 // DASHBOARD
@@ -304,6 +305,11 @@ function App() {
             <Login />
           </PublicRoute>
         }
+      />
+
+      <Route
+        path="/auth/google/success"
+        element={<GoogleLoginSuccess />}
       />
 
       <Route
