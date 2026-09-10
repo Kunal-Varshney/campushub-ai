@@ -48,8 +48,8 @@ function Footer() {
               to="/"
               className="inline-block text-2xl font-bold tracking-tight"
             >
-              CampusHub
-              <span className="text-blue-500">AI</span>
+              <span className="text-indigo-400">CampusHub</span>
+              <span className="text-white">AI</span>
             </Link>
 
              <p className="mt-2 text-xs font-medium text-slate-500">
