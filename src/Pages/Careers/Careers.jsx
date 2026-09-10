@@ -300,7 +300,10 @@ function Careers() {
               <Sparkles size={17} />
             </div>
 
-            <span className="text-sm font-semibold">CampusHub AI</span>
+            <span className="text-sm font-semibold">
+              <span className="text-indigo-400">CampusHub</span>
+              <span className="text-white">AI</span>
+            </span>
           </div>
 
           <p className="text-xs text-slate-500 sm:text-sm">
