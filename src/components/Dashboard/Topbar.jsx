@@ -365,7 +365,8 @@ function Topbar({ user }) {
         border-b
         border-slate-800
         bg-slate-950/90
-        px-3
+        pl-14
+        pr-3
         py-3
         backdrop-blur-xl
         sm:min-h-[73px]
