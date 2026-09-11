@@ -665,12 +665,13 @@ const AdminTopbar = ({
             {notificationOpen && (
               <div
                 className="
-                  absolute
-                  right-0
-                  top-12
+                  fixed
+                  left-3
+                  right-3
+                  top-[84px]
                   z-[100]
-                  w-[calc(100vw-32px)]
-                  max-w-[380px]
+                  w-auto
+                  max-w-none
                   overflow-hidden
                   rounded-2xl
                   border
@@ -678,6 +679,12 @@ const AdminTopbar = ({
                   bg-slate-950
                   shadow-2xl
                   shadow-black/40
+                  sm:absolute
+                  sm:left-auto
+                  sm:right-0
+                  sm:top-12
+                  sm:w-[380px]
+                  sm:max-w-[calc(100vw-32px)]
                 "
               >
                 {/* HEADER */}
@@ -760,7 +767,7 @@ const AdminTopbar = ({
 
                 {/* CONTENT */}
 
-                <div className="max-h-[420px] overflow-y-auto">
+                <div className="max-h-[calc(100vh-150px)] overflow-y-auto sm:max-h-[420px]">
                   {notificationLoading ? (
                     <div className="flex min-h-[180px] items-center justify-center">
                       <div className="text-center">
