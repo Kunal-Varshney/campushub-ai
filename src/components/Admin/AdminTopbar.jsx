@@ -662,31 +662,30 @@ const AdminTopbar = ({
                 NOTIFICATION DROPDOWN
             ================================================== */}
 
-            {notificationOpen && (
-              <div
-                className="
-                  fixed
-                  left-3
-                  right-3
-                  top-[84px]
-                  z-[100]
-                  w-auto
-                  max-w-none
-                  overflow-hidden
-                  rounded-2xl
-                  border
-                  border-white/10
-                  bg-slate-950
-                  shadow-2xl
-                  shadow-black/40
-                  sm:absolute
-                  sm:left-auto
-                  sm:right-0
-                  sm:top-12
-                  sm:w-[380px]
-                  sm:max-w-[calc(100vw-32px)]
-                "
-              >
+              {notificationOpen && (
+                <div
+                  className="
+                    fixed
+                    right-3
+                    top-[84px]
+                    z-[9999]
+                    w-[calc(100vw-24px)]
+                    max-w-[380px]
+                    overflow-hidden
+                    rounded-2xl
+                    border
+                    border-white/10
+                    bg-slate-950
+                    shadow-2xl
+                    shadow-black/40
+                    sm:absolute
+                    sm:right-0
+                    sm:top-12
+                    sm:z-[100]
+                    sm:w-[380px]
+                    sm:max-w-[calc(100vw-32px)]
+                  "
+                >
                 {/* HEADER */}
 
                 <div
