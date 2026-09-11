@@ -238,7 +238,7 @@ function Sidebar() {
 
       {/* Desktop */}
 
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-slate-800 bg-slate-950/95 backdrop-blur-xl lg:block">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-slate-800/70 bg-slate-950/95 backdrop-blur-xl lg:block">
         <SidebarContent
           pathname={pathname}
           onNavigate={() => {}}
@@ -269,7 +269,7 @@ function Sidebar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMobileOpen(false)}
-              className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm lg:hidden"
             />
 
             <motion.aside

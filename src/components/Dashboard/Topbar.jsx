@@ -362,18 +362,13 @@ function Topbar({ user }) {
         items-center
         justify-between
         gap-2
-        relative
+        border-b
+        border-slate-800/70
         bg-slate-950/90
         pl-16
         pr-3
         py-3
         backdrop-blur-xl
-        after:absolute
-        after:bottom-0
-        after:left-0
-        after:right-0
-        after:h-px
-        after:bg-slate-800/70
         sm:min-h-[73px]
         sm:gap-4
         sm:px-6
