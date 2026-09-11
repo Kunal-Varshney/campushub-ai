@@ -75,7 +75,6 @@ const formatNotificationTime = (date) => {
   );
 };
 
-
 // ======================================================
 // TOPBAR
 // ======================================================
@@ -242,22 +241,22 @@ function Topbar({ user }) {
   // ======================================================
 
   const handleLogout = async () => {
-  try {
-    await logoutUser();
-  } catch (error) {
-    console.error("Logout Error:", error);
-  } finally {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    try {
+      await logoutUser();
+    } catch (error) {
+      console.error("Logout Error:", error);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
 
-    setDropdownOpen(false);
-    setNotificationOpen(false);
+      setDropdownOpen(false);
+      setNotificationOpen(false);
 
-    navigate("/login", {
-      replace: true,
-    });
-  }
-};
+      navigate("/login", {
+        replace: true,
+      });
+    }
+  };
 
   // ======================================================
   // MARK ALL NOTIFICATIONS AS READ
@@ -378,13 +377,23 @@ function Topbar({ user }) {
           LEFT SIDE
       ================================================== */}
 
-      <div className="min-w-0 flex-1">
+      <div
+        className="
+          min-w-0
+          flex-1
+          overflow-hidden
+          pr-1
+          sm:pr-0
+        "
+      >
         <h1
           className="
+            max-w-full
             truncate
-            text-sm
+            text-[13px]
             font-semibold
             leading-5
+            text-gray-200
             sm:text-xl
             sm:leading-normal
           "
@@ -404,6 +413,7 @@ function Topbar({ user }) {
           className="
             mt-0.5
             hidden
+            truncate
             text-sm
             text-gray-500
             sm:block
@@ -612,7 +622,8 @@ function Topbar({ user }) {
                   left-3
                   right-3
                   top-[68px]
-                  z-50
+                  z-[9999]
+                  max-h-[calc(100vh-84px)]
                   overflow-hidden
                   rounded-2xl
                   border
@@ -625,7 +636,9 @@ function Topbar({ user }) {
                   sm:left-auto
                   sm:right-0
                   sm:top-auto
+                  sm:z-50
                   sm:mt-3
+                  sm:max-h-none
                   sm:w-[350px]
                 "
               >
@@ -636,13 +649,14 @@ function Topbar({ user }) {
                     flex
                     items-center
                     justify-between
+                    gap-3
                     border-b
                     border-slate-800
                     px-4
                     py-3
                   "
                 >
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="text-sm font-semibold">
                       Notifications
                     </h3>
@@ -663,8 +677,10 @@ function Topbar({ user }) {
                         onClick={markAllRead}
                         className="
                           flex
+                          shrink-0
                           items-center
                           gap-1
+                          whitespace-nowrap
                           text-[11px]
                           font-medium
                           text-cyan-400
@@ -725,24 +741,11 @@ function Topbar({ user }) {
                               notification
                             )
                           }
-                          className={`
-                            flex
-                            w-full
-                            gap-3
-                            border-b
-                            border-slate-800/70
-                            px-4
-                            py-4
-                            text-left
-                            transition
-                            duration-200
-                            hover:bg-slate-800/50
-                            ${
-                              !notification.isRead
-                                ? "bg-cyan-500/[0.03]"
-                                : ""
-                            }
-                          `}
+                          className={`flex w-full gap-3 border-b border-slate-800/70 px-4 py-4 text-left transition duration-200 hover:bg-slate-800/50 ${
+                            !notification.isRead
+                              ? "bg-cyan-500/[0.03]"
+                              : ""
+                          }`}
                         >
                           {/* ICON */}
 
@@ -775,14 +778,11 @@ function Topbar({ user }) {
                               "
                             >
                               <p
-                                className={`
-                                  text-sm
-                                  ${
-                                    !notification.isRead
-                                      ? "font-semibold text-white"
-                                      : "font-medium text-gray-400"
-                                  }
-                                `}
+                                className={`min-w-0 break-words text-sm ${
+                                  !notification.isRead
+                                    ? "font-semibold text-white"
+                                    : "font-medium text-gray-400"
+                                }`}
                               >
                                 {notification.title ||
                                   "CampusHub Update"}
@@ -805,6 +805,7 @@ function Topbar({ user }) {
                             <p
                               className="
                                 mt-1
+                                break-words
                                 text-xs
                                 leading-5
                                 text-gray-500
@@ -1000,7 +1001,7 @@ function Topbar({ user }) {
                   fixed
                   right-3
                   top-[68px]
-                  z-50
+                  z-[9999]
                   w-[calc(100vw-1.5rem)]
                   max-w-[260px]
                   overflow-hidden
@@ -1014,6 +1015,7 @@ function Topbar({ user }) {
                   sm:absolute
                   sm:right-0
                   sm:top-auto
+                  sm:z-50
                   sm:mt-3
                   sm:w-52
                 "
